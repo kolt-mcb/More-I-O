@@ -2,6 +2,7 @@
 a port of sethblings mar i/o to python 
 
 this is current utilizes open ai. https://openai.com/about/
+to install open ai please visit https://gym.openai.com/docs
 
 
 Things to do!
