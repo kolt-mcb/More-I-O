@@ -1,4 +1,4 @@
-# neat
+# MORE-I/O
 a port of sethblings mar i/o to python 
 
 this is current utilizes open ai. https://openai.com/about/
