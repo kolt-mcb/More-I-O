@@ -3,684 +3,589 @@ import sys
 import time
 import random
 import math
-from tkinter import *
 
 
 
-CrossoverChance = 0.75
-PerturbChance = 0.90
-MutateConnectionsChance = 0.25
-LinkMutationChance = 2.0
-BiasMutationChance = 0.40
-NodeMutationChance = .25
-EnableMutationChance = 0.2
-DisableMutationChance = 0.4
-DeltaDisjoint = 2.0
-DeltaWeights = 0.4
-DeltaThreshold = 1.0
-StepSize = 0.1
-Outputs = None
-MaxNodes = 10000
-SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
-GRIDSIZE=80
-GRID_WIDTH = SCREEN_WIDTH // GRIDSIZE
-GRID_HEIGHT = SCREEN_HEIGHT // GRIDSIZE
-Inputs = None
-StaleSpecies = 15
-pool = None
-
-width = 720
-height = 240
 
 
+class pool: #holds all species data, crossspecies settings and the current gene innovation
+	def __init__(self,population,Inputs,Outputs,recurrent=False):
+		self.species = []
+		self.generation = 0
+		self.currentSpecies = 0
+		self.currentGenome = 0
+		self.maxFitness = 0
+		self.Population = population
+		self.best = []
+		self.DeltaDisjoint = 2.0
+		self.DeltaWeights = 0.4
+		self.DeltaThreshold = 1.0
+		self.StaleSpecies = 15
+		self.CrossOverSpeciesRate = .01
+		self.Inputs = Inputs
+		self.Outputs = Outputs
+		self.newGenome.innovation = Inputs #  sets the class variable to the current number of inputs
+		self.recurrent = recurrent
+		for x in range(self.Population):# potpulate with random nets
+			newGenome = self.newGenome(Inputs,Outputs,recurrent)
+			while newGenome.genes == []:
+				newGenome.mutate()
+			self.addToPool(newGenome)
+		for specie in self.species:
+			for genome in specie.genomes:
+				genome.generateNetwork()		
+ 
 
-class networkDisplay(Frame):
-    def __init__(self):
-        Frame.__init__(self)
-        #Set up the main window frame as a grid
-        self.grid()     
-        #Set up main frame for game as a grid
-        frame1 = Frame(self, width = width, height = height)
-        frame1.grid()
-        #Add a canvas to frame1 as self.canvas member 
-        self.canvas = Canvas(frame1, width = width, height = height,bg ="white")
-        
-nd= networkDisplay()             
-class Cell():
-    def __init__(self):
-        self.x= None
-        self.y = None
-        self.value = None
-        
-        
-class newPool(): #holds all species data
-    def __init__(self):
-        self.species = []
-        self.generation = 0
-        self.currentSpecies = 0
-        self.currentGenome = 0
-        self.maxFitness = 0
-        self.innovation = Outputs
-        self.Population = None
+	def addToPool(self,child): # adds a species to its family of species, if not within threshold of any existing species creates a new species.
+		foundSpecies = False
+		for specie in self.species:
+			if not foundSpecies and self.sameSpecies(child,specie.genomes[0]): # checks against left overspecies from last gen ie species in index 0
+				specie.genomes.append(child)
+				foundSpecies = True
+		if not foundSpecies:
+			childSpecies = self.newSpecies(self.Inputs,self.Outputs,self.recurrent)
+			childSpecies.genomes.append(child)
+			self.species.append(childSpecies)
+			      
+	def sameSpecies(self,genome1,genome2):
+		dd = self.DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
+		dw = self.DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes 
+		return dd + dw < self.DeltaThreshold
 
-class newSpecies():
-    def __init__(self):
-        self.topFitness = 0
-        self.staleness = 0
-        self.genomes = []
-        self.averageFitness = 0
-   
-class newGenome():
-    def __init__(self):
-        self.genes = []
-        self.fitness = 0
-        self.neurons = {}
-        self.maxneuron = Inputs
-        self.mutationRates = {}
-        self.globalRank = 0
-        self.buttonPresses = {}
-        self.mutationRates["connections"] =  MutateConnectionsChance
-        self.mutationRates["link"] =  LinkMutationChance
-        self.mutationRates["bias"] = BiasMutationChance
-        self.mutationRates["node"] = NodeMutationChance
-        self.mutationRates["enable"] = EnableMutationChance
-        self.mutationRates["disable"] = DisableMutationChance
-        self.mutationRates["step"] = StepSize
-        newGenome.__eq__ = lambda self, other: self.fitness == other.fitness
-        newGenome.__ne__ = lambda self, other: self.fitness != other.fitness
-        newGenome.__lt__ = lambda self, other: self.fitness < other.fitness
-        newGenome.__le__ = lambda self, other: self.fitness <= other.fitness
-        newGenome.__gt__ = lambda self, other: self.fitness > other.fitness
-        newGenome.__ge__ = lambda self, other: self.fitness >= other.fitness
+	def initializeRun(self): #generates a network for current species
+		species = self.species[self.currentSpecies]
+		genome = species.genomes[self.currentGenome]
+		generateNetwork(genome) 
+			
+	def nextGenome(self):# cycles through genomes
+		self.currentGenome = self.currentGenome + 1
+		if self.currentGenome +1 > len(self.species[self.currentSpecies].genomes):
+			self.currentGenome = 0
+			self.currentSpecies = self.currentSpecies+1
+			if self.currentSpecies >= len(self.species):
+				self.currentSpecies = 0
+				self.currentGenome = 0
+				newGeneration()
+				
+	def evaluateCurrent(self,inputs,discrete=False): # runs current species network 
+		species = self.species[self.currentSpecies]
+		genome = species.genomes[self.currentGenome]
+		output = genome.evaluateNetwork(inputs,discrete)
+		return output
+	               
+				
+	def nextGeneration(self): #cuts poor preforming genomes and performs crossover of remaining genomes.
+		self.cullSpecies(False)  
+		self.rankGlobally() 
 
-class newGene():
-    def __init__(self):
-        self.into = 0
-        self.out = 0
-        self.weight = 0.0
-        self.innovation = 0
-        self.enabled = True
+		self.removeStaleSpecies()
+
+		self.rankGlobally(addBest=True) # reranks after removeing stales species and  stores best player for later play
+		for specie in self.species:
+			specie.calculateAverageFitness() #calculateAverageFitness of a specie
+		self.removeWeakSpecies() 
+		Sum = self.totalAverageFitness()
+		children = []
+		for specie in self.species:
+			breed = math.floor(specie.averageFitness / Sum * self.Population)-1 # if a species average fitness is over the pool averagefitness it can breed
+			for i in range(breed):
+				children.append(specie.breedChildren())
+		self.cullSpecies(True) # leave only the top member of each species.
+
+
+		if self.generation > 0:
+			while (len(children) < (self.Population-len(self.species))*(1-self.CrossOverSpeciesRate)): # cross over species at species cross over rate 
+				parent = random.choice(self.species)
+				child = parent.breedChildren()
+				children.append(child)
+			
+			while len(children) + len(self.species) < self.Population :
+						r1 = random.choice(self.species)
+						r2 = random.choice(self.species)
+						children.append(r1.crossover(r1.genomes[0],r2.genomes[0])) # cross over is a species function so we must used one of the 2 species cross over functions, maybe move this to the pool in the future
+		else:
+			while (len(children) + len(self.species) < self.Population):
+				parent = random.choice(self.species)
+				child = parent.breedChildren()
+				children.append(child)
+		lastGen = self.species
+		self.species = []
+		for child in children: # adds all children there species in the pool
+			self.addToPool(child)
+		for specie in lastGen:
+			for genome in specie.genomes:
+				self.addToPool(genome)
+		self.generation = self.generation + 1
+		
+	def cullSpecies(self,cutToOne): #sorts genomes by fitness and removes half of them or cuts to one
+		for specie in self.species:
+			specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
+
+			remaining = math.ceil(len(specie.genomes)/2)
+			if cutToOne:
+				remaining = 1
+			total = len(specie.genomes)
+			while len(specie.genomes) > remaining:
+				specie.genomes.remove(specie.genomes[total-1])
+				total += -1
+		
+	def removeStaleSpecies(self): # removes species that have not gotten a high score past a threshold
+		survived = []
+		for specie in self.species:
+			specie.genomes = sorted(specie.genomes, key=attrgetter('fitness'),reverse=True)
+			for genome in specie.genomes:
+				if genome.fitness > specie.topFitness:
+					specie.topFitness = genome.fitness
+					specie.staleness = 0
+				else:
+					specie.staleness = specie.staleness + 1
+			if specie.staleness < self.StaleSpecies or specie.topFitness >= self.maxFitness:
+				survived.append(specie)
+		self.species = survived
+		
+	def removeWeakSpecies(self): # removes poor performing species
+		survived = []
+		sum = self.totalAverageFitness()
+		for specie in self.species:
+			breed = math.floor(specie.averageFitness / sum * self.Population)
+			if breed >= 1:
+				survived.append(specie)
+    
+		self.species = survived
+
+	def totalAverageFitness(self): #total of all averages of pool
+		total = 0 
+		for specie in self.species:
+			total = total + specie.averageFitness
+		return total
+
+	def averageFitness(self): #average fitness of entire pool
+		total = 0
+		count =+ 1
+		for specie in self.species:
+			for genome in specie.genomes:
+				count += 1
+				total += genome.fitness
+		total = total/count
+		return total
+		
+	def rankGlobally(self,addBest=False): # sets globalRank value for all genomes.
+		sIndex = []
+		s = 0
+		for specie in self.species:
+			g = 0
+			for genome in specie.genomes:
+				sIndex.append((s,g,genome.fitness))
+				g += 1
+			s += 1
+
+		sIndex.sort(key=lambda tup: tup[2])
+		
+		c = 1
+		for rank in sIndex:
+			self.species[rank[0]].genomes[rank[1]].globalRank = c
+			if c == len(sIndex):
+				topGenome = self.species[rank[0]].genomes[rank[1]]
+				if addBest:
+					self.best.append(topGenome)
+				self.maxFitness = topGenome.fitness
+			c += 1
+
+	def getBest(self): # returns best genome for current generation
+		return self.best[len(self.best)-1]
+
+	def disjoint(self,genes1,genes2): # mesures the amount of shared in a genes in a genomes genes.
+		i1 = {}
+		for gene in genes1:
+			i1[gene.innovation] = True
+		i2 = {}
+		for gene in genes2:
+			i2[gene.innovation] = True
+    
+		disjointGenes = 0
+		for gene in genes1:
+			if  not i2.get(gene.innovation,False):
+				disjointGenes = disjointGenes+1
+		for gene in genes2:
+			if not i1.get(gene.innovation,False):
+				disjointGenes = disjointGenes+1
+            
+		n = max(len(genes1),len(genes2))
+		if n == 0:
+			return 0
+		return disjointGenes / n
+	    
+	def weights(self,genes1,genes2): # mesures the difference of weights in a shared gene due to mutation 
+		i2 = {}
+		for gene in genes2:
+			i2[gene.innovation] = gene
+		sum = 0
+		coincident = 0
+		for gene in genes1:
+			if i2.get(gene.innovation) != None:
+				gene2 = i2.get(gene.innovation)
+				sum = sum + abs(gene.weight - gene2.weight)
+				coincident = coincident + 1
+		if sum == 0 and coincident == 0:
+			return 0
+		return sum / coincident
+
+	def getOutputs(self):
+		return self.Outputs
+
+	
+
+	class newGenome:
+
+		def __init__(self,Inputs,Outputs,recurrent):
+			self.genes = []
+			self.fitness = 0
+			self.neurons = {}
+			self.maxneuron = Inputs
+			self.mutationRates = {}
+			self.globalRank = 0
+			self.maxNodes = 10000 
+			self.mutationRates["connections"] =  0.25
+			self.mutationRates["link"] =  .3
+			self.mutationRates["bias"] = 0.1
+			self.mutationRates["node"] = 0.1
+			self.mutationRates["enable"] = 0.01
+			self.mutationRates["disable"] = 0.05
+			self.mutationRates["step"] = 0.1
+			self.PerturbChance = 0.5
+			self.Inputs = Inputs
+			self.Outputs = Outputs
+			self.recurrent = recurrent
+		
+			if self.recurrent: # initializes first run for reccurrent networks
+				self.lastEval = Outputs*[0]
+				self.maxneuron = self.Inputs+self.Outputs
+	    
+		
+
+		def newInnovation(self):
+			#sets genome class variable, this is shared between all genomes
+			pool.newGenome.innovation += 1
+			return pool.newGenome.innovation
+
+			
+		def mutate(self): # runs all mutation types at rate set, while probabilty is over the rate set.
+			for mutation,rate in self.mutationRates.items():
+				if random.randint(1,2) == 1:
+					self.mutationRates[mutation] = 0.95*rate
+				else:
+					self.mutationRates[mutation] = 1.05263*rate
+			if random.random() < self.mutationRates["connections"]:
+
+				self.pointMutate()
+			p = self.mutationRates["link"]
+			while p > 0:
+				if random.random() < p:
+					self.linkMutate(False)
+				p = p -1
+			p = self.mutationRates["bias"]
+			while p > 0:
+
+				if random.random() < p:
+					self.linkMutate(True)
+				p = p -1
+			p = self.mutationRates["node"] 
+			while p > 0:
+
+				if random.random() < p:
+					self.nodeMutate()
+				p = p -1
+			p = self.mutationRates["enable"]
+			while p > 0:
+
+				if random.random() < p:
+					self.enableDisableMutate(True)
+				p = p -1
+			p = self.mutationRates["disable"]
+			while p > 0:
+				if random.random() < p:
+
+					self.enableDisableMutate(False)
+				p = p -1
+						   
+		def pointMutate(self): #mutates the weight of a gene
+			step = self.mutationRates["step"]
+			for gene in self.genes:
+				if random.random() < self.PerturbChance:
+					gene.weight = gene.weight + random.random()*step*2-step
+				else:
+					gene.weight = random.random()*4-2
+
+		def linkMutate(self,forceBias): #adds a link to the network, potentialy forced to bias neuron
+			neuron1 = self.randomNeuron(False)
+			neuron2 = self.randomNeuron(True)
+			newLink = newGene()
+			if self.recurrent:
+				Inputs = self.Inputs+self.Outputs
+			else:
+				Inputs = self.Inputs
+			if neuron1 <=Inputs and neuron2 <= Inputs:     
+				return 
+			if neuron1 == neuron2:
+				return
+			if neuron2 <= Inputs:
+				temp = neuron1
+				neuron1 = neuron2
+				neuron2 = temp
+
+			newLink.into = neuron1
+
+			newLink.out = neuron2 
+			if forceBias:
+				newLink.into = Inputs
+			if self.containsLink(newLink):
+				return     
+			newLink.innovation = self.newInnovation()
+			newLink.weight = (random.random()*4-2)
+			self.genes.append(newLink)
+			
+		def containsLink(self,link): # checks if link already exists between neurons
+			for gene in self.genes:
+				if gene.into == link.into and gene.out == link.out:
+					return True
+				
+		def nodeMutate(self):# addds a node 
+			if len(self.genes) == 0:
+				return
+			r = random.randint(0,len(self.genes)-1)
+			gene = self.genes[r]
+			if not gene.enabled:
+				return
+			self.maxneuron += 1 # index of next neuron to point at as seen 3 lines below, gene1.out = self.maxneuron
+			gene.enabled = False
+			gene1 = gene.copyGene()
+			gene1.out = self.maxneuron
+			gene1.weight = 1.0
+			gene1.innovation = self.newInnovation()
+			gene1.enabled = True
+			self.genes.append(gene1)
+			gene2 = gene.copyGene()
+			gene2.into = self.maxneuron
+			gene2.innovation = self.newInnovation()
+			gene2.enabled = True
+			self.genes.append(gene2)
+		
+		def enableDisableMutate(self, enable):# enables or disables a gene
+			candidates = []
+			for g in self.genes:
+				if g.enabled == (not enable):
+					candidates.append(g)
+			if len(candidates) == 0:
+				return
+			r = random.randint(0,len(candidates)-1)
+			gene = candidates[r]
+			gene.enabled = (not gene.enabled)
+	   
+		def copyGenome(self): # copies a genome perfectly. 
+			genome2 = pool.newGenome(self.Inputs,self.Outputs,self.recurrent)
+			for gene in self.genes:
+				genome2.genes.append(gene.copyGene())
+			genome2.Inputs = self.Inputs
+			genome2.Outputs = self.Outputs
+			genome2.maxneuron = self.maxneuron
+			genome2.mutationRates["connections"] = self.mutationRates["connections"]
+			genome2.mutationRates["link"] = self.mutationRates["link"]
+			genome2.mutationRates["bias"] = self.mutationRates["bias"]
+			genome2.mutationRates["node"] = self.mutationRates["node"]
+			genome2.mutationRates["enable"] = self.mutationRates["enable"]
+			genome2.mutationRates["disable"] = self.mutationRates["disable"]
+		
+			return genome2
+		
+		def generateNetwork(self): # generates a network based on genes.
+			neurons = {}
+			self.lastEval = self.Outputs * [0]
+			#input neurons
+			if self.recurrent:
+				for i in range(self.Inputs+self.Outputs+1): 
+					neurons[i] = newNeuron()
+			else:
+				for i in range(self.Inputs+1):
+					neurons[i] = newNeuron()
+
+		
+			#Output neurons
+			for o in range(1,self.Outputs+1):
+				neurons[self.maxNodes+o] = newNeuron()
+
+		
+			self.genes = sorted(self.genes,key=attrgetter('out'))
+			for gene in self.genes:
+				if gene.enabled:
+					if not(gene.out in neurons):
+
+						neurons[gene.out] = newNeuron() # checks all out links for missing neurons
+
+					neuron = neurons[gene.out]
+					neuron.incoming.append(gene)
+					if not(gene.into in neurons):
+						
+						neurons[gene.into] = newNeuron()
+			self.neurons = neurons
+
+		
+		def randomNeuron(self,nonInput): # selects a random neuron with choice of input or not.
+			neurons = {}
+			if self.recurrent:
+				inputs = self.Inputs + self.Outputs
+			else:
+				inputs = self.Inputs
+			if not nonInput:
+				
+				for i in range(inputs):
+					neurons[i] = True
+			for o in range(1,self.Outputs+1):
+				neurons[self.maxNodes+o] = True
+			for gene in self.genes: 
+				if (not nonInput) or gene.into > inputs:
+					neurons[gene.into]  = True
+				if (not nonInput) or gene.out > inputs:
+					neurons[gene.into] = True
+			n = random.randint(1,len(neurons))
+			for k,v in neurons.items():
+				n = n-1
+				if n==0:
+					return k
+			return 0
+		
+		def evaluateNetwork(self,inputs,discrete=False): # runs inputs through neural network, this is what runs the brain. 
+			if self.recurrent:
+				inputs = inputs + self.lastEval
+			inputs = inputs + [1]
+
+			if self.recurrent:
+				if len(inputs) != self.Inputs+self.Outputs+1:
+					print(self.Inputs,self.Outputs+1,len(inputs))
+					print("incorrect neural network")
+			else:
+				if len(inputs) != self.Inputs+1:
+					print(self.Inputs,len(inputs))
+					print("incorrect neural network")
+			for i in range(len(inputs)):
+				self.neurons[i].value = inputs[i] #start at +1
+			
+
+
+			for n,neuron in self.neurons.items():
+				total = 0
+				for incoming in neuron.incoming:
+					other = self.neurons[incoming.into]
+					total += incoming.weight * other.value
+
+				if len(neuron.incoming) > 0:
+					neuron.value = self.sigmoid(total)
+			outputs = []
+			if discrete: # discrete means 0 or 1 eg on or off other wise send unmodified output layer values
+				for o in range(1,self.Outputs+1):
+					if self.neurons[self.maxNodes+o].value > 0:
+						outputs.append(1)
+					else:
+						outputs.append(0)
+			else:
+				for o in range(1,self.Outputs+1):    
+					outputs.append(self.neurons[self.maxNodes+o].value)
+			if self.recurrent:
+				self.lastEval=[]
+				for o in range(1,self.Outputs+1):    
+					self.lastEval.append(self.neurons[self.maxNodes+o].value)
+			return outputs
+				
+		def sigmoid(self,x): # sigmoid function.
+			return 2/(1+math.exp(-4.9*x))-1
+
+	 
+	class newSpecies():
+
+		def __init__(self,Inputs,Outputs,recurrent):
+			self.Inputs = Inputs
+			self.Outputs = Outputs
+			self.topFitness = 0
+			self.staleness = 0
+			self.genomes = []
+			self.averageFitness = 0
+			self.CrossoverChance = 0.75
+			self.recurrent = recurrent
+
+		def calculateAverageFitness(self): 
+			total = 0
+			for genome in self.genomes:
+				total = total + genome.globalRank
+			self.averageFitness = total / len(self.genomes)
+		
+		def breedChildren(self): # breeds children of a species
+			if random.random() < self.CrossoverChance:
+				rand1 = random.randint(0,len(self.genomes)-1)
+				rand2 = random.randint(0,len(self.genomes)-1)
+				g1 = self.genomes[rand1]
+				g2 = self.genomes[rand2]
+				child = self.crossover(g1,g2)
+			else:
+				g =  self.genomes[random.randint(0,len(self.genomes)-1)]
+				child = g.copyGenome()
+			
+			child.mutate()
+			return child
+		
+		def crossover(self,g1,g2): # mixes genes of 2 species
+			if g2.fitness > g1.fitness:
+				tempg = g1
+				g1 = g2
+				g2 = tempg
+			innovations2 = {}
+			child = pool.newGenome(self.Inputs,self.Outputs,self.recurrent)
+			child.mutate()
+			for gene2 in g2.genes:
+				innovations2[gene2.innovation] = gene2
+			for gene1 in g1.genes:
+				gene2 = innovations2.get(gene1.innovation)
+				if gene2 != None and  random.randint(1,2) == 1 and gene2.enabled:
+					child.genes.append(gene2.copyGene())
+				else:
+					child.genes.append(gene1.copyGene())
+			child.maxneuron = max(g1.maxneuron,g2.maxneuron)
+			for mutation,rate in g1.mutationRates.items():
+				child.mutationRates[mutation] = rate
+			return child
+
+		
+	   
+		
+
+
+       
+		
+class newGene:
+	def __init__(self):
+		self.into = 0
+		self.out = 0
+		self.weight = 0.0
+		self.innovation = 0
+		self.enabled = True
+		
+	def copyGene(self): # copies gene perfectly
+		gene2 = newGene()
+		gene2.into = self.into
+		gene2.out = self.out
+		gene2.weight = self.weight
+		gene2.enabled = self.enabled
+		gene2.innovation = self.innovation
+		return gene2
 
 class newNeuron():
     def __init__(self):
         self.incoming = []
         self.value = 0.0
-   
-def newInnovation():
-    
-    pool.innovation += 1
-    return pool.innovation
-
-def addToSpecies(child):
-    foundSpecies = False
-    generateNetwork(child)
-    for specie in pool.species:
-        if not foundSpecies and sameSpecies(child,specie.genomes[0]):
-            specie.genomes.append(child)
-            foundSpecies = True
-    if not foundSpecies:
-        childSpecies = newSpecies()
-        childSpecies.genomes.append(child)
-        pool.species.append(childSpecies)
-  
-def basicGenome():
-    genome = newGenome()
-      
-    genome.maxneuron = Inputs
-    mutate(genome)
-    return genome 
-  
-def initializePool(Population,_Input,_Outputs):
-    
-    setInputOutput(_Input,_Outputs)
-    global pool
-    pool = newPool()
-    pool.Population = Population
-    for x in range(pool.Population):
-        basic = basicGenome()
-        addToSpecies(basic)        
-                          
-def mutate(genome):
-    
-    for mutation,rate in genome.mutationRates.items():
-        if random.randint(1,2) == 1:
-            genome.mutationRates[mutation] = 0.95*rate
-        else:
-            genome.mutationRates[mutation] = 1.05263*rate
-    if random.random() < genome.mutationRates["connections"]:
-        pointMutate(genome)
-    p = genome.mutationRates["link"]
-    while p > 0:
-        if random.random() < p:
-            linkMutate(genome, False)
-            p -= 1
-    p = genome.mutationRates["bias"]
-    while p > 0:
-        if random.random() < p:
-            linkMutate(genome,True)
-            p -= 1
-    p = genome.mutationRates["node"] 
-    while p > 0:
-        if random.random() < p:
-            nodeMutate(genome)
-            p -= 1
-    p = genome.mutationRates["enable"]
-    while p > 0:
-        if random.random() < p:
-            enableDisableMutate(genome, True)
-            p -= 1
-    p = genome.mutationRates["disable"]
-    while p > 0:
-        if random.random() < p:
-            enableDisableMutate(genome, False)
-            p -= 1
-               
-def pointMutate(genome):
-    step = genome.mutationRates["step"]
-    for gene in genome.genes:
-        if random.random() < PerturbChance:
-            gene.weight = gene.weight + random.random()*step*2-step
-        else:
-            gene.weight = random.random()*4-2
-
-def linkMutate(genome,forceBias):
-    neuron1 = randomNeuron(genome.genes,False)
-    neuron2 = randomNeuron(genome.genes,True)
-    newLink = newGene()
-    if neuron1 <= Inputs and neuron2 <= Inputs:
-        return
-    if neuron2 <= Inputs:
-        temp = neuron1
-        neuron1 = neuron2
-        neuron2 = temp
-        
-    newLink.into = neuron1
-    newLink.out = neuron2
-    
-    if forceBias:
-        newLink.into = Inputs
-    if containsLink(genome.genes,newLink):
-        return 
-    
-    newLink.innovation = newInnovation()
-    newLink.weight = (random.random()*4-2)
-    genome.genes.append(newLink)
-        
-def containsLink(genes,link):
-    
-    for gene in genes:
-        if gene.into == link.into and gene.out == link.out:
-            return True
-            
-def nodeMutate(genome):
-
-    if len(genome.genes) == 0:
-        return
-    genome.maxneuron += 1
-    
-    for k,_ in enumerate(genome.genes):
-        r = random.randint(0,k)
-        gene = genome.genes[r]
-    if not gene.enabled:
-        return
-    
-    gene.enabled = False
-    
-    gene1 = copyGene(gene)
-    gene1.out = genome.maxneuron
-    gene1.weight = 1.0
-    gene1.innovation = newInnovation()
-    gene1.enabled = True
-    genome.genes.append(gene1)
-    
-    gene2 = copyGene(gene)
-    gene2.out = genome.maxneuron
-    gene2.innovation = newInnovation()
-    gene2.enabled = True
-    genome.genes.append(gene2)
-    
-def enableDisableMutate(genome, enable):
-    candidates = []
-    
-    for g in genome.genes:
-        if g.enabled == (not enable):
-            candidates.append(g)
-    if len(candidates) == 0:
-        return
-    r = random.randint(0,len(candidates)-1)
-    gene = candidates[r]
-    gene.enabled = (not gene.enabled)
-   
-def copyGene(gene):
-    gene2 = newGene()
-    gene2.into = gene.into
-    gene2.out = gene.out
-    gene2.weight = gene.weight
-    gene2.enabled = gene.enabled
-    gene2.innovation = gene.innovation
-    return gene2
-    
-def copyGenome(genome):
-    genome2 = newGenome()
-    for gene in genome.genes:
-        genome2.genes.append(copyGene(gene))
-    genome2.maxneuron = genome.maxneuron
-    genome2.mutationRates["connections"] = genome.mutationRates["connections"]
-    genome2.mutationRates["link"] = genome.mutationRates["link"]
-    genome2.mutationRates["bias"] = genome.mutationRates["bias"]
-    genome2.mutationRates["node"] = genome.mutationRates["node"]
-    genome2.mutationRates["enable"] = genome.mutationRates["enable"]
-    genome2.mutationRates["disable"] = genome.mutationRates["disable"]
-    
-    return genome2
-       
-def randomNeuron(genes,nonInput):
-    neurons = {}
-    if not nonInput:
-        for i in range(1,Inputs):
-            neurons[i] = True
-    for o in range(1,Outputs+1):
-        neurons[MaxNodes+o] = True
-      
- 
-    for gene in genes:
-        if (not nonInput) or gene.into > Inputs:
-            neurons[gene.into]  = True
-        if (not nonInput) or gene.out > Inputs:
-            neurons[gene.into] = True
-    count = 0
-    for k,v in neurons.items():
-        count += 1
-    n = random.randint(1,count)
-    for k,v in neurons.items():
-        n = n-1
-        if n==0:
-            return k
-
-    
-    return(neurons[n])
-
-def generateNetwork(genome):
-    neurons = {}
-    
-    for i in range(1,Inputs+1):
-        neurons[i] = newNeuron()
-    for o in range(1,Outputs+1):
-        neurons[MaxNodes+o] = newNeuron()
-    
-    genome.genes = sorted(genome.genes,key=attrgetter('out'))
-    count = 0
-    for gene in genome.genes:
-        if gene.enabled:
-            if neurons.get(gene.out, 'N/A'):
-                neurons[gene.out] = newNeuron()
-            neuron = neurons[gene.out]
-            
-            neuron.incoming.append(gene)
-            if neurons.get(gene.into, 'N/A'):
-                neurons[gene.into] = newNeuron()
-            count += 1
-    genome.neurons = neurons
-      
-def evaluateNetwork(neurons,inputs):
-    inputs.append(1)
-    if len(inputs) != Inputs:
-        print("incorrect neural network")
-    for i in range(1,Inputs):
-        neurons[i].value = inputs[i-1] #start at +1
-    
-    for neuron in neurons:
-        total = 0
-        for incoming in neurons[neuron].incoming:
-            other = neurons[incoming.into]
-            total += incoming.weight * other.value
-        if len(neurons[neuron].incoming) > 0:
-            neurons[neuron].value = sigmoid(total)
-    
-    
-    
-    for o in range(Outputs):
-        if neurons[MaxNodes+o+1].value > 0:
-            outputs = 1
-        else:
-            outputs = 0
-    return outputs
-
-
-             
-def sigmoid(x):
-    return 2/(1+math.exp(-4.9*x))-1
-
-def evaluateCurrent(inputs):
-
-    species = pool.species[pool.currentSpecies]
-    genome = species.genomes[pool.currentGenome]
-    output = evaluateNetwork(genome.neurons,inputs) 
-    updateCanvas(genome)
      
-    return output
-        
-def evaluateAll(inputs): 
-    
-    for input in inputs:
-        currentNetwork = pool.species[pool.currentSpecies].genomes[pool.currentGenome]
-        generateNetwork(currentNetwork)
-        currentNetwork.buttonPresses = evaluateNetworkRaw(currentNetwork.neurons,input)
-        nextGenomeCompetition()
-    
-    return pool
-
-def setFitness(score):
-    pool.species[pool.currentSpecies].genomes[pool.currentGenome].fitness = score
-
-def setAllFitness(gamePool):
-    currentSpecie = 0
-    for specie in gamePool.species:
-        currentGenome = 0
-        for genome in specie.genomes:
-            pool.species[currentSpecie].genomes[currentGenome].fitness = genome.creature.score
-            currentGenome += 1
-        currentSpecie += 1
-    
-def nextGenome():
-    pool.currentGenome = pool.currentGenome + 1
-    if pool.currentGenome +1 > len(pool.species[pool.currentSpecies].genomes):
-        pool.currentGenome = 0
-        pool.currentSpecies = pool.currentSpecies+1
-        if pool.currentSpecies >= len(pool.species):
-            pool.currentSpecies = 0
-            pool.currentGenome = 0
-            newGeneration()
-               
-def nextGenomeCompetition():
-    pool.currentGenome = pool.currentGenome + 1
-    if pool.currentGenome +1 > len(pool.species[pool.currentSpecies].genomes):
-        pool.currentGenome = 0
-        pool.currentSpecies = pool.currentSpecies+1
-        if pool.currentSpecies >= len(pool.species):
-            pool.currentSpecies = 0
-            pool.currentGenome = 0            
-            
-def initializeRun():
-    species = pool.species[pool.currentSpecies]
-    genome = species.genomes[pool.currentGenome]
-    generateNetwork(genome)   
-
-def newGeneration():
-    cullSpecies(False)  
-    rankGlobally()
-    removeStaleSpecies()
-    rankGlobally()
-    for specie in pool.species:
-        calculateAverageFitness(specie)
-        
-    removeWeakSpecies()
-    sum = totalAverageFitness()
-    children = []
-    for specie in range(len(pool.species)):
-        breed = math.floor(pool.species[specie].averageFitness / sum * pool.Population) -1
-        for i in range(breed):
-            children.append(breedChildren(pool.species[specie]))
-    cullSpecies(True)
-    while (len(children) + len(pool.species) < pool.Population):
-        test = breedChildren(pool.species[random.randint(0,len(pool.species)-1)])
-        children.append(test)
-    for child in children:
-        addToSpecies(child)
-    pool.generation = pool.generation + 1
-            
-def cullSpecies(cutToOne):
-    for specie in pool.species:
-        specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
-        remaining = math.ceil(len(specie.genomes)/2)
-        if cutToOne:
-            remaining = 1
-        total = len(specie.genomes)
-        while len(specie.genomes) > remaining:
-            specie.genomes.remove(specie.genomes[total-1])
-            total += -1
 
 
-def removeStaleSpecies():
-    survived = []
-    for specie in pool.species:
-        specie.genomes = sorted(specie.genomes, key=attrgetter('fitness'),reverse=True)
-        for genome in specie.genomes:
-            if genome.fitness > specie.topFitness:
-                specie.topFitness = genome.fitness
-                specie.staleness = 0
-            else:
-                specie.staleness = specie.staleness + 1
-        if specie.staleness < StaleSpecies or specie.topFitness >= pool.maxFitness:
-            survived.append(specie)
-    pool.species = survived
 
-def removeWeakSpecies():
-    survived = []
-    sum = totalAverageFitness()
-    for specie in pool.species:
-        breed = math.floor(specie.averageFitness / sum * pool.Population)
-        if breed >= 1:
-            survived.append(specie)
-    
-    pool.species = survived
 
-def totalAverageFitness():
-    total = 0 
-    for specie in pool.species:
-        total = total + specie.averageFitness
-    return total
 
-def averageFitness():
-    total = 0
-    count =+ 1
-    for specie in pool.species:
-        for genome in specie.genomes:
-            count += 1
-            total += genome.fitness
-    total = total/count
-    return total
 
-def calculateAverageFitness(Specie):
-    total = 0
-    for genome in Specie.genomes:
-        total = total + genome.globalRank
-    Specie.averageFitness = total / len(Specie.genomes)
 
-def breedChildren(species):
-    if random.random() < CrossoverChance:
-        rand1 = random.randint(0,len(species.genomes)-1)
-        rand2 = random.randint(0,len(species.genomes)-1)
-        g1 = species.genomes[rand1]
-        g2 = species.genomes[rand2]
-        child = crossover(g1,g2)
-    else:
-        g =  species.genomes[random.randint(0,len(species.genomes)-1)]
-        child = copyGenome(g)
-    mutate(child)
-    return child
-
-def crossover(g1,g2):
-    if g2.fitness > g1.fitness:
-        tempg = g1
-        g1 = g2
-        g2 = tempg
-    innovations2 = {}
-    child = newGenome()
-    for gene2 in g2.genes:
-        innovations2[gene2.innovation] = gene2
-    for gene1 in g1.genes:
-        gene2 = innovations2.get(gene1.innovation)
-        if gene2 != None and  random.randint(1,2) == 1 and gene2.enabled:
-            child.genes.append(copyGene(gene2))
-        else:
-            child.genes.append(copyGene(gene1))
-    child.maxneuron = max(g1.maxneuron,g2.maxneuron)
-    for mutation,rate in g1.mutationRates.items():
-        child.mutationRates[mutation] = rate
-    return child
-        
-def sameSpecies(genome1,genome2):
-    dd = DeltaDisjoint*disjoint(genome1.genes,genome2.genes)
-    dw = DeltaWeights*weights(genome1.genes,genome2.genes)
-    return dd + dw < DeltaThreshold
-
-def disjoint(genes1,genes2):
-    i1 = {}
-    for gene in genes1:
-        i1[gene.innovation] = True
-    i2 = {}
-    for gene in genes2:
-        i2[gene.innovation] = True
-    
-    disjointGenes = 0
-    for gene in genes1:
-        if  not i2.get(gene.innovation,False):
-            disjointGenes = disjointGenes+1
-    for gene in genes2:
-        if not i1.get(gene.innovation,False):
-            disjointGenes = disjointGenes+1
-            
-    n = max(len(genes1),len(genes2))
-    return disjointGenes / n
-        
-def weights(genes1,genes2):
-    i2 = {}
-    for gene in genes2:
-        i2[gene.innovation] = gene
-    sum = 0
-    coincident = 0
-    for gene in genes1:
-        if i2.get(gene.innovation) != None:
-            gene2 = i2.get(gene.innovation)
-            sum = sum + abs(gene.weight - gene2.weight)
-            coincident = coincident + 1
-    if sum == 0 and coincident == 0:
-        return 0
-    return sum / coincident
-
-def rankGlobally():
-    sIndex = []
-    s = 0
-    for specie in pool.species:
-        g = 0
-        for genome in specie.genomes:
-           sIndex.append((s,g,genome))
-           g += 1
-        s += 1
-    
-    sIndex.sort(key=lambda tup: tup[2])
-    c = 0
-    for rank in sIndex:
-        pool.species[rank[0]].genomes[rank[1]].globalRank = c
-        c += 1
-     
-    
-def getNeurons():
-	return pool.species[pool.currentSpecies].genomes[pool.currentGenome].neurons
-	
-def getGenome():
-	return pool.species[pool.currentSpecies].genomes[pool.currentGenome]
-	
-def getSpecies():
-	return pool.species
-
-def getPool():
-    return pool
-
-def setInputOutput(_Inputs,_Outputs):
-    global Inputs
-    global Outputs
-    Inputs = len(range(_Inputs+1))
-    Outputs = _Outputs
-    
-def updateCanvas(genome):
-    nd.canvas.delete(ALL)
-    cells = {}
-    i = 1
-    GridSize = 15
-    
-    x=2        
-    square = 1
-    while x <= Inputs:
-        x= 2**square
-        square +=1
-    k = int(math.sqrt(x))
-
-    for dx in range(k):
-        dx = dx-k//2
-        for dy in range(k):
-            dy = dy-k//2
-            r = (height/2)+(dx*(height/k))+(height/k)/2
-            z = (height/2)+(dy*(height/k)) + (height/k)/2
-            if i < Inputs:                
-                cell = Cell()
-                cell.x = r
-                cell.y =  z
-                cell.value = genome.neurons[i].value
-                cells[i] = cell
-            i += 1
-    biasCell = Cell()
-    biasCell.x = r
-    biasCell.y = z
-    biasCell.value = genome.neurons[Inputs].value
-    cells[Inputs] = biasCell
-    
-    for o in range(1,Outputs+1):
-        cell = Cell()
-        cell.x = width*.9
-        cell.y = (height*.2)*o
-        cell.value = genome.neurons[MaxNodes+o].value
-        cells[MaxNodes+o]=cell
-        
-
-    for n,neuron in genome.neurons.items():
-        cell = Cell()
-        if n>Inputs and n<=MaxNodes:
-            cell.x = 20*n
-            cell.y = 10 * n
-            cell.value = neuron.value
-            cells[n] = cell
-    x = 0
-    y = 10
-    for mutation,Rate in genome.mutationRates.items():
-        Text = mutation," ",Rate
-        nd.canvas.create_text((x,y),text=Text)
-        x += .2*width
-        
-    for k,cell in cells.items():
-        value = math.floor((cell.value+1)/2*256)
-        if value > 255:
-            value = 255
-        if value < 0:
-            value = 0
-        color = '#%02x%02x%02x' % (0, 0,value)
-        nd.canvas.create_rectangle(cell.x-GridSize,cell.y-GridSize,cell.x+GridSize,cell.y+GridSize,fill=color)
-
-    for o in range(1,Outputs+1):
-        cell = cells[MaxNodes+o]
-        nd.canvas.create_text((cell.x+20,cell.y),text=str(o))
-    
-
-    for gene in genome.genes:
-        if gene.enabled:
-            c1 = cells[gene.into]
-            c2 = cells[gene.out]
-            value = int(math.fabs(gene.weight)*255)
-            if value > 255:
-                value = 255
-            color = '#%02x%02x%02x' % (0, 0,value)
-            nd.canvas.create_line(c1.x+1, c1.y, c2.x-3, c2.y,fill=color,width=5)
-    nd.canvas.focus_set()
-    nd.canvas.pack()
-    nd.canvas.update()
-    
-    
-def getBest():
-    _max = 0
-    for specie in pool.species:
-        for genome in specie.genomes:
-            if genome.fitness > _max:
-               _max = genome.fitness
-    return _max
 

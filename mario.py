@@ -1,15 +1,14 @@
+
 from subprocess import check_output
 import gym
-from gym import wrappers
 import os,signal,psutil
 from lib import neat 
 from lib import networkDisplay
-import numpy
+import numpy as np
 import math
 import time 
 import multiprocessing
 from multiprocessing import Queue
-from queue import Empty
 from tkinter import *
 from tkinter import filedialog,messagebox
 import pickle
@@ -21,169 +20,178 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 
+sentinel = object()
 
-sentinel = object() # tells the main tkinter window if a generattion is in progress
 
-lock = multiprocessing.Lock() # lock needed for env process
-
-def poolInitializer(q): # manages the job queue for genomes/players
+def poolInitializer(q,l):
 	global jobs
 	jobs = q
+	global lock
+	lock = l
+	
+
+def playBest(pool):
+  parentPipe, childPipe = multiprocessing.Pipe()
+  genome = pool.getBest()
+  process = multiprocessing.Process(target = singleGame,args=(genome,childPipe))
+  process.start()
+  display = networkDisplay.newNetworkDisplay(genome,parentPipe)
+  display.checkGenomePipe()
+  display.Tk.mainloop()
+  process.join()
 
 
-def trainPool(envNum,species,queue,env,attemps): # creates multiprocessing job for pool and trains pool 
+def trainPool(population,envNum,pool,queue,env): 
     before = time.time()
     results = []
     jobs = Queue()
+    lock = multiprocessing.Lock()
     s = 0
-    for specie in species: # generates network for each genome and creates a job with species and genome index, env name and number of trials/attemps
+    for specie in pool.species:
       g=0
       for genome in specie.genomes:
         genome.generateNetwork()
-        jobs.put((s,g,genome,attemps))
+        jobs.put((s,g,genome))
         g+=1
       s+=1
-    mPool = multiprocessing.Pool(processes=envNum,initializer =poolInitializer,initargs=(jobs,))
+
+      
+    mPool = multiprocessing.Pool(processes=envNum,initializer = poolInitializer,initargs=(jobs,lock,))
+    
     results = mPool.map(jobTrainer,[env]*envNum)
     mPool.close()
     mPool.join()
-    
+    after = time.time()
+    killFCEUX()
     for resultChunk in results:
         for result in resultChunk:
             currentSpecies = result[1][0]
             currentGenome = result[1][1]
-            species[currentSpecies].genomes[currentGenome].fitness = result[0] # sets results from result list
-    after = time.time()
-    print("finished in ",int(after-before))
+            pool.species[currentSpecies].genomes[currentGenome].fitness = result[0]
+    print("next generation")
+    pool.nextGeneration()
+    print("gen " ,pool.generation, "in ",int(after-before)," best", pool.getBest().fitness)
 
-    queue.put(species) # sends message to main tkinter process
+    queue.put(pool)
    
 
-def obFixer(observation_space,observation): # fixes observation ranges, uses hyperbolic tangent for infinite values
-  newObservation = []
-  
-  if observation_space.__class__ == gym.spaces.box.Box:
-    for space in range(observation_space.shape[0]):
-      high = observation_space.high[space]
-      low = observation_space.low[space]
-      if high == numpy.finfo(numpy.float32).max or high == float('Inf'):
-        newObservation.append(math.tanh(observation[space]))
-      else:
-        dif = high - low 
-        percent = (observation[space]+abs(low))/dif
-        newObservation.append(((percent * 2)-1).tolist())
-
-
-  return newObservation
-
-def acFixer(action_space,action): # fixes action ranges, uses hyperbolic tangent for infinite values
-  newAction = []
-  if action_space.__class__ == gym.spaces.box.Box:
-    for space in range(action_space.shape[0]):
-      high = action_space.high[space]
-      low = action_space.low[space]
-      if high != numpy.finfo(numpy.float32).max:
-        dif = high - low 
-        percent = (action[space]+1)/2
-        newAction.append(((percent * dif)-(dif/2)).tolist())
-      else:
-        print("if your seeing me this code needs updated")
-        newAction.append(math.tanh(observation[space]))
-    return newAction
-  if action_space.__class__ == gym.spaces.discrete.Discrete:
-    c = 0
-    for _,myAction in enumerate(action):
-      if myAction > 0:
-        newAction.append(_+1)
-        c += 1
-      if c > 1:
-        newAction = [0]
-        return int(newAction[0])
-    if c == 0:
-      newAction = [0]
-    return int(newAction[0])
+def get_pid(name):
+      return check_output(["pidof",name]).split()
+    
+def killFCEUX():
+  for pid in get_pid("fceux"):
+      pid = int(pid)
+      os.kill(pid,signal.SIGKILL)
 
 
 
 
 
-def jobTrainer(envName):
-
+def jobTrainer(envName):  
 	env = gym.make(envName)
-	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False) # no recoding on windows due to ffmepg
-
-
-	if env.action_space.__class__ == gym.spaces.discrete.Discrete: # identifies action/observation space
-		discrete = True
-	else:
-		discrete = False
-	
+	env.lock = lock
+	env.lock.acquire()
+	env.reset()
+	env.lock.release()
 	results = []
-	
-	while not jobs.empty(): # gets a new player index from queue
+	env.locked_levels = [False] * 32
+	while not jobs.empty():
 		try: 
 			job = jobs.get()
 		except Empty:
 			pass
-
 		currentSpecies = job[0]
 		currentGenome = job[1]
 		genome = job[2]
-		attemps = job[3]
-		scores = 0
-		for run in range(attemps): # runs for number of attemps
-			score = 0
-			done = False
-			ob = env.reset()	
-			
-			while not done: 
-			  ob = obFixer(env.observation_space,ob)
-			  o = genome.evaluateNetwork(ob,discrete) # evalutes brain, getting button presses
-			  o = acFixer(env.action_space,o)
-			  ob, reward, done, _ = env.step(o)
-			  #env.render() # disabled render
-			  score += reward
-			
-			scores += score
-		finalScore = scores/attemps	
-		print("species:",currentSpecies, " genome:",currentGenome," Scored:",finalScore)
-		results.append((finalScore,job))
-	env.close()
-	return results
-
-def singleGame(genome,genomePipe,envName,eval):
-	env = gym.make(envName)
-	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True)
-	runs = 1
-	print("playing best")
-	if eval:
-		#env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False)
-		runs = 100
-	for i in range(runs):
-		if env.action_space.__class__ == gym.spaces.discrete.Discrete:
-			discrete = True
-		else:
-			discrete = False
-		ob = env.reset()
-		done = False
-		distance = 0
 		maxDistance = 0
+		distance = None
 		staleness = 0
-		score = 0 
-		while not done:
-			ob = obFixer(env.observation_space,ob)
-			o = genome.evaluateNetwork(ob,discrete)
-			o = acFixer(env.action_space,o)
-			ob, reward, done, _ = env.step(o)
-			score += reward
-			if not eval:
-				env.render()
-			genomePipe.send(genome)
-		print(score)
-	env.reset
-	genomePipe.send("quit")
-	genomePipe.close()
-	env.close()
+		scores = []
+		finalScore = 0
+		done = False
+		maxReward = 0
+		for LVint in range(32):
+			maxDistance = 0
+			staleness = 0
+			done = False
+			env.change_level(new_level=LVint)
+			while not done:
+				ob = env.tiles.flatten()
+				o = genome.evaluateNetwork(ob.tolist(),discrete=True)
+				ob, reward, done, _ = env.step(o)
+				if 'ignore' in _:
+					done = False
+					env = gym.make('meta-SuperMarioBros-Tiles-v0')
+					env.lock.acquire()
+					env.reset()
+					env.locked_levels = [False] * 32
+					env.change_level(new_level=LVint)
+					env.lock.release()
+				distance = env._get_info()["distance"]
+				if distance > maxDistance:
+					maxDistance = distance
+					staleness = 0
+				if maxDistance >= distance:
+					staleness += 1
+	 
+				if staleness > 80 or done:
+					scores.append(maxDistance)
+					if not done:
+						done = True
+		for score in scores:
+			finalScore += score
+		finalScore = finalScore
+		results.append((finalScore,job))
+	
+		print("species:",currentSpecies, "genome:",currentGenome,"Scored:",finalScore)
+
+	return (results)
+
+def singleGame(genome,genomePipe):
+  env = gym.make('meta-SuperMarioBros-Tiles-v0')
+  env.reset()
+  done = False
+  distance = 0
+  maxDistance = 0
+  staleness = 0
+  print("playing next")
+  env.locked_levels = [False] * 32
+  for LVint in range(32):
+    maxDistance = 0
+    staleness = 0
+    done = False
+    #env.is_finished = True
+
+
+    env.change_level(new_level=LVint)
+    #env._write_to_pipe("changelevel#"+str(LVint))
+    while not done:
+    	ob = env.tiles.flatten()
+    	o = genome.evaluateNetwork(ob.tolist(),discrete=True)
+    	genomePipe.send(genome)
+    	ob, reward, done, _ = env.step(o)
+    	if 'ignore' in _:
+    		done = False
+    		env = gym.make('meta-SuperMarioBros-Tiles-v0')
+    		env.lock.acquire()
+    		env.reset()
+    		env.locked_levels = [False] * 32
+    		env.change_level(new_level=LVint)
+    		env.lock.release()
+    	distance = env._get_info()["distance"]
+    	if distance > maxDistance:
+    		maxDistance = distance
+    		staleness = 0
+    	if maxDistance >= distance:
+    		staleness += 1
+
+    	if staleness > 100 or done:
+    		if not done:
+    			done = True
+
+  env.close()
+  genomePipe.send("quit")
+  genomePipe.close()
 
 
 def kill_proc_tree(pid, including_parent=True):    
@@ -195,6 +203,7 @@ def kill_proc_tree(pid, including_parent=True):
     if including_parent:
         parent.kill()
         parent.wait(5)
+
 
 
 
@@ -228,29 +237,13 @@ class gui:
     self.runButton = Button(self.frame,text="start run", command=self.toggleRun)
     self.runButton.grid(row=2,column=3)
     #play best button
-    self.playBestButton = Button(self.frame,text='play best',command =self.playBest)
+    self.playBestButton = Button(self.frame,text='play best',command =self.handlePlayBest)
     self.playBestButton.grid(row=2,column=4)
-    #uploadButton 
-    #self.uploadButton = Button(self.frame,text="upload",command=self.handleUpload)
-    #self.uploadButton.grid(row=2,column=5)
-    #attemps label
-    self.attempsLabel = Label(self.master,text="attemps")
-    self.attempsLabel.grid(row=3,column=0,sticky=W)
-    self.attemps = IntVar()
-    self.attempsEntry = Entry(self.master,textvariable=self.attemps)
-    self.attempsEntry.insert(END,'1')
-    self.attemps.set('1')
-    self.attempsEntry.grid(row=3,column=0,sticky=E)
-    #env label
-    self.envLabel = Label(self.master,text="enviroment")
-    self.envLabel.grid(row=4,column=0,sticky=W)
-    self.envEntry = Entry(self.master)
-    self.envEntry.insert(END,'CartPole-v1')
-    self.envEntry.grid(row=4,column=0,sticky=E)
     self.netProccess = None
     self.running= False
     self.poolInitialized = False
     self.pool = None
+    self.env = 'meta-SuperMarioBros-Tiles-v0'
     self.lastPopulation = []
     self.plotDictionary = {}
     self.plotData = []
@@ -260,9 +253,8 @@ class gui:
     self.ax.stackplot([],[],baseline='wiggle')
     canvas = FigureCanvasTkAgg(self.fig,self.master)
     canvas.get_tk_widget().grid(row=5,column=0,rowspan=4,sticky="nesw")
-	
-	
-	
+
+
   def updateStackPlot(self,species):
     if self.lastPopulation == []:
         for specie in species:
@@ -295,6 +287,7 @@ class gui:
 				
     for specieID in sorted(self.genomeDictionary.values()):
         speciesLen = self.plotDictionary[specieID]
+        #print(specieID,speciesLen,len(self.plotData))
         if len(self.plotData) <= specieID:
             if len(self.plotData) == 0:
                 self.plotData.append([])
@@ -303,34 +296,25 @@ class gui:
             self.plotData[specieID].append(speciesLen)
         else:
             self.plotData[specieID].append(speciesLen)
+    #print(self.plotData)
     self.ax.clear()
     self.ax.stackplot(list(range(len(self.plotData[0]))),*self.plotData,baseline='wiggle')
     canvas = FigureCanvasTkAgg(self.fig,self.master)
     canvas.get_tk_widget().grid(row=5,column=0,rowspan=5,sticky="nesw")
 	
-	
-	
-  def handleUpload(self):
-    gym.upload('tmp/'+self.envEntry.get(),api_key=None)
+    
 
+
+  def handlePlayBest(self):
+    playBest(self.pool)
 
   def toggleRun(self):
-    env = gym.make(self.envEntry.get())
-	
+    
     if not self.running:
       if not self.poolInitialized:
-        if env.action_space.__class__ == gym.spaces.discrete.Discrete:
-           actions = env.action_space.n -1
-        else:
-           actions = env.action_space.shape[0]
-        if env.observation_space.__class__ == gym.spaces.discrete.Discrete:
-           observation = env.observation_space.n 
-        else:
-           observation = env.observation_space.shape[0]
-        self.pool = neat.pool(int(self.populationEntry.get()),observation,actions,recurrent=True)
-        env.close()
-        self.updateStackPlot(self.pool.species)
+        self.pool = neat.pool(self.population.get(),208,6,recurrent=True)
         self.poolInitialized = True
+      self.updateStackPlot(self.pool.species)
       self.running = True
       self.runButton.config(text='running')
       self.master.after(250,self.checkRunPaused)
@@ -342,9 +326,9 @@ class gui:
   def checkRunPaused(self):
     if self.running:
       queue = multiprocessing.Queue()
-      self.netProcess = multiprocessing.Process(target=trainPool,args=(int(self.envNumEntry.get()),self.pool.species,queue,self.envEntry.get(),int(self.attempsEntry.get())))
+      self.netProcess = multiprocessing.Process(target=trainPool,args=(self.population,self.envNum.get(),self.pool,queue,self.env))
       self.netProcess.start()
-      self.master.after(250,lambda: self.checkRunCompleted(queue,pausing=False))
+      self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame=False))
     if not self.running:
       self.runButton.config(text='run')
          
@@ -354,31 +338,33 @@ class gui:
     if messagebox.askokcancel("Quit","do you want to Quit?"):
       for child in multiprocessing.active_children():
         kill_proc_tree(child.pid)
+      if self.running:
+        killFCEUX()
       self.master.destroy()
       self.master.quit()
 
 
 
-  def checkRunCompleted(self,queue,pausing=True):
+
+  def checkRunCompleted(self,queue,singleGame=True):
     try:
-        msg = queue.get_nowait()
-        if msg is not sentinel:
-          self.pool.species = msg
-          self.netProcess.join()
-          print("next generation")
-          self.pool.nextGeneration() # applies rewards and breeds new species
-          print("gen " ,self.pool.generation," best", self.pool.getBest().fitness)
-          self.updateStackPlot(self.pool.species)
-          self.playBest(eval = False)
-          if pausing:
-            self.running = False
-            self.master.after(250,lambda: self.checkRunCompleted(queue,pausing))
-            return
-          else:
-           self.master.after(250,self.checkRunPaused)
-        self.master.after(250,lambda: self.checkRunCompleted(queue,pausing))
+      msg = queue.get_nowait()
+      if msg is not sentinel:
+        self.pool = msg
+        self.netProcess.join()
+        self.updateStackPlot(self.pool.species)
+        playBest(self.pool)
+        if singleGame:
+          self.running = False
+          self.master.after(250,lambda: self.checkRunCompleted(queue))
+          return
+
+        self.master.after(250,self.checkRunPaused)
+      else:
+        pass
     except Empty:
-        self.master.after(250,lambda: self.checkRunCompleted(queue,pausing))
+        self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame))
+
 
   def saveFile(self):
     if self.pool == None:
@@ -409,16 +395,6 @@ class gui:
     self.population.set(self.pool.Population)
     self.poolInitialized = True
     f.close()
-	
-  def playBest(self,eval=True):
-    parentPipe, childPipe = multiprocessing.Pipe()
-    genome = self.pool.getBest()
-    process = multiprocessing.Process(target = singleGame,args=(genome,childPipe,self.envEntry.get(),eval))
-    process.start()
-    display = networkDisplay.newNetworkDisplay(genome,parentPipe)
-    display.checkGenomePipe()
-    display.Tk.mainloop()
-    process.join()
 
 
 
