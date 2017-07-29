@@ -2,7 +2,9 @@
 a port of sethblings mar i/o to python 
 
 this is current utilizes open ai. https://openai.com/about/
+
 to install open ai please visit https://gym.openai.com/docs
+
 to play mario please install https://github.com/koltafrickenfer/gym-super-mario
 
 
