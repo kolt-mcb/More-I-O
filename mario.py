@@ -379,7 +379,7 @@ class gui:
   def loadFile(self):
     filename = filedialog.askopenfilename()
     if filename is ():
-      return
+       return
     f = open(filename,"rb")
     loadedPool = pickle.load(f)
     newInovation = 0
@@ -389,7 +389,7 @@ class gui:
           if gene.innovation > newInovation:
             newInovation = gene.innovation
     
-    self.pool = neat.pool(len(loadedPool),loadedPool[0].genomes[0].Inputs,loadedPool[0].genomes[0].Outputs,recurrent=loadedPool[0].genomes[0].recurrent)
+    self.pool = neat.pool(sum([v for v in [len(specie.genomes) for specie in loadedPool]]),loadedPool[0].genomes[0].Inputs,loadedPool[0].genomes[0].Outputs,recurrent=loadedPool[0].genomes[0].recurrent)
     self.pool.newGenome.innovation = newInovation +1
     self.pool.species=loadedPool
     self.population.set(self.pool.Population)
