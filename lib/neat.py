@@ -192,6 +192,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			c += 1
 
 	def getBest(self): # returns best genome for current generation
+	
 		return self.best[len(self.best)-1]
 
 	def disjoint(self,genes1,genes2): # mesures the amount of shared in a genes in a genomes genes.

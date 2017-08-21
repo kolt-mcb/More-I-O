@@ -1,4 +1,3 @@
-
 from subprocess import check_output
 import gym
 import os,signal,psutil
@@ -112,6 +111,9 @@ def jobTrainer(envName):
 		maxReward = 0
 		for LVint in range(32):
 			maxDistance = 0
+			oldDistance = 0
+			bonus = 0
+			bonusOffset = 0
 			staleness = 0
 			done = False
 			env.change_level(new_level=LVint)
@@ -128,6 +130,11 @@ def jobTrainer(envName):
 					env.change_level(new_level=LVint)
 					env.lock.release()
 				distance = env._get_info()["distance"]
+				if oldDistance - distance < -100 :
+					bonus = maxDistance
+					bonusOffset = distance
+				if maxDistance - distance > 50 and distance != 0:
+					maxDistance = distance                    
 				if distance > maxDistance:
 					maxDistance = distance
 					staleness = 0
@@ -135,12 +142,13 @@ def jobTrainer(envName):
 					staleness += 1
 	 
 				if staleness > 80 or done:
-					scores.append(maxDistance)
+					scores.append(maxDistance-bonusOffset+bonus)
 					if not done:
 						done = True
+				oldDistance = distance
 		for score in scores:
 			finalScore += score
-		finalScore = finalScore
+		finalScore = finalScore/32
 		results.append((finalScore,job))
 	
 		print("species:",currentSpecies, "genome:",currentGenome,"Scored:",finalScore)
@@ -159,7 +167,11 @@ def singleGame(genome,genomePipe):
   for LVint in range(32):
     maxDistance = 0
     staleness = 0
+    oldDistance = 0
     done = False
+    bonus = 0
+    bonusOffset = 0
+
     #env.is_finished = True
 
 
@@ -179,6 +191,11 @@ def singleGame(genome,genomePipe):
     		env.change_level(new_level=LVint)
     		env.lock.release()
     	distance = env._get_info()["distance"]
+    	if oldDistance - distance < -100 :
+                bonus = maxDistance
+                bonusOffset = distance
+    	if maxDistance - distance > 50 and distance != 0:
+    	    	maxDistance = distance
     	if distance > maxDistance:
     		maxDistance = distance
     		staleness = 0
@@ -188,6 +205,7 @@ def singleGame(genome,genomePipe):
     	if staleness > 100 or done:
     		if not done:
     			done = True
+    	oldDistance = distance
 
   env.close()
   genomePipe.send("quit")
@@ -312,7 +330,7 @@ class gui:
     
     if not self.running:
       if not self.poolInitialized:
-        self.pool = neat.pool(self.population.get(),208,6,recurrent=True)
+        self.pool = neat.pool(self.population.get(),208,6,recurrent=False)
         self.poolInitialized = True
       self.updateStackPlot(self.pool.species)
       self.running = True
@@ -326,7 +344,8 @@ class gui:
   def checkRunPaused(self):
     if self.running:
       queue = multiprocessing.Queue()
-      self.netProcess = multiprocessing.Process(target=trainPool,args=(self.population,self.envNum.get(),self.pool,queue,self.env))
+      self.pool.Population = self.population.get()
+      self.netProcess = multiprocessing.Process(target=trainPool,args=(self.population.get(),self.envNum.get(),self.pool,queue,self.env))
       self.netProcess.start()
       self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame=False))
     if not self.running:
@@ -379,7 +398,7 @@ class gui:
   def loadFile(self):
     filename = filedialog.askopenfilename()
     if filename is ():
-      return
+       return
     f = open(filename,"rb")
     loadedPool = pickle.load(f)
     newInovation = 0
@@ -389,7 +408,7 @@ class gui:
           if gene.innovation > newInovation:
             newInovation = gene.innovation
     
-    self.pool = neat.pool(len(loadedPool),loadedPool[0].genomes[0].Inputs,loadedPool[0].genomes[0].Outputs,recurrent=loadedPool[0].genomes[0].recurrent)
+    self.pool = neat.pool(sum([v for v in [len(specie.genomes) for specie in loadedPool]]),loadedPool[0].genomes[0].Inputs,loadedPool[0].genomes[0].Outputs,recurrent=loadedPool[0].genomes[0].recurrent)
     self.pool.newGenome.innovation = newInovation +1
     self.pool.species=loadedPool
     self.population.set(self.pool.Population)
