@@ -393,7 +393,12 @@ class gui:
     if filename is None or filename == '':
       return
     file = open(filename,"wb")
-    pickle.dump(self.pool.species,file)
+    pickle.dump((self.pool.species,self.pool.best,
+                 self.lastPopulation,
+                 self.plotDictionary,
+                 self.plotData,
+                 self.genomeDictionary,
+                 self.specieID),file)
 
   def loadFile(self):
     filename = filedialog.askopenfilename()
@@ -401,16 +406,24 @@ class gui:
        return
     f = open(filename,"rb")
     loadedPool = pickle.load(f)
+    species  = loadedPool[0]
+    self.lastPopulation = loadedPool[2]
+    self.plotDictionary = loadedPool[3]
+    self.plotData = loadedPool[4]
+    self.genomeDictionary = loadedPool[5]
+    self.specieID = loadedPool[6]
     newInovation = 0
-    for specie in loadedPool:
+    for specie in species:
       for genome in specie.genomes:
         for gene in genome.genes:
           if gene.innovation > newInovation:
             newInovation = gene.innovation
     
-    self.pool = neat.pool(sum([v for v in [len(specie.genomes) for specie in loadedPool]]),loadedPool[0].genomes[0].Inputs,loadedPool[0].genomes[0].Outputs,recurrent=loadedPool[0].genomes[0].recurrent)
+    self.pool = neat.pool(sum([v for v in [len(specie.genomes) for specie in species]]),species[0].genomes[0].Inputs,species[0].genomes[0].Outputs,recurrent=species[0].genomes[0].recurrent)
     self.pool.newGenome.innovation = newInovation +1
-    self.pool.species=loadedPool
+    self.pool.species = species
+    self.pool.best = loadedPool[1]
+    self.pool.generation = len(self.pool.best)
     self.population.set(self.pool.Population)
     self.poolInitialized = True
     f.close()
