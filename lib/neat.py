@@ -19,7 +19,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.best = []
 		self.DeltaDisjoint = 2.0
 		self.DeltaWeights = 0.4
-		self.DeltaThreshold = 1.0
 		self.StaleSpecies = 15
 		self.CrossOverSpeciesRate = .01
 		self.Inputs = Inputs
@@ -48,13 +47,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.species.append(childSpecies)
 			      
 	def sameSpecies(self,genome1,genome2):
+		threshold = 1
+		if genome1.fitness == genome2.fitness:
+			threshold = genome1.mutationRates["DeltaThreshold"]
 		if genome1.fitness > genome2.fitness:
-			genome = genome1
+			threshold = genome1.mutationRates["DeltaThreshold"]
 		if genome1.fitness < genome2.fitness:
-			genome = genome2
+			threshold = genome2.mutationRates["DeltaThreshold"]
 		dd = self.DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
 		dw = self.DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes 
-		return dd + dw < genome.DeltaThreshold
+		return dd + dw < threshold
 
 	def initializeRun(self): #generates a network for current species
 		species = self.species[self.currentSpecies]
@@ -257,7 +259,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["enable"] = 0.01
 			self.mutationRates["disable"] = 0.05
 			self.mutationRates["step"] = 0.1
-			self.mutationRates["crossoverThreshold"] = 1
+			self.mutationRates["DeltaThreshold"] = 1
 			self.PerturbChance = 0.5
 			self.Inputs = Inputs
 			self.Outputs = Outputs
