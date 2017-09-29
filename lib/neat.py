@@ -63,6 +63,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		dd = DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
 		dw = DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes 
+
+		if genome1.fitness > genome2.fitness:
+			threshold = genome1.mutationRates["DeltaThreshold"]
+		if genome1.fitness < genome2.fitness:
+			threshold = genome2.mutationRates["DeltaThreshold"]
+		dd = DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
+		dw = DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes 
 		return dd + dw < threshold
 
 	def initializeRun(self): #generates a network for current species
