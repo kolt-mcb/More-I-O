@@ -17,9 +17,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.maxFitness = 0
 		self.Population = population
 		self.best = []
-		self.DeltaDisjoint = 2.0
-		self.DeltaWeights = 0.4
-		self.DeltaThreshold = 1.0
 		self.StaleSpecies = 15
 		self.CrossOverSpeciesRate = .01
 		self.Inputs = Inputs
@@ -48,13 +45,25 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.species.append(childSpecies)
 			      
 	def sameSpecies(self,genome1,genome2):
+		threshold = 1
+		if genome1.fitness == genome2.fitness:
+			threshold = genome1.mutationRates["DeltaThreshold"]
+			DeltaDisjoint = genome1.mutationRates["DeltaDisjoint"]
+			DeltaWeights = genome1.mutationRates["DeltaWeights"]
+
 		if genome1.fitness > genome2.fitness:
-			genome = genome1
+			threshold = genome1.mutationRates["DeltaThreshold"]
+			DeltaDisjoint = genome1.mutationRates["DeltaDisjoint"]
+			DeltaWeights = genome1.mutationRates["DeltaWeights"]
+
 		if genome1.fitness < genome2.fitness:
-			genome = genome2
-		dd = self.DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
-		dw = self.DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes 
-		return dd + dw < genome.DeltaThreshold
+			threshold = genome2.mutationRates["DeltaThreshold"]
+			DeltaDisjoint = genome2.mutationRates["DeltaDisjoint"]
+			DeltaWeights = genome2.mutationRates["DeltaWeights"]
+
+		dd = DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
+		dw = DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes 
+		return dd + dw < threshold
 
 	def initializeRun(self): #generates a network for current species
 		species = self.species[self.currentSpecies]
@@ -249,15 +258,17 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.maxneuron = Inputs
 			self.mutationRates = {}
 			self.globalRank = 0
-			self.maxNodes = 10000 
-			self.mutationRates["connections"] =  0.25
-			self.mutationRates["link"] =  .3
-			self.mutationRates["bias"] = 0.1
-			self.mutationRates["node"] = 0.1
-			self.mutationRates["enable"] = 0.01
-			self.mutationRates["disable"] = 0.05
+			self.maxNodes = 10000
+			self.mutationRates["connections"] =  0.8
+			self.mutationRates["link"] =  1.25
+			self.mutationRates["bias"] = 0.4
+			self.mutationRates["node"] = 0.8
+			self.mutationRates["enable"] = 0.5
+			self.mutationRates["disable"] = 0.1
 			self.mutationRates["step"] = 0.1
-			self.mutationRates["crossoverThreshold"] = 1
+			self.mutationRates["DeltaThreshold"] = 1
+			self.mutationRates["DeltaDisjoint"] = 2.0
+			self.mutationRates["DeltaWeights"] = 0.4 
 			self.PerturbChance = 0.5
 			self.Inputs = Inputs
 			self.Outputs = Outputs
