@@ -419,6 +419,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			genome2.mutationRates["node"] = self.mutationRates["node"]
 			genome2.mutationRates["enable"] = self.mutationRates["enable"]
 			genome2.mutationRates["disable"] = self.mutationRates["disable"]
+			genome2.mutationRates["DeltaThreshold"] = self.mutationRates["DeltaThreshold"]
+			genome2.mutationRates["DeltaDisjoint"] = self.mutationRates["DeltaDisjoint"]
+			genome2.mutationRates["DeltaWeights"] = self.mutationRates["DeltaWeights"] 
 		
 			return genome2
 		
