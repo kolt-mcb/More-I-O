@@ -109,7 +109,7 @@ def jobTrainer(envName):
 		finalScore = 0
 		done = False
 		maxReward = 0
-		for LVint in range(32):
+		for LVint in [1,2,10,14,18,22]:
 			maxDistance = 0
 			oldDistance = 0
 			bonus = 0
@@ -148,7 +148,7 @@ def jobTrainer(envName):
 				oldDistance = distance
 		for score in scores:
 			finalScore += score
-		finalScore = finalScore/32
+		finalScore = finalScore/6
 		results.append((finalScore,job))
 	
 		print("species:",currentSpecies, "genome:",currentGenome,"Scored:",finalScore)
@@ -164,7 +164,7 @@ def singleGame(genome,genomePipe):
   staleness = 0
   print("playing next")
   env.locked_levels = [False] * 32
-  for LVint in range(32):
+  for LVint in [1,2,10,14,18,22]:
     maxDistance = 0
     staleness = 0
     oldDistance = 0
@@ -273,7 +273,7 @@ class gui:
     canvas.get_tk_widget().grid(row=5,column=0,rowspan=4,sticky="nesw")
 
 
-  def updateStackPlot(self,species):
+def updateStackPlot(self,species):
     if self.lastPopulation == []:
         for specie in species:
             genome = specie.genomes[0] 
@@ -302,10 +302,12 @@ class gui:
                         self.specieID +=1
     self.lastPopulation = species
 
-				
-    for specieID in sorted(self.genomeDictionary.values()):
+    for genome,specieID in sorted(self.genomeDictionary.items(),key=itemgetter(1)):
         speciesLen = self.plotDictionary[specieID]
-        #print(specieID,speciesLen,len(self.plotData))
+        if speciesLen == 0 :
+          del self.plotDictionary[specieID]
+          del self.genomeDictionary[genome]
+
         if len(self.plotData) <= specieID:
             if len(self.plotData) == 0:
                 self.plotData.append([])
@@ -314,11 +316,14 @@ class gui:
             self.plotData[specieID].append(speciesLen)
         else:
             self.plotData[specieID].append(speciesLen)
-    #print(self.plotData)
+    for specieArray in self.plotData:
+      if len(specieArray) != self.pool.generation:
+        specieArray.append(0)
     self.ax.clear()
     self.ax.stackplot(list(range(len(self.plotData[0]))),*self.plotData,baseline='wiggle')
     canvas = FigureCanvasTkAgg(self.fig,self.master)
     canvas.get_tk_widget().grid(row=5,column=0,rowspan=5,sticky="nesw")
+  
 	
     
 
@@ -332,7 +337,6 @@ class gui:
       if not self.poolInitialized:
         self.pool = neat.pool(self.population.get(),208,6,recurrent=False)
         self.poolInitialized = True
-      self.updateStackPlot(self.pool.species)
       self.running = True
       self.runButton.config(text='running')
       self.master.after(250,self.checkRunPaused)
@@ -371,7 +375,7 @@ class gui:
       if msg is not sentinel:
         self.pool = msg
         self.netProcess.join()
-        self.updateStackPlot(self.pool.species)
+        #self.updateStackPlot(self.pool.species)
         playBest(self.pool)
         if singleGame:
           self.running = False

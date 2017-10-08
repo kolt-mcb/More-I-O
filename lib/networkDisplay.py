@@ -130,17 +130,20 @@ class newNetworkDisplay():
             cell.value=neurons[maxNodes+Output].value
             self.cells[maxNodes+Output] = cell
         for o in range(Outputs):
-
             cell = self.cells[maxNodes+Output]
-            self.canvas.create_text((cell.x-50,cell.y),text=str(o))
+
 
     def mutationRates(self,genome):  
-        x = 0
+        if genome.recurrent:
+            Inputs = genome.Inputs + genome.Outputs
+        else:
+            Inputs = genome.Inputs
+        x = (height//(Inputs+1))+100
         y = 10
         for mutation,Rate in genome.mutationRates.items():
-            Text = mutation," ",Rate
+            Text = mutation," ",str(round(Rate,2))
             self.canvas.create_text((x,y),text=Text)
-            x += .15*width
+            y += .05*height
 
 
     def pickCellColor(self,value):

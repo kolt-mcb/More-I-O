@@ -19,6 +19,7 @@ matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+from operator import itemgetter
 
 
 
@@ -256,7 +257,7 @@ class gui:
     self.plotData = []
     self.genomeDictionary = {}
     self.specieID = 0
-    self.fig,self.ax = plt.subplots(figsize=(3.7,3))
+    self.fig,self.ax = plt.subplots(figsize=(10,6))
     self.ax.stackplot([],[],baseline='wiggle')
     canvas = FigureCanvasTkAgg(self.fig,self.master)
     canvas.get_tk_widget().grid(row=5,column=0,rowspan=4,sticky="nesw")
@@ -292,9 +293,12 @@ class gui:
                         self.specieID +=1
     self.lastPopulation = species
 
-				
-    for specieID in sorted(self.genomeDictionary.values()):
+    for genome,specieID in sorted(self.genomeDictionary.items(),key=itemgetter(1)):
         speciesLen = self.plotDictionary[specieID]
+        if speciesLen == 0 :
+          del self.plotDictionary[specieID]
+          del self.genomeDictionary[genome]
+
         if len(self.plotData) <= specieID:
             if len(self.plotData) == 0:
                 self.plotData.append([])
@@ -303,6 +307,9 @@ class gui:
             self.plotData[specieID].append(speciesLen)
         else:
             self.plotData[specieID].append(speciesLen)
+    for specieArray in self.plotData:
+      if len(specieArray) != self.pool.generation:
+        specieArray.append(0)
     self.ax.clear()
     self.ax.stackplot(list(range(len(self.plotData[0]))),*self.plotData,baseline='wiggle')
     canvas = FigureCanvasTkAgg(self.fig,self.master)
@@ -327,9 +334,8 @@ class gui:
            observation = env.observation_space.n 
         else:
            observation = env.observation_space.shape[0]
-        self.pool = neat.pool(int(self.populationEntry.get()),observation,actions,recurrent=True)
+        self.pool = neat.pool(int(self.populationEntry.get()),observation,actions,recurrent=False)
         env.close()
-        self.updateStackPlot(self.pool.species)
         self.poolInitialized = True
       self.running = True
       self.runButton.config(text='running')
@@ -342,6 +348,7 @@ class gui:
   def checkRunPaused(self):
     if self.running:
       queue = multiprocessing.Queue()
+      self.pool.Population = self.population.get()
       self.netProcess = multiprocessing.Process(target=trainPool,args=(int(self.envNumEntry.get()),self.pool.species,queue,self.envEntry.get(),int(self.attempsEntry.get())))
       self.netProcess.start()
       self.master.after(250,lambda: self.checkRunCompleted(queue,pausing=False))

@@ -18,7 +18,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.Population = population
 		self.best = []
 		self.StaleSpecies = 15
-		self.CrossOverSpeciesRate = .01
 		self.Inputs = Inputs
 		self.Outputs = Outputs
 		self.newGenome.innovation = Inputs #  sets the class variable to the current number of inputs
@@ -111,30 +110,17 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for i in range(breed):
 				children.append(specie.breedChildren())
 		self.cullSpecies(True) # leave only the top member of each species.
-
-
-		if self.generation > 0:
-			while (len(children) < (self.Population-len(self.species))*(1-self.CrossOverSpeciesRate)): # cross over species at species cross over rate 
-				parent = random.choice(self.species)
-				child = parent.breedChildren()
-				children.append(child)
-			
-			while len(children) + len(self.species) < self.Population :
-						r1 = random.choice(self.species)
-						r2 = random.choice(self.species)
-						children.append(r1.crossover(r1.genomes[0],r2.genomes[0])) # cross over is a species function so we must used one of the 2 species cross over functions, maybe move this to the pool in the future
-		else:
-			while (len(children) + len(self.species) < self.Population):
-				parent = random.choice(self.species)
-				child = parent.breedChildren()
-				children.append(child)
+		while (len(children) < self.Population):
+			parent = random.choice(self.species)
+			child = parent.breedChildren()
+			children.append(child)
 		lastGen = self.species
 		self.species = []
 		for child in children: # adds all children there species in the pool
 			self.addToPool(child)
-		for specie in lastGen:
-			for genome in specie.genomes:
-				self.addToPool(genome)
+		#for specie in lastGen:
+			#for genome in specie.genomes:
+				#self.addToPool(genome)
 		self.generation = self.generation + 1
 		
 	def cullSpecies(self,cutToOne): #sorts genomes by fitness and removes half of them or cuts to one
@@ -195,11 +181,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			g = 0
 			for genome in specie.genomes:
-				sIndex.append((s,g,genome.fitness))
+				geneEnabledCount = 0 
+				for gene in genome.genes:
+					if gene.enabled:
+						geneEnabledCount += 1
+				geneCount = len(genome.genes)-geneEnabledCount
+				sIndex.append((s,g,genome.fitness,genome.mutationRates["ConectionCostRate"]*geneCount))
 				g += 1
 			s += 1
 
-		sIndex.sort(key=lambda tup: tup[2])
+		sIndex.sort(key=lambda tup: (tup[2],tup[3]))
 		
 		c = 1
 		for rank in sIndex:
@@ -212,7 +203,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			c += 1
 
 	def getBest(self): # returns best genome for current generation
-	
 		return self.best[len(self.best)-1]
 
 	def disjoint(self,genes1,genes2): # mesures the amount of shared in a genes in a genomes genes.
@@ -257,7 +247,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	
 
 	class newGenome:
-
 		def __init__(self,Inputs,Outputs,recurrent):
 			self.genes = []
 			self.fitness = 0
@@ -266,17 +255,19 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates = {}
 			self.globalRank = 0
 			self.maxNodes = 10000
-			self.mutationRates["connections"] =  0.8
-			self.mutationRates["link"] =  1.25
-			self.mutationRates["bias"] = 0.4
-			self.mutationRates["node"] = 0.8
-			self.mutationRates["enable"] = 0.5
+			self.mutationRates["connections"] =  0.4
+			self.mutationRates["link"] =  .4
+			self.mutationRates["bias"] = 0.1
+			self.mutationRates["node"] = 0.4
+			self.mutationRates["enable"] = 0.05
 			self.mutationRates["disable"] = 0.1
 			self.mutationRates["step"] = 0.1
-			self.mutationRates["DeltaThreshold"] = 1
-			self.mutationRates["DeltaDisjoint"] = 2.0
+			self.mutationRates["DeltaThreshold"] = 1.5
+			self.mutationRates["DeltaDisjoint"] = 1.5
 			self.mutationRates["DeltaWeights"] = 0.4 
-			self.PerturbChance = 0.5
+			self.mutationRates["CrossOverRate"] = .75
+			self.mutationRates["PerturbChance"] = 0.5
+			self.mutationRates["ConectionCostRate"] = 1 
 			self.Inputs = Inputs
 			self.Outputs = Outputs
 			self.recurrent = recurrent
@@ -309,7 +300,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				p = p -1
 			p = self.mutationRates["bias"]
 			while p > 0:
-
 				if random.random() < p:
 					self.linkMutate(True)
 				p = p -1
@@ -336,7 +326,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		def pointMutate(self): #mutates the weight of a gene
 			step = self.mutationRates["step"]
 			for gene in self.genes:
-				if random.random() < self.PerturbChance:
+				if random.random() < self.mutationRates["PerturbChance"]:
 					gene.weight = gene.weight + random.random()*step*2-step
 				else:
 					gene.weight = random.random()*4-2
@@ -413,15 +403,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			genome2.Inputs = self.Inputs
 			genome2.Outputs = self.Outputs
 			genome2.maxneuron = self.maxneuron
-			genome2.mutationRates["connections"] = self.mutationRates["connections"]
-			genome2.mutationRates["link"] = self.mutationRates["link"]
-			genome2.mutationRates["bias"] = self.mutationRates["bias"]
-			genome2.mutationRates["node"] = self.mutationRates["node"]
-			genome2.mutationRates["enable"] = self.mutationRates["enable"]
-			genome2.mutationRates["disable"] = self.mutationRates["disable"]
-			genome2.mutationRates["DeltaThreshold"] = self.mutationRates["DeltaThreshold"]
-			genome2.mutationRates["DeltaDisjoint"] = self.mutationRates["DeltaDisjoint"]
-			genome2.mutationRates["DeltaWeights"] = self.mutationRates["DeltaWeights"] 
+			genome2.mutationRates = self.mutationRates
 		
 			return genome2
 		
@@ -536,7 +518,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.staleness = 0
 			self.genomes = []
 			self.averageFitness = 0
-			self.CrossoverChance = 0.75
 			self.recurrent = recurrent
 
 		def calculateAverageFitness(self): 
@@ -546,7 +527,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.averageFitness = total / len(self.genomes)
 		
 		def breedChildren(self): # breeds children of a species
-			if random.random() < self.CrossoverChance:
+			if random.random() < self.getAverageCrossOverRate():
 				rand1 = random.randint(0,len(self.genomes)-1)
 				rand2 = random.randint(0,len(self.genomes)-1)
 				g1 = self.genomes[rand1]
@@ -555,7 +536,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			else:
 				g =  self.genomes[random.randint(0,len(self.genomes)-1)]
 				child = g.copyGenome()
-			
 			child.mutate()
 			return child
 		
@@ -566,7 +546,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				g2 = tempg
 			innovations2 = {}
 			child = pool.newGenome(self.Inputs,self.Outputs,self.recurrent)
-			child.mutate()
 			for gene2 in g2.genes:
 				innovations2[gene2.innovation] = gene2
 			for gene1 in g1.genes:
@@ -579,6 +558,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for mutation,rate in g1.mutationRates.items():
 				child.mutationRates[mutation] = rate
 			return child
+		def getAverageCrossOverRate(self):
+			totalAverage = 0
+			for genome in self.genomes:
+				totalAverage += genome.mutationRates["CrossOverRate"]
+			CrossOverRate = totalAverage/len(self.genomes)
+			return CrossOverRate
 
 		
 	   
