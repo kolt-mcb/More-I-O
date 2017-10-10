@@ -111,7 +111,7 @@ def acFixer(action_space,action): # fixes action ranges, uses hyperbolic tangent
 def jobTrainer(envName):
 
 	env = gym.make(envName)
-	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False) # no recoding on windows due to ffmepg
+	env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False) # no recoding on windows due to ffmepg
 
 
 	if env.action_space.__class__ == gym.spaces.discrete.Discrete: # identifies action/observation space
@@ -146,7 +146,7 @@ def jobTrainer(envName):
 			  score += reward
 			
 			scores += score
-		finalScore = scores/attemps	
+		finalScore = round(scores/attemps)	
 		print("species:",currentSpecies, " genome:",currentGenome," Scored:",finalScore)
 		results.append((finalScore,job))
 	env.close()
@@ -154,7 +154,7 @@ def jobTrainer(envName):
 
 def singleGame(genome,genomePipe,envName,eval):
 	env = gym.make(envName)
-	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True)
+	env = wrappers.Monitor(env,'tmp/'+envName,resume=True)
 	runs = 1
 	print("playing best")
 	if eval:
@@ -232,8 +232,8 @@ class gui:
     self.playBestButton = Button(self.frame,text='play best',command =self.playBest)
     self.playBestButton.grid(row=2,column=4)
     #uploadButton 
-    #self.uploadButton = Button(self.frame,text="upload",command=self.handleUpload)
-    #self.uploadButton.grid(row=2,column=5)
+    self.uploadButton = Button(self.frame,text="upload",command=self.handleUpload)
+    self.uploadButton.grid(row=2,column=5)
     #attemps label
     self.attempsLabel = Label(self.master,text="attemps")
     self.attempsLabel.grid(row=3,column=0,sticky=W)
@@ -318,7 +318,7 @@ class gui:
 	
 	
   def handleUpload(self):
-    gym.upload('tmp/'+self.envEntry.get(),api_key=None)
+    gym.upload('tmp/'+self.envEntry.get(),api_key="sk_8j3LQ561SH20sk0YN3qpg")
 
 
   def toggleRun(self):

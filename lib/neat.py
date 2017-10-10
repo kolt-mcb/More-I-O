@@ -96,9 +96,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	def nextGeneration(self): #cuts poor preforming genomes and performs crossover of remaining genomes.
 		self.cullSpecies(False)  
 		self.rankGlobally() 
-
 		self.removeStaleSpecies()
-
 		self.rankGlobally(addBest=True) # reranks after removeing stales species and  stores best player for later play
 		for specie in self.species:
 			specie.calculateAverageFitness() #calculateAverageFitness of a specie
@@ -110,21 +108,41 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for i in range(breed):
 				children.append(specie.breedChildren())
 		self.cullSpecies(True) # leave only the top member of each species.
-		while (len(children) < self.Population):
+		self.cullOldSpecies()
+		while (len(children)+len(self.species) < self.Population):
 			parent = random.choice(self.species)
 			child = parent.breedChildren()
 			children.append(child)
+		
+
 		lastGen = self.species
 		self.species = []
+
 		for child in children: # adds all children there species in the pool
 			self.addToPool(child)
-		#for specie in lastGen:
-			#for genome in specie.genomes:
-				#self.addToPool(genome)
+		for specie in lastGen:
+			for genome in specie.genomes:
+				self.addToPool(genome)
 		self.generation = self.generation + 1
 		
+	def cullOldSpecies(self):
+		species = self.species
+		s = 0
+		for specie in species:
+			g = 0
+			for genome in specie.genomes:
+				p = genome.mutationRates["age"]
+				if random.random() > p:
+					self.species[s].genomes.pop(g)
+					if len(self.species[s].genomes) == 0:
+						self.species.pop(s)
+					self.species[s].genomes[g].mutationRates["age"] -= 1
+				g += 1
+			s += 1	
+
 	def cullSpecies(self,cutToOne): #sorts genomes by fitness and removes half of them or cuts to one
-		for specie in self.species:
+		species = self.species
+		for specie in species:
 			specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
 
 			remaining = math.ceil(len(specie.genomes)/2)
@@ -262,12 +280,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["enable"] = 0.05
 			self.mutationRates["disable"] = 0.1
 			self.mutationRates["step"] = 0.1
-			self.mutationRates["DeltaThreshold"] = 1.5
-			self.mutationRates["DeltaDisjoint"] = 1.5
+			self.mutationRates["DeltaThreshold"] = 2
+			self.mutationRates["DeltaDisjoint"] = 2
 			self.mutationRates["DeltaWeights"] = 0.4 
 			self.mutationRates["CrossOverRate"] = .75
 			self.mutationRates["PerturbChance"] = 0.5
 			self.mutationRates["ConectionCostRate"] = 1 
+			self.mutationRates["age"] = 2
 			self.Inputs = Inputs
 			self.Outputs = Outputs
 			self.recurrent = recurrent
