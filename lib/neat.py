@@ -131,12 +131,14 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in species:
 			g = 0
 			for genome in specie.genomes:
-				p = genome.mutationRates["age"]
+				p = genome.currentAge
 				if random.random() > p:
 					self.species[s].genomes.pop(g)
 					if len(self.species[s].genomes) == 0:
 						self.species.pop(s)
-					self.species[s].genomes[g].mutationRates["age"] -= 1
+				else:
+					if len(self.species[s].genomes) != 0:
+						self.species[s].genomes[g].currentAge -= 1
 				g += 1
 			s += 1	
 
@@ -280,13 +282,14 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["enable"] = 0.05
 			self.mutationRates["disable"] = 0.1
 			self.mutationRates["step"] = 0.1
-			self.mutationRates["DeltaThreshold"] = 2
+			self.mutationRates["DeltaThreshold"] = 1
 			self.mutationRates["DeltaDisjoint"] = 2
 			self.mutationRates["DeltaWeights"] = 0.4 
 			self.mutationRates["CrossOverRate"] = .75
 			self.mutationRates["PerturbChance"] = 0.5
 			self.mutationRates["ConectionCostRate"] = 1 
-			self.mutationRates["age"] = 2
+			self.mutationRates["age"] = 5
+			self.currentAge = self.mutationRates["age"]
 			self.Inputs = Inputs
 			self.Outputs = Outputs
 			self.recurrent = recurrent
@@ -423,6 +426,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			genome2.Outputs = self.Outputs
 			genome2.maxneuron = self.maxneuron
 			genome2.mutationRates = self.mutationRates
+			
 		
 			return genome2
 		

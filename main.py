@@ -375,7 +375,7 @@ class gui:
           print("next generation")
           self.pool.nextGeneration() # applies rewards and breeds new species
           print("gen " ,self.pool.generation," best", self.pool.getBest().fitness)
-          self.updateStackPlot(self.pool.species)
+          #self.updateStackPlot(self.pool.species)
           self.playBest(eval = False)
           if pausing:
             self.running = False
