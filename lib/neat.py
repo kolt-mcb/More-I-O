@@ -205,8 +205,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				for gene in genome.genes:
 					if gene.enabled:
 						geneEnabledCount += 1
-				geneCount = len(genome.genes)-geneEnabledCount
-				sIndex.append((s,g,genome.fitness,genome.mutationRates["ConectionCostRate"]*geneCount))
+				geneEnabledCount = 0 -geneEnabledCount
+				sIndex.append((s,g,genome.fitness,genome.mutationRates["ConectionCostRate"]*geneEnabledCount))
 				g += 1
 			s += 1
 
