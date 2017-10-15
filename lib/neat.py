@@ -146,10 +146,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		species = self.species
 		for specie in species:
 			specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
-
-			remaining = math.ceil(len(specie.genomes)/2)
+			if not cutToOne:
+				remaining = math.ceil(len(specie.genomes)/specie.calculateAverageRemainingMultiplyer())
+				if remaining < 1:
+					remaining = 1
+		
 			if cutToOne:
-				remaining = 1
+				remaining = specie.calculateAverageRemainingRate()
+				if remaining < 1:
+					remaining = 1
+			print(cutToOne,remaining)			
 			total = len(specie.genomes)
 			while len(specie.genomes) > remaining:
 				specie.genomes.remove(specie.genomes[total-1])
@@ -273,6 +279,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.neurons = {}
 			self.maxneuron = Inputs
 			self.mutationRates = {}
+			self.speciesRates = {}
 			self.globalRank = 0
 			self.maxNodes = 10000
 			self.mutationRates["connections"] =  0.4
@@ -282,12 +289,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["enable"] = 0.05
 			self.mutationRates["disable"] = 0.1
 			self.mutationRates["step"] = 0.1
+			self.mutationRates["speciesStep"]= 0.5
 			self.mutationRates["DeltaThreshold"] = 1
 			self.mutationRates["DeltaDisjoint"] = 2
 			self.mutationRates["DeltaWeights"] = 0.4 
 			self.mutationRates["CrossOverRate"] = .75
 			self.mutationRates["PerturbChance"] = 0.5
-			self.mutationRates["ConectionCostRate"] = 1 
+			self.mutationRates["ConectionCostRate"] = 1
+			self.speciesRates["RemainingMultiplyer"] = 2
+			self.speciesRates["Remaining"] = 1 
 			self.mutationRates["age"] = 5
 			self.currentAge = self.mutationRates["age"]
 			self.Inputs = Inputs
@@ -312,6 +322,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					self.mutationRates[mutation] = 0.95*rate
 				else:
 					self.mutationRates[mutation] = 1.05263*rate
+			for mutation,rate in self.speciesRates.items():
+				speciesRate = self.mutationRates["speciesStep"]
+				if random.randint(1,2) == 1:
+					self.speciesRates[mutation] = rate + speciesRate
+				else:
+					self.speciesRates[mutation] = rate-speciesRate
 			if random.random() < self.mutationRates["connections"]:
 
 				self.pointMutate()
@@ -351,7 +367,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				if random.random() < self.mutationRates["PerturbChance"]:
 					gene.weight = gene.weight + random.random()*step*2-step
 				else:
-					gene.weight = random.random()*4-2
+					gene.weight = 1-random.random()*2
 
 		def linkMutate(self,forceBias): #adds a link to the network, potentialy forced to bias neuron
 			neuron1 = self.randomNeuron(False)
@@ -378,7 +394,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if self.containsLink(newLink):
 				return     
 			newLink.innovation = self.newInnovation()
-			newLink.weight = (random.random()*4-2)
+			newLink.weight = (1-random.random()*2)
 			self.genes.append(newLink)
 			
 		def containsLink(self,link): # checks if link already exists between neurons
@@ -426,7 +442,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			genome2.Outputs = self.Outputs
 			genome2.maxneuron = self.maxneuron
 			genome2.mutationRates = self.mutationRates
-			
+			genome2.speciesRates = self.speciesRates
 		
 			return genome2
 		
@@ -548,7 +564,25 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for genome in self.genomes:
 				total = total + genome.globalRank
 			self.averageFitness = total / len(self.genomes)
-		
+
+		def calculateAverageRemainingRate(self):
+			total = 0			
+			for genome in self.genomes:
+				total += genome.speciesRates["Remaining"] 
+			total = total / len(self.genomes)
+			if total < 1:
+				total = 1
+			return total
+
+		def calculateAverageRemainingMultiplyer(self):
+			total = 0
+			for genome in self.genomes:
+				total += genome.speciesRates["RemainingMultiplyer"] 
+			total = total / len(self.genomes)
+			if total < 1:
+				total = 1
+			return total
+
 		def breedChildren(self): # breeds children of a species
 			if random.random() < self.getAverageCrossOverRate():
 				rand1 = random.randint(0,len(self.genomes)-1)

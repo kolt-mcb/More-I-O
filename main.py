@@ -73,8 +73,13 @@ def obFixer(observation_space,observation): # fixes observation ranges, uses hyp
         dif = high - low 
         percent = (observation[space]+abs(low))/dif
         newObservation.append(((percent * 2)-1).tolist())
-
-
+  if observation_space.__class__ == gym.spaces.discrete.Discrete:
+    c = 0
+    for neuron in range(observation_space.n):
+      if observation == neuron:
+        newObservation.append(1)
+      else:
+        newObservation.append(0)
   return newObservation
 
 def acFixer(action_space,action): # fixes action ranges, uses hyperbolic tangent for infinite values
@@ -178,7 +183,8 @@ def singleGame(genome,genomePipe,envName,eval):
 			ob, reward, done, _ = env.step(o)
 			score += reward
 			if not eval:
-				env.render()
+				pass
+				#env.render()
 			genomePipe.send(genome)
 		print(score)
 	env.reset
@@ -375,7 +381,7 @@ class gui:
           print("next generation")
           self.pool.nextGeneration() # applies rewards and breeds new species
           print("gen " ,self.pool.generation," best", self.pool.getBest().fitness)
-          #self.updateStackPlot(self.pool.species)
+          self.updateStackPlot(self.pool.species)
           self.playBest(eval = False)
           if pausing:
             self.running = False
