@@ -10,6 +10,7 @@ import math
 
 class pool: #holds all species data, crossspecies settings and the current gene innovation
 	def __init__(self,population,Inputs,Outputs,recurrent=False):
+		self.generations = []
 		self.species = []
 		self.generation = 0
 		self.currentSpecies = 0
@@ -94,6 +95,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	               
 				
 	def nextGeneration(self): #cuts poor preforming genomes and performs crossover of remaining genomes.
+		self.generations.append(self.species)
 		self.cullSpecies(False)  
 		self.rankGlobally() 
 		self.removeStaleSpecies()
@@ -300,6 +302,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.speciesRates["Remaining"] = 1 
 			self.mutationRates["age"] = 5
 			self.currentAge = self.mutationRates["age"]
+			self.parents = []
 			self.Inputs = Inputs
 			self.Outputs = Outputs
 			self.recurrent = recurrent
@@ -443,6 +446,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			genome2.maxneuron = self.maxneuron
 			genome2.mutationRates = self.mutationRates
 			genome2.speciesRates = self.speciesRates
+			genome2.parents = *self
 		
 			return genome2
 		
@@ -612,8 +616,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				else:
 					child.genes.append(gene1.copyGene())
 			child.maxneuron = max(g1.maxneuron,g2.maxneuron)
+			
 			for mutation,rate in g1.mutationRates.items():
 				child.mutationRates[mutation] = rate
+			for mutation,rate in g1.speciesRates.items():
+				child.speciesRates[mutation] = rate
+			child.parents.append(g1)
+			child.parents.append(g2)
 			return child
 		def getAverageCrossOverRate(self):
 			totalAverage = 0
@@ -624,7 +633,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		
 	   
-		
+     
 
 
        
