@@ -10,7 +10,6 @@ import math
 
 class pool: #holds all species data, crossspecies settings and the current gene innovation
 	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None):
-		self.generations = []
 		self.species = []
 		self.generation = 0
 		self.currentSpecies = 0
@@ -199,28 +198,27 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				   
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
-		self.generations.append(self.species)
 		population = 0
-		for specie in self.generations[self.generation]:
+		for specie in self.species:
 			for genome in specie.genomes:
 				population += 1
 		self.Population = population
 		self.cullSpecies(False)  
 		self.rankGlobally() 
 		self.removeStaleSpecies()
+
 		# reranks after removeing stales species and  stores best player for later play
 		self.rankGlobally(addBest=True)
-		for specie in self.generations[self.generation]:
+		for specie in self.species:
+
 			#calculateAverageFitness of a specie
 			specie.calculateAverageFitness() 
-		
 		self.removeWeakSpecies() 
 		Sum = self.totalAverageFitness()
 
 		#defines new children list
 		children = []
-
-		for k, species in enumerate(self.generations[self.generation]):
+		for species in self.species:
 			breed = math.floor(specie.averageFitness / Sum * self.Population)-1 # if a species average fitness is over the pool averagefitness it can breed
 			for i in range(breed):
 				children.append(specie.breedChildren())
@@ -231,14 +229,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			parent = random.choice(self.species)
 			child = parent.breedChildren()
 			children.append(child)
-
-
 		for child in children: # adds all children there species in the pool
 			self.addToPool(child)
-		for specie in lastGen:
-			for genome in specie.genomes:
-				self.addToPool(genome)
-			
 		self.generation = self.generation + 1
 		
 	def cullOldSpecies(self):
@@ -751,10 +743,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			return CrossOverRate
 
 		
-	   
-	 
-
-
 	   
 		
 class newGene:
