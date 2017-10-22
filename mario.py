@@ -335,11 +335,11 @@ class gui:
 	
 		if not self.running:
 			if not self.poolInitialized:
-			self.pool = neat.pool(self.population.get(),208,6,recurrent=False)
-			self.poolInitialized = True
-			self.running = True
-			self.runButton.config(text='running')
-			self.master.after(250,self.checkRunPaused)
+				self.pool = neat.pool(self.population.get(),208,6,recurrent=False)
+				self.poolInitialized = True
+				self.running = True
+				self.runButton.config(text='running')
+				self.master.after(250,self.checkRunPaused)
 		else:
 			self.running = False
 			self.runButton.config(text='pausing')
@@ -360,11 +360,11 @@ class gui:
 	def onClosing(self):
 		if messagebox.askokcancel("Quit","do you want to Quit?"):
 			for child in multiprocessing.active_children():
-			kill_proc_tree(child.pid)
+				kill_proc_tree(child.pid)
 			if self.running:
-			killFCEUX()
-			self.master.destroy()
-			self.master.quit()
+				killFCEUX()
+				self.master.destroy()
+				self.master.quit()
 
 
 
@@ -373,10 +373,10 @@ class gui:
 		try:
 			msg = queue.get_nowait()
 			if msg is not sentinel:
-			self.pool = msg
-			self.netProcess.join()
-			#self.updateStackPlot(self.pool.species)
-			playBest(self.pool)
+				self.pool = msg
+				self.netProcess.join()
+				#self.updateStackPlot(self.pool.species)
+				playBest(self.pool)
 			if singleGame:
 				self.running = False
 				self.master.after(250,lambda: self.checkRunCompleted(queue))
@@ -384,7 +384,7 @@ class gui:
 	
 			self.master.after(250,self.checkRunPaused)
 			else:
-			pass
+				pass		
 		except Empty:
 			self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame))
 
