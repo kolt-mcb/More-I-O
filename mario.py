@@ -228,49 +228,49 @@ def kill_proc_tree(pid, including_parent=True):
 
 class gui:
 	def __init__(self, master):
-	self.master = master
-	self.frame = Frame(self.master,height=1000,width=450)
-	self.frame.grid()
-	#jobs label
-	self.envLabel = Label(self.master,text="Jobs: ").grid(row=1,column=0,sticky=W)
-	self.envNum = IntVar()
-	self.envNumEntry	= Entry(self.master,textvariable=self.envNum)
-	self.envNumEntry.insert(END,'2')
-	self.envNum.set('2')
-	self.envNumEntry.grid(row=1,column=0,sticky=E)
-	#popluation label
-	self.populationLabel = Label(self.master,text="Population")
-	self.populationLabel.grid(row=2,column=0,sticky=W)
-	self.population = IntVar()
-	self.populationEntry = Entry(self.master,textvariable=self.population)
-	self.populationEntry.insert(END,'300')
-	self.population.set('300')
-	self.populationEntry.grid(row=2,column=0,sticky=E)
-	#file saver button
-	self.fileSaverButton = Button(self.frame,text="save pool",command=self.saveFile)
-	self.fileSaverButton.grid(row=2,column=1)
-	self.fileLoaderButton = Button(self.frame,text="load pool", command=self.loadFile)
-	self.fileLoaderButton.grid(row=2,column=2)
-	#run button
-	self.runButton = Button(self.frame,text="start run", command=self.toggleRun)
-	self.runButton.grid(row=2,column=3)
-	#play best button
-	self.playBestButton = Button(self.frame,text='play best',command =self.handlePlayBest)
-	self.playBestButton.grid(row=2,column=4)
-	self.netProccess = None
-	self.running= False
-	self.poolInitialized = False
-	self.pool = None
-	self.env = 'meta-SuperMarioBros-Tiles-v0'
-	self.lastPopulation = []
-	self.plotDictionary = {}
-	self.plotData = []
-	self.genomeDictionary = {}
-	self.specieID = 0
-	self.fig,self.ax = plt.subplots(figsize=(3.7,3))
-	self.ax.stackplot([],[],baseline='wiggle')
-	canvas = FigureCanvasTkAgg(self.fig,self.master)
-	canvas.get_tk_widget().grid(row=5,column=0,rowspan=4,sticky="nesw")
+		self.master = master
+		self.frame = Frame(self.master,height=1000,width=450)
+		self.frame.grid()
+		#jobs label
+		self.envLabel = Label(self.master,text="Jobs: ").grid(row=1,column=0,sticky=W)
+		self.envNum = IntVar()
+		self.envNumEntry	= Entry(self.master,textvariable=self.envNum)
+		self.envNumEntry.insert(END,'2')
+		self.envNum.set('2')
+		self.envNumEntry.grid(row=1,column=0,sticky=E)
+		#popluation label
+		self.populationLabel = Label(self.master,text="Population")
+		self.populationLabel.grid(row=2,column=0,sticky=W)
+		self.population = IntVar()
+		self.populationEntry = Entry(self.master,textvariable=self.population)
+		self.populationEntry.insert(END,'300')
+		self.population.set('300')
+		self.populationEntry.grid(row=2,column=0,sticky=E)
+		#file saver button
+		self.fileSaverButton = Button(self.frame,text="save pool",command=self.saveFile)
+		self.fileSaverButton.grid(row=2,column=1)
+		self.fileLoaderButton = Button(self.frame,text="load pool", command=self.loadFile)
+		self.fileLoaderButton.grid(row=2,column=2)
+		#run button
+		self.runButton = Button(self.frame,text="start run", command=self.toggleRun)
+		self.runButton.grid(row=2,column=3)
+		#play best button
+		self.playBestButton = Button(self.frame,text='play best',command =self.handlePlayBest)
+		self.playBestButton.grid(row=2,column=4)
+		self.netProccess = None
+		self.running= False
+		self.poolInitialized = False
+		self.pool = None
+		self.env = 'meta-SuperMarioBros-Tiles-v0'
+		self.lastPopulation = []
+		self.plotDictionary = {}
+		self.plotData = []
+		self.genomeDictionary = {}
+		self.specieID = 0
+		self.fig,self.ax = plt.subplots(figsize=(3.7,3))
+		self.ax.stackplot([],[],baseline='wiggle')
+		canvas = FigureCanvasTkAgg(self.fig,self.master)
+		canvas.get_tk_widget().grid(row=5,column=0,rowspan=4,sticky="nesw")
 
 	
 	def updateStackPlot(self,species):
@@ -318,7 +318,7 @@ class gui:
 				self.plotData[specieID].append(speciesLen)
 		for specieArray in self.plotData:
 			if len(specieArray) != self.pool.generation:
-			specieArray.append(0)
+				specieArray.append(0)
 		self.ax.clear()
 		self.ax.stackplot(list(range(len(self.plotData[0]))),*self.plotData,baseline='wiggle')
 		canvas = FigureCanvasTkAgg(self.fig,self.master)
