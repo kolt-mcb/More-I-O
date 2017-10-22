@@ -70,7 +70,6 @@ def trainPool(population,envNum,pool,queue,env):
 	print("next generation")
 	pool.nextGeneration()
 	print("gen " ,pool.generation, "in ",int(after-before)," best", pool.getBest().fitness)
-
 	queue.put(pool)
 	 
 
@@ -109,7 +108,7 @@ def jobTrainer(envName):
 		finalScore = 0
 		done = False
 		maxReward = 0
-		for LVint in [1,2,10,14,18,22]:
+		for LVint in [2,10,14,18,22]:
 			maxDistance = 0
 			oldDistance = 0
 			bonus = 0
@@ -148,7 +147,7 @@ def jobTrainer(envName):
 				oldDistance = distance
 		for score in scores:
 			finalScore += score
-		finalScore = round(finalScore/6)
+		finalScore = round(finalScore/5)
 		results.append((finalScore,job))
 	
 		print("species:",currentSpecies, "genome:",currentGenome,"Scored:",finalScore)
@@ -164,48 +163,48 @@ def singleGame(genome,genomePipe):
 	staleness = 0
 	print("playing next")
 	env.locked_levels = [False] * 32
-	for LVint in [1,2,10,14,18,22]:
+	for LVint in [2,10,14,18,22]:
 		maxDistance = 0
-	staleness = 0
-	oldDistance = 0
-	done = False
-	bonus = 0
-	bonusOffset = 0
-
-	#env.is_finished = True
-
-
-	env.change_level(new_level=LVint)
-	#env._write_to_pipe("changelevel#"+str(LVint))
-	while not done:
-		ob = env.tiles.flatten()
-		o = genome.evaluateNetwork(ob.tolist(),discrete=True)
-		genomePipe.send(genome)
-		ob, reward, done, _ = env.step(o)
-		if 'ignore' in _:
-			done = False
-			env = gym.make('meta-SuperMarioBros-Tiles-v0')
-			env.lock.acquire()
-			env.reset()
-			env.locked_levels = [False] * 32
-			env.change_level(new_level=LVint)
-			env.lock.release()
-		distance = env._get_info()["distance"]
-		if oldDistance - distance < -100 :
-				bonus = maxDistance
-				bonusOffset = distance
-		if maxDistance - distance > 50 and distance != 0:
+		staleness = 0
+		oldDistance = 0
+		done = False
+		bonus = 0
+		bonusOffset = 0
+	
+		#env.is_finished = True
+	
+	
+		env.change_level(new_level=LVint)
+		#env._write_to_pipe("changelevel#"+str(LVint))
+		while not done:
+			ob = env.tiles.flatten()
+			o = genome.evaluateNetwork(ob.tolist(),discrete=True)
+			genomePipe.send(genome)
+			ob, reward, done, _ = env.step(o)
+			if 'ignore' in _:
+				done = False
+				env = gym.make('meta-SuperMarioBros-Tiles-v0')
+				env.lock.acquire()
+				env.reset()
+				env.locked_levels = [False] * 32
+				env.change_level(new_level=LVint)
+				env.lock.release()
+			distance = env._get_info()["distance"]
+			if oldDistance - distance < -100 :
+					bonus = maxDistance
+					bonusOffset = distance
+			if maxDistance - distance > 50 and distance != 0:
+					maxDistance = distance
+			if distance > maxDistance:
 				maxDistance = distance
-		if distance > maxDistance:
-			maxDistance = distance
-			staleness = 0
-		if maxDistance >= distance:
-			staleness += 1
-
-		if staleness > 100 or done:
-			if not done:
-				done = True
-		oldDistance = distance
+				staleness = 0
+			if maxDistance >= distance:
+				staleness += 1
+	
+			if staleness > 100 or done:
+				if not done:
+					done = True
+			oldDistance = distance
 
 	env.close()
 	genomePipe.send("quit")
@@ -381,9 +380,9 @@ class gui:
 				self.running = False
 				self.master.after(250,lambda: self.checkRunCompleted(queue))
 				return
-				self.master.after(250,self.checkRunPaused)
 			else:
-				pass		
+				self.master.after(250,self.checkRunPaused)
+			self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame))		
 		except Empty:
 			self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame))
 
