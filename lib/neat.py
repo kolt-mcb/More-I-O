@@ -720,28 +720,28 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			return child
 		
 
-        def crossover(self,g1,g2): # mixes genes of 2 species
-            if g2.fitness > g1.fitness:
-                tempg = g1
-                g1 = g2
-                g2 = tempg
-            innovations2 = {}
-            child = pool.newGenome(self.Inputs,self.Outputs,self.recurrent)
-            child.mutate()
-            for gene2 in g2.genes:
-                innovations2[gene2.innovation] = gene2
-            for gene1 in g1.genes:
-                gene2 = innovations2.get(gene1.innovation)
-                if gene2 != None and  random.randint(1,2) == 1 and gene2.enabled:
-                    child.genes.append(gene2.copyGene())
-                else:
-                    child.genes.append(gene1.copyGene())
-            child.maxneuron = max(g1.maxneuron,g2.maxneuron)
-            for mutation,rate in g1.mutationRates.items():
-                child.mutationRates[mutation] = rate
+		def crossover(self,g1,g2): # mixes genes of 2 species
+			if g2.fitness > g1.fitness:
+				tempg = g1
+				g1 = g2
+				g2 = tempg
+			innovations2 = {}
+			child = pool.newGenome(self.Inputs,self.Outputs,self.recurrent)
+			child.mutate()
+			for gene2 in g2.genes:
+				innovations2[gene2.innovation] = gene2
+			for gene1 in g1.genes:
+				gene2 = innovations2.get(gene1.innovation)
+				if gene2 != None and  random.randint(1,2) == 1 and gene2.enabled:
+					child.genes.append(gene2.copyGene())
+				else:
+					child.genes.append(gene1.copyGene())
+			child.maxneuron = max(g1.maxneuron,g2.maxneuron)
+			for mutation,rate in g1.mutationRates.items():
+				child.mutationRates[mutation] = rate
 			child.parents["parent1"] = g1.ID
-            child.parents["parent2"] = g2.ID   
-            return child
+			child.parents["parent2"] = g2.ID   
+			return child
 
 
 		def getAverageCrossOverRate(self):
