@@ -34,8 +34,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for genome in specie.genomes:
 				genome.generateNetwork()		
 		if database != None:
-            self.database=database
-            self.updateMongo()
+			self.database=database
+			self.updateMongo()
 
 			
 	def updateMongo(self):
