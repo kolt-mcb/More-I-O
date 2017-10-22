@@ -10,12 +10,14 @@ import math
 
 class pool: #holds all species data, crossspecies settings and the current gene innovation
 	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None):
+		self.generations = []
 		self.species = []
 		self.generation = 0
 		self.currentSpecies = 0
 		self.currentGenome = 0
 		self.maxFitness = 0
 		self.Population = population
+		self.lastPolulation = population
 		self.best = []
 		self.StaleSpecies = 15
 		self.Inputs = Inputs
@@ -198,6 +200,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				   
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
+		self.generations.append(self.species)
 		population = 0
 		for specie in self.species:
 			for genome in specie.genomes:
@@ -219,18 +222,19 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		#defines new children list
 		children = []
 		for species in self.species:
-			breed = math.floor(specie.averageFitness / Sum * self.Population)-1 # if a species average fitness is over the pool averagefitness it can breed
+			breed = math.floor(specie.averageFitness / Sum * self.lastPopulation)-1 # if a species average fitness is over the pool averagefitness it can breed
 			for i in range(breed):
 				children.append(specie.breedChildren())
 		# leave only the top member of each species.
 		self.cullSpecies(True) 
 		self.cullOldSpecies()
-		while (len(children)+len(self.species) < self.Population):
+		while (len(children)+len(self.species) < self.lastPopulation):
 			parent = random.choice(self.species)
 			child = parent.breedChildren()
 			children.append(child)
 		for child in children: # adds all children there species in the pool
 			self.addToPool(child)
+		self.lastPopulation = population
 		self.generation = self.generation + 1
 		
 	def cullOldSpecies(self):
