@@ -210,7 +210,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.removeStaleSpecies()
 		# reranks after removeing stales species and  stores best player for later play
 		self.rankGlobally(addBest=True)
-		for specie in self.generations[self.generation].species:
+		for specie in self.generations[self.generation]:
 			#calculateAverageFitness of a specie
 			specie.calculateAverageFitness() 
 		
@@ -220,7 +220,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		#defines new children list
 		children = []
 
-		for k, species in enumerate(self.generations[self.generation].species):
+		for k, species in enumerate(self.generations[self.generation]):
 			breed = math.floor(specie.averageFitness / Sum * self.Population)-1 # if a species average fitness is over the pool averagefitness it can breed
 			for i in range(breed):
 				children.append(specie.breedChildren())
