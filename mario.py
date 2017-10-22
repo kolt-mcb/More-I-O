@@ -49,7 +49,7 @@ def trainPool(population,envNum,pool,queue,env):
 	for specie in pool.species:
 		g=0
 		for genome in specie.genomes:
-		genome.generateNetwork()
+			genome.generateNetwork()
 		jobs.put((s,g,genome))
 		g+=1
 		s+=1
