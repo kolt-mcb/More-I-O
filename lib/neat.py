@@ -291,7 +291,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		survived = []
 		sum = self.totalAverageFitness()
 		for specie in self.species:
-			breed = math.floor(specie.averageFitness / sum * self.Population)
+			breed = math.floor(specie.averageFitness / sum * self.lastPopulation)
 			if breed >= 1:
 				survived.append(specie)
 	
