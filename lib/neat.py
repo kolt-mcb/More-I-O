@@ -9,7 +9,7 @@ import math
 
 
 class pool: #holds all species data, crossspecies settings and the current gene innovation
-	def __init__(self,population,Inputs,Outputs,recurrent=False):
+	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None):
 		self.generations = []
 		self.species = []
 		self.generation = 0
@@ -33,7 +33,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			for genome in specie.genomes:
 				genome.generateNetwork()		
- 
+		if database != None:
+            self.database=database
+            self.updateMongo()
 
 			
 	def updateMongo(self):
@@ -199,7 +201,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	def nextGeneration(self):
 		self.generations.append(self.species)
 		population = 0
-		for specie in self.generations[self.generation].species:
+		for specie in self.generations[self.generation]:
 			for genome in specie.genomes:
 				population += 1
 		self.Population = population
