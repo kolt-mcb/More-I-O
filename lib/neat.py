@@ -17,7 +17,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.currentGenome = 0
 		self.maxFitness = 0
 		self.Population = population
-		self.lastPolulation = population
+		self.lastPopulation = population
 		self.best = []
 		self.StaleSpecies = 15
 		self.Inputs = Inputs
