@@ -424,8 +424,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.recurrent = recurrent
 			self.ID = None
             self.parents = {
-                    "parent1" : None,
-                    "parent2" : None
+            	"parent1" : None,
+                "parent2" : None
             }
 		
 			if self.recurrent: # initializes first run for reccurrent networks
