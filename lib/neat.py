@@ -423,10 +423,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.Outputs = Outputs
 			self.recurrent = recurrent
 			self.ID = None
-            self.parents = {
-            	"parent1" : None,
-                "parent2" : None
-            }
+			self.parents = {
+				"parent1" : None,
+				"parent2" : None
+				}
 		
 			if self.recurrent: # initializes first run for reccurrent networks
 				self.lastEval = Outputs*[0]
@@ -739,7 +739,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
             child.maxneuron = max(g1.maxneuron,g2.maxneuron)
             for mutation,rate in g1.mutationRates.items():
                 child.mutationRates[mutation] = rate
-            child.parents["parent1"] = g1.ID
+			child.parents["parent1"] = g1.ID
             child.parents["parent2"] = g2.ID   
             return child
 
