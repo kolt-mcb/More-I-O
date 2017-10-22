@@ -38,7 +38,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			
 	def updateMongo(self):
 		self.client = MongoClient(self.database, 27017)
-		db = .client["pool"]
+		db = self.client["pool"]
 		collection = db["gen"+str(self.generation+1)]
 		collection.insert_many(self.getSpeciesBSON(self.species))
 
