@@ -116,7 +116,7 @@ def acFixer(action_space,action): # fixes action ranges, uses hyperbolic tangent
 def jobTrainer(envName):
 
 	env = gym.make(envName)
-	env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False) # no recoding on windows due to ffmepg
+	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False) # no recoding on windows due to ffmepg
 
 
 	if env.action_space.__class__ == gym.spaces.discrete.Discrete: # identifies action/observation space
@@ -159,7 +159,7 @@ def jobTrainer(envName):
 
 def singleGame(genome,genomePipe,envName,eval):
 	env = gym.make(envName)
-	env = wrappers.Monitor(env,'tmp/'+envName,resume=True)
+	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True)
 	runs = 1
 	print("playing best")
 	if eval:
