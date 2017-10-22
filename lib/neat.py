@@ -93,39 +93,53 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		output = genome.evaluateNetwork(inputs,discrete)
 		return output
 	               
-				
-	def nextGeneration(self): #cuts poor preforming genomes and performs crossover of remaining genomes.
+	#cuts poor preforming genomes and performs crossover of remaining genomes.
+	def nextGeneration(self):
+
+		population = 0
+		for specie in self.generations[self.generation].species:
+			for genome in specie.genomes:
+				population += 1
+		self.Population = population
+
+
+		self.generation = self.generation + 1
 		self.generations.append(self.species)
 		self.cullSpecies(False)  
 		self.rankGlobally() 
 		self.removeStaleSpecies()
-		self.rankGlobally(addBest=True) # reranks after removeing stales species and  stores best player for later play
-		for specie in self.species:
-			specie.calculateAverageFitness() #calculateAverageFitness of a specie
+		# reranks after removeing stales species and  stores best player for later play
+		self.rankGlobally(addBest=True)
+		for specie in self.generations[self.generation].species:
+			#calculateAverageFitness of a specie
+			specie.calculateAverageFitness() 
+		
 		self.removeWeakSpecies() 
 		Sum = self.totalAverageFitness()
+
+		#defines new children list
 		children = []
-		for specie in self.species:
+
+
+		for specie in self.generations[self.generation].species:
 			breed = math.floor(specie.averageFitness / Sum * self.Population)-1 # if a species average fitness is over the pool averagefitness it can breed
 			for i in range(breed):
 				children.append(specie.breedChildren())
-		self.cullSpecies(True) # leave only the top member of each species.
+		# leave only the top member of each species.
+		self.cullSpecies(True) 
 		self.cullOldSpecies()
 		while (len(children)+len(self.species) < self.Population):
 			parent = random.choice(self.species)
 			child = parent.breedChildren()
 			children.append(child)
-		
 
-		lastGen = self.species
-		self.species = []
 
 		for child in children: # adds all children there species in the pool
 			self.addToPool(child)
 		for specie in lastGen:
 			for genome in specie.genomes:
 				self.addToPool(genome)
-		self.generation = self.generation + 1
+
 		
 	def cullOldSpecies(self):
 		species = self.species
@@ -160,7 +174,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			print(cutToOne,remaining)			
 			total = len(specie.genomes)
 			while len(specie.genomes) > remaining:
-				specie.genomes.remove(specie.genomes[total-1])
+				self.specie.genomes.remove(specie.genomes[total-1])
 				total += -1
 		
 	def removeStaleSpecies(self): # removes species that have not gotten a high score past a threshold
@@ -447,7 +461,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			genome2.mutationRates = self.mutationRates
 			genome2.speciesRates = self.speciesRates
 			genome2.parents = *self
-		
 			return genome2
 		
 		def generateNetwork(self): # generates a network based on genes.
@@ -553,7 +566,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 	 
 	class newSpecies():
-
 		def __init__(self,Inputs,Outputs,recurrent):
 			self.Inputs = Inputs
 			self.Outputs = Outputs
@@ -621,9 +633,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				child.mutationRates[mutation] = rate
 			for mutation,rate in g1.speciesRates.items():
 				child.speciesRates[mutation] = rate
-			child.parents.append(g1)
-			child.parents.append(g2)
+			child.parents.append(*g1)
+			child.parents.append(*g2)
 			return child
+
 		def getAverageCrossOverRate(self):
 			totalAverage = 0
 			for genome in self.genomes:
