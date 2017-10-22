@@ -165,7 +165,7 @@ def singleGame(genome,genomePipe):
 	print("playing next")
 	env.locked_levels = [False] * 32
 	for LVint in [1,2,10,14,18,22]:
-	maxDistance = 0
+		maxDistance = 0
 	staleness = 0
 	oldDistance = 0
 	done = False
