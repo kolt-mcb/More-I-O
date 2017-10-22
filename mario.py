@@ -329,108 +329,108 @@ class gui:
 	
 
 	def handlePlayBest(self):
-	playBest(self.pool)
+		playBest(self.pool)
 
 	def toggleRun(self):
 	
-	if not self.running:
-		if not self.poolInitialized:
-		self.pool = neat.pool(self.population.get(),208,6,recurrent=False)
-		self.poolInitialized = True
-		self.running = True
-		self.runButton.config(text='running')
-		self.master.after(250,self.checkRunPaused)
-	else:
-		self.running = False
-		self.runButton.config(text='pausing')
+		if not self.running:
+			if not self.poolInitialized:
+			self.pool = neat.pool(self.population.get(),208,6,recurrent=False)
+			self.poolInitialized = True
+			self.running = True
+			self.runButton.config(text='running')
+			self.master.after(250,self.checkRunPaused)
+		else:
+			self.running = False
+			self.runButton.config(text='pausing')
 
 
 	def checkRunPaused(self):
-	if self.running:
-		queue = multiprocessing.Queue()
-		self.pool.Population = self.population.get()
-		self.netProcess = multiprocessing.Process(target=trainPool,args=(self.population.get(),self.envNum.get(),self.pool,queue,self.env))
-		self.netProcess.start()
-		self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame=False))
-	if not self.running:
-		self.runButton.config(text='run')
-		 
+		if self.running:
+			queue = multiprocessing.Queue()
+			self.pool.Population = self.population.get()
+			self.netProcess = multiprocessing.Process(target=trainPool,args=(self.population.get(),self.envNum.get(),self.pool,queue,self.env))
+			self.netProcess.start()
+			self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame=False))
+		if not self.running:
+			self.runButton.config(text='run')
+			 
 
 
 	def onClosing(self):
-	if messagebox.askokcancel("Quit","do you want to Quit?"):
-		for child in multiprocessing.active_children():
-		kill_proc_tree(child.pid)
-		if self.running:
-		killFCEUX()
-		self.master.destroy()
-		self.master.quit()
+		if messagebox.askokcancel("Quit","do you want to Quit?"):
+			for child in multiprocessing.active_children():
+			kill_proc_tree(child.pid)
+			if self.running:
+			killFCEUX()
+			self.master.destroy()
+			self.master.quit()
 
 
 
 
 	def checkRunCompleted(self,queue,singleGame=True):
-	try:
-		msg = queue.get_nowait()
-		if msg is not sentinel:
-		self.pool = msg
-		self.netProcess.join()
-		#self.updateStackPlot(self.pool.species)
-		playBest(self.pool)
-		if singleGame:
-			self.running = False
-			self.master.after(250,lambda: self.checkRunCompleted(queue))
-			return
-
-		self.master.after(250,self.checkRunPaused)
-		else:
-		pass
-	except Empty:
-		self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame))
+		try:
+			msg = queue.get_nowait()
+			if msg is not sentinel:
+			self.pool = msg
+			self.netProcess.join()
+			#self.updateStackPlot(self.pool.species)
+			playBest(self.pool)
+			if singleGame:
+				self.running = False
+				self.master.after(250,lambda: self.checkRunCompleted(queue))
+				return
+	
+			self.master.after(250,self.checkRunPaused)
+			else:
+			pass
+		except Empty:
+			self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame))
 
 
 	def saveFile(self):
-	if self.pool == None:
-		return
-
-	filename = filedialog.asksaveasfilename(defaultextension=".pool")
-	if filename is None or filename == '':
-		return
-	file = open(filename,"wb")
-	pickle.dump((self.pool.species,self.pool.best,
-				 self.lastPopulation,
-				 self.plotDictionary,
-				 self.plotData,
-				 self.genomeDictionary,
-				 self.specieID),file)
+		if self.pool == None:
+			return
+	
+		filename = filedialog.asksaveasfilename(defaultextension=".pool")
+		if filename is None or filename == '':
+			return
+		file = open(filename,"wb")
+		pickle.dump((self.pool.species,self.pool.best,
+					 self.lastPopulation,
+					 self.plotDictionary,
+					 self.plotData,
+					 self.genomeDictionary,
+					 self.specieID),file)
 
 	def loadFile(self):
-	filename = filedialog.askopenfilename()
-	if filename is ():
-		 return
-	f = open(filename,"rb")
-	loadedPool = pickle.load(f)
-	species	= loadedPool[0]
-	self.lastPopulation = loadedPool[2]
-	self.plotDictionary = loadedPool[3]
-	self.plotData = loadedPool[4]
-	self.genomeDictionary = loadedPool[5]
-	self.specieID = loadedPool[6]
-	newInovation = 0
-	for specie in species:
-		for genome in specie.genomes:
-		for gene in genome.genes:
-			if gene.innovation > newInovation:
-			newInovation = gene.innovation
-	
-	self.pool = neat.pool(sum([v for v in [len(specie.genomes) for specie in species]]),species[0].genomes[0].Inputs,species[0].genomes[0].Outputs,recurrent=species[0].genomes[0].recurrent)
-	self.pool.newGenome.innovation = newInovation +1
-	self.pool.species = species
-	self.pool.best = loadedPool[1]
-	self.pool.generation = len(self.pool.best)
-	self.population.set(self.pool.Population)
-	self.poolInitialized = True
-	f.close()
+		filename = filedialog.askopenfilename()
+		if filename is ():
+			 return
+		f = open(filename,"rb")
+		loadedPool = pickle.load(f)
+		species	= loadedPool[0]
+		self.lastPopulation = loadedPool[2]
+		self.plotDictionary = loadedPool[3]
+		self.plotData = loadedPool[4]
+		self.genomeDictionary = loadedPool[5]
+		self.specieID = loadedPool[6]
+		newInovation = 0
+		for specie in species:
+			for genome in specie.genomes:
+			for gene in genome.genes:
+				if gene.innovation > newInovation:
+				newInovation = gene.innovation
+		
+		self.pool = neat.pool(sum([v for v in [len(specie.genomes) for specie in species]]),species[0].genomes[0].Inputs,species[0].genomes[0].Outputs,recurrent=species[0].genomes[0].recurrent)
+		self.pool.newGenome.innovation = newInovation +1
+		self.pool.species = species
+		self.pool.best = loadedPool[1]
+		self.pool.generation = len(self.pool.best)
+		self.population.set(self.pool.Population)
+		self.poolInitialized = True
+		f.close()
 
 
 
