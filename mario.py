@@ -420,7 +420,7 @@ class gui:
 			for genome in specie.genomes:
 				for gene in genome.genes:
 					if gene.innovation > newInovation:
-					newInovation = gene.innovation
+						newInovation = gene.innovation
 		
 		self.pool = neat.pool(sum([v for v in [len(specie.genomes) for specie in species]]),species[0].genomes[0].Inputs,species[0].genomes[0].Outputs,recurrent=species[0].genomes[0].recurrent)
 		self.pool.newGenome.innovation = newInovation +1
