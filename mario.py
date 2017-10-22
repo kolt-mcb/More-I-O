@@ -381,8 +381,7 @@ class gui:
 				self.running = False
 				self.master.after(250,lambda: self.checkRunCompleted(queue))
 				return
-	
-			self.master.after(250,self.checkRunPaused)
+				self.master.after(250,self.checkRunPaused)
 			else:
 				pass		
 		except Empty:
