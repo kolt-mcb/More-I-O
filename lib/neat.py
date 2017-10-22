@@ -197,16 +197,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				   
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
-
+		self.generations.append(self.species)
 		population = 0
 		for specie in self.generations[self.generation].species:
 			for genome in specie.genomes:
 				population += 1
 		self.Population = population
-
-
-
-		self.generations.append(self.species)
 		self.cullSpecies(False)  
 		self.rankGlobally() 
 		self.removeStaleSpecies()
