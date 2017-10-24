@@ -17,7 +17,7 @@ matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
-
+from operator import itemgetter
 
 sentinel = object()
 
@@ -50,8 +50,8 @@ def trainPool(population,envNum,pool,queue,env):
 		g=0
 		for genome in specie.genomes:
 			genome.generateNetwork()
-		jobs.put((s,g,genome))
-		g+=1
+			jobs.put((s,g,genome))
+			g+=1
 		s+=1
 
 		
@@ -339,9 +339,13 @@ class gui:
 				self.running = True
 				self.runButton.config(text='running')
 				self.master.after(250,self.checkRunPaused)
+			self.running = True
+			self.runButton.config(text='running')
+			self.master.after(250,self.checkRunPaused)
 		else:
 			self.running = False
 			self.runButton.config(text='pausing')
+		
 
 
 	def checkRunPaused(self):
@@ -374,7 +378,7 @@ class gui:
 			if msg is not sentinel:
 				self.pool = msg
 				self.netProcess.join()
-				#self.updateStackPlot(self.pool.species)
+				self.updateStackPlot(self.pool.species)
 				playBest(self.pool)
 			if singleGame:
 				self.running = False

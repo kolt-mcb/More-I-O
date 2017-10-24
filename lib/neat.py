@@ -124,9 +124,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		return parentsBSON
 	
 	
-
-
-
 	def addToPool(self,child): # adds a species to its family of species, if not within threshold of any existing species creates a new species.
 		foundSpecies = False
 		for specie in range(len(self.species)):
