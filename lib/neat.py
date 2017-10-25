@@ -215,7 +215,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		#defines new children list
 		children = []
-		while (len(children)+len(self.species) < self.Population):
+		c = 0
+		for specie in self.species:
+			for genome in specie.genomes:
+				c += 1
+				
+		while (len(children)+c < self.Population):
+			
 			for specie in self.species:
 				breed = math.floor(specie.averageFitness / Sum * self.Population)-1 # if a species average fitness is over the pool averagefitness it can breed
 				for i in range(breed):
@@ -223,7 +229,14 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		# leave only the top member of each species.
 		self.cullSpecies(True) 
 		self.cullOldSpecies()
-		while (len(children)+len(self.species) < self.Population):
+		
+		c = 0
+		for specie in self.species:
+			for genome in specie.genomes:
+				c += 1
+				
+		while (len(children)+c < self.Population):
+			
 			parent = random.choice(self.species)
 			child = parent.breedChildren()
 			children.append(child)
