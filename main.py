@@ -116,9 +116,11 @@ def acFixer(action_space,action): # fixes action ranges, uses hyperbolic tangent
 def jobTrainer(envName):
 
 	env = gym.make(envName)
-	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False) # no recoding on windows due to ffmepg
-
-
+	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False) # no recoding on windows due to ffmepg	if 
+	if env.env.__class__ == 'gym.envs.atari.atari_env.AtariEnv':
+		atari = True
+		
+	
 	if env.action_space.__class__ == gym.spaces.discrete.Discrete: # identifies action/observation space
 		discrete = True
 	else:
@@ -131,7 +133,6 @@ def jobTrainer(envName):
 			job = jobs.get()
 		except Empty:
 			pass
-
 		currentSpecies = job[0]
 		currentGenome = job[1]
 		genome = job[2]
@@ -141,7 +142,6 @@ def jobTrainer(envName):
 			score = 0
 			done = False
 			ob = env.reset()	
-			
 			while not done: 
 			  ob = obFixer(env.observation_space,ob)
 			  o = genome.evaluateNetwork(ob,discrete) # evalutes brain, getting button presses

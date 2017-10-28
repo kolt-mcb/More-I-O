@@ -275,6 +275,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if len(self.species[S].genomes) == 0:
 				self.species.remove(specie)
 			S += 1
+			
 	def removeStaleSpecies(self): # removes species that have not gotten a high score past a threshold
 		survived = []
 		for specie in self.species:
@@ -292,8 +293,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	def removeWeakSpecies(self): # removes poor performing species
 		survived = []
 		sum = self.totalAverageFitness()
+		S= 0 
 		for specie in self.species:
 			breed = math.floor(specie.averageFitness / sum * self.Population)
+			print(S,specie.averageFitness,breed)
 			if breed >= 1:
 				survived.append(specie)
 	
