@@ -199,6 +199,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.generations.append(self.species)
 		for specie in self.species:
 			specie.calculateAverageRemainingMultiplyer()
+			specie.caclulateAverageBreedRate()
 		self.cullSpecies(False)  
 		self.rankGlobally() 
 		self.removeStaleSpecies()
@@ -297,7 +298,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			breed = math.floor(specie.averageFitness / sum * self.Population)
 			print(S,specie.averageFitness,breed)
-			if breed >= 1:
+			if breed >= specie.averageBreed:
 				survived.append(specie)
 	
 		self.species = survived
@@ -413,6 +414,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["ConectionCostRate"] = 1
 			self.mutationRates["RemainingMultiplyer"] = 2
 			self.mutationRates["Remaining"] = 5
+			self.mutationRates["breed"] = 1
 			self.mutationRates["age"] = 10
 			self.currentAge = self.mutationRates["age"]
 			self.parents = []
@@ -676,6 +678,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.remainingRate = None
 			self.remainingMultiplyer = 	None
 			self.crossoverRate = None
+			self.averageBreed = None
 			
 		def calculateAverageFitness(self): 
 			total = 0
@@ -689,6 +692,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				total += genome.mutationRates["Remaining"] 
 			total = total / len(self.genomes)
 			self.remainingRate = total
+		
+		def caclulateAverageBreedRate(self):
+			total = 0
+			for genome in self.genomes:
+				total += genome.mutationRates["breed"]
+			total = total / len(self.genomes)
+			self.averageBreed = total
 
 		def calculateAverageRemainingMultiplyer(self):
 			total = 0
