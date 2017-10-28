@@ -118,7 +118,8 @@ def jobTrainer(envName):
 			env.change_level(new_level=LVint)
 			while not done:
 				ob = env.tiles.flatten()
-				o = genome.evaluateNetwork(ob.tolist(),discrete=True)
+				o = genome.evaluateNetwork(ob.tolist(),discrete=False)
+				o = joystick(o)
 				ob, reward, done, _ = env.step(o)
 				if 'ignore' in _:
 					done = False
@@ -178,7 +179,9 @@ def singleGame(genome,genomePipe):
 		#env._write_to_pipe("changelevel#"+str(LVint))
 		while not done:
 			ob = env.tiles.flatten()
-			o = genome.evaluateNetwork(ob.tolist(),discrete=True)
+			
+			o = genome.evaluateNetwork(ob.tolist(),discrete=False)
+			o = joystick(o)
 			genomePipe.send(genome)
 			ob, reward, done, _ = env.step(o)
 			if 'ignore' in _:
@@ -209,6 +212,44 @@ def singleGame(genome,genomePipe):
 	env.close()
 	genomePipe.send("quit")
 	genomePipe.close()
+	
+def joystick(four):
+	six =[0]*6
+	if four[0] > 0.5:
+		six[0]=0
+		six[2]=1
+	if four[0] < -0.5:
+		six[0]=1
+		six[2]=0
+	if four[0] < 0.5 and four[0] > -0.5:
+		six[0]=0
+		six[2]=0
+		
+	if four[1] >= 0.5:
+		six[1]=0
+		six[3]=1
+	if four[1] <= -0.5:
+		six[1]=1
+		six[3]=0
+	if four[1] < 0.5 and four[1] > -0.5:
+		six[1]=0
+		six[3]=0
+		
+	if four[2] >= 0.5:
+		six[4] = 1
+	if four[2] <= -0.5:
+		six[4] = -1
+	if four[2] < 0.5 and four[2] > -0.5:
+		six[4]=0
+
+	if four[3] >= 0.5:
+		six[5] = 1
+	if four[3] <= -0.5:
+		six[5] = -1
+	if four[3] < 0.5 and four[3] > -0.5:
+		six[5]=0
+	return six
+	
 
 
 def kill_proc_tree(pid, including_parent=True):	
@@ -266,7 +307,7 @@ class gui:
 		self.plotData = []
 		self.genomeDictionary = {}
 		self.specieID = 0
-		self.fig,self.ax = plt.subplots(figsize=(3.7,3))
+		self.fig,self.ax = plt.subplots(figsize=(10,6))
 		self.ax.stackplot([],[],baseline='wiggle')
 		canvas = FigureCanvasTkAgg(self.fig,self.master)
 		canvas.get_tk_widget().grid(row=5,column=0,rowspan=4,sticky="nesw")
@@ -334,11 +375,10 @@ class gui:
 	
 		if not self.running:
 			if not self.poolInitialized:
-				self.pool = neat.pool(self.population.get(),208,6,recurrent=False)
+				self.pool = neat.pool(self.population.get(),208,4,recurrent=True)
 				self.poolInitialized = True
 				self.running = True
 				self.runButton.config(text='running')
-				self.master.after(250,self.checkRunPaused)
 			self.running = True
 			self.runButton.config(text='running')
 			self.master.after(250,self.checkRunPaused)
@@ -354,7 +394,7 @@ class gui:
 			self.pool.Population = self.population.get()
 			self.netProcess = multiprocessing.Process(target=trainPool,args=(self.population.get(),self.envNum.get(),self.pool,queue,self.env))
 			self.netProcess.start()
-			self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame=False))
+			self.master.after(250,lambda: self.checkRunCompleted(queue,pausing=False))
 		if not self.running:
 			self.runButton.config(text='run')
 			 
@@ -372,7 +412,7 @@ class gui:
 
 
 
-	def checkRunCompleted(self,queue,singleGame=True):
+	def checkRunCompleted(self,queue,pausing=True):
 		try:
 			msg = queue.get_nowait()
 			if msg is not sentinel:
@@ -380,15 +420,14 @@ class gui:
 				self.netProcess.join()
 				self.updateStackPlot(self.pool.species)
 				playBest(self.pool)
-			if singleGame:
+			if pausing:
 				self.running = False
 				self.master.after(250,lambda: self.checkRunCompleted(queue))
 				return
 			else:
 				self.master.after(250,self.checkRunPaused)
-			self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame))		
 		except Empty:
-			self.master.after(250,lambda: self.checkRunCompleted(queue,singleGame))
+			self.master.after(250,lambda: self.checkRunCompleted(queue,pausing))
 
 
 	def saveFile(self):

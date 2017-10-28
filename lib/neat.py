@@ -221,11 +221,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				c += 1
 				
 		while (len(children)+c < self.Population):
-			
 			for specie in self.species:
 				breed = math.floor(specie.averageFitness / Sum * self.Population)-1 # if a species average fitness is over the pool averagefitness it can breed
 				for i in range(breed):
-					children.append(specie.breedChildren())
+						if len(children)+c < self.Population:
+							children.append(specie.breedChildren())
 		# leave only the top member of each species.
 		self.cullSpecies(True) 
 		self.cullOldSpecies()
@@ -236,10 +236,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				c += 1
 				
 		while (len(children)+c < self.Population):
-			
-			parent = random.choice(self.species)
-			child = parent.breedChildren()
-			children.append(child)
+				parent = random.choice(self.species)
+				child = parent.breedChildren()
+				children.append(child)
 		for child in children: # adds all children there species in the pool
 			self.addToPool(child)
 		self.generation = self.generation + 1
@@ -396,10 +395,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates = {}
 			self.globalRank = 0
 			self.maxNodes = 10000
-			self.mutationRates["connections"] =  0.4
-			self.mutationRates["link"] =  .4
+			self.mutationRates["connections"] =  0.7
+			self.mutationRates["link"] =  .7
 			self.mutationRates["bias"] = 0.1
-			self.mutationRates["node"] = 0.4
+			self.mutationRates["node"] = 0.7
 			self.mutationRates["enable"] = 0.05
 			self.mutationRates["disable"] = 0.1
 			self.mutationRates["step"] = 0.1
@@ -410,8 +409,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["PerturbChance"] = 0.5
 			self.mutationRates["ConectionCostRate"] = 1
 			self.mutationRates["RemainingMultiplyer"] = 2
-			self.mutationRates["Remaining"] = 1 
-			self.mutationRates["age"] = 5
+			self.mutationRates["Remaining"] = 5
+			self.mutationRates["age"] = 10
 			self.currentAge = self.mutationRates["age"]
 			self.parents = []
 			self.Inputs = Inputs
