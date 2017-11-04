@@ -3,13 +3,14 @@ import sys
 import time
 import random
 import math
+from pymongo import MongoClient
 
 
 
 
 
 class pool: #holds all species data, crossspecies settings and the current gene innovation
-	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None):
+	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None,gameName=None):
 		self.generations = []
 		self.species = []
 		self.generation = 0
@@ -23,8 +24,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.Outputs = Outputs
 		self.newGenome.innovation = Inputs #  sets the class variable to the current number of inputs
 		self.recurrent = recurrent
-		self.database = None
+		self.databaseName = database
 		self.client = None
+		self.gameName = gameName
+		self.timeStamp = time.time()
 		for x in range(self.Population):# potpulate with random nets
 			newGenome = self.newGenome(Inputs,Outputs,recurrent)
 			while newGenome.genes == []:
@@ -32,127 +35,130 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.addToPool(newGenome)
 		for specie in self.species:
 			for genome in specie.genomes:
-				genome.generateNetwork()		
+				genome.generateNetwork()
+		self.updateMongoGenomes(self.species)
 		if database != None:
-			self.database=database
-			self.updateMongo()
+			self.client = MongoClient(self.databaseName, 27017)
+		if gameName == None:
+			self.gameName = str(self.Inputs)+" "+str(self.Outputs)+" "+str(self.timeStamp)
+
+
 
 			
-	def updateMongo(self):
-		self.client = MongoClient(self.database, 27017)
-		db = self.client["pool"]
-		collection = db["gen"+str(self.generation+1)]
-		collection.insert_many(self.getSpeciesBSON(self.species))
-
+	def updateMongoGenerations(self,doc):
+		db = self.client["runs"]
+		collection = db["Generations"]
+		collection.insert_one(doc)
 		
-	def getSpeciesBSON(self,species):
-		specieArray = []
-		c = 0
+	def updateMongoGenomes(self,species):
+		docs = []
 		for specie in species:
-			specieBSON = {
-				"specie" : c,
-				"inputs"  : specie.Inputs,
-				"outputs" : specie.Outputs,
-				"topFitness" : specie.topFitness,
-				"staleness" : specie.staleness, 
-				"genomes" : self.getGenomeBSON(specie.genomes),
-				"averageFitness" : specie.averageFitness,
-				"CrossoverChance" : specie.CrossoverChance,
-				"recurrent" : specie.recurrent
-				}
-			c += 1
-			specieArray.append(specieBSON)
-		return specieArray
-			
-	def getGenomeBSON(self,genomes):
-		genomesArray = []
-		c = 0
-		for genome in genomes:
-			genomeBSON = {
-				"genome" : c,
+			for genome in specie.genomes:
+				docs.append({
+				"game" : str(self.Inputs)+" "+str(self.Outputs)+" "+str(self.timeStamp),
 				"genes" : self.getGenesBSON(genome.genes),
+				"weightMaps" : self.getGeneWeightsBSON(genome.genes),
 				"fitness" : genome.fitness,
-				"neurons" : self.getNeuronsBSON(genome.neurons),
-				"max neuron" : genome.Inputs,
-				"muation rates" : {
-					"connections" : genome.mutationRates["connections"],
-					"link" : genome.mutationRates["link"],
-					"bias" : genome.mutationRates["bias"],
-					"node" : genome.mutationRates["node"],
-					"enable" : genome.mutationRates["enable"],
-					"disable" : genome.mutationRates["disable"],
-					"step" :  genome.mutationRates["step"]
-				},
-				"global rank" :  genome.globalRank,
-				"max nodes" : genome.maxNodes,
-				"perturb chance" : genome.PerturbChance,
-				"parents" : self.getGenomeParentsBSON(genome.parents)
-			}
-			c += 1
-			genomesArray.append(genomeBSON)
-		return genomesArray
+				"maxNeuron" : genome.maxneuron,
+				"mutationRates" : genome.mutationRates,
+				"globalRank" : genome.globalRank,
+				"maxNodes" : genome.maxNodes,
+				"currentAge" : genome.mutationRates["age"],
+				"inputs" : genome.Inputs,
+				"Outputs" : genome.Outputs,
+				"recurrent" : genome.recurrent,
+				"parents" : genome.parents,
+				"generation" : genome.ID["generation"],
+				"specie"	 : genome.ID["specie"],
+				"genome"	 : genome.ID["genome"]
+				})
+		db = self.client["runs"]
+		collection = db["Genomes"]
+		collection.insert_many(docs)
+		
 	
 	def getGenesBSON(self,genes):
 		genesArray = []
-		c = 0
 		for gene in genes:
-			geneBSON = {
-				"into": gene.into,
-				"out" : gene.out,
-				"weight" : gene.weight,
-				"innovation" : gene.innovation,
-				"enabled" : gene.enabled
-			}
-			c += 1
-			genesArray.append(geneBSON)
+			genesArray.append(gene.innovation)
 		return genesArray
 	
-	def getNeuronsBSON(self,neurons):
-		neuronsBSON = {}
-		for k,neuron in neurons.items():
-			neuronsBSON[str(k)] = neuron.value 
-		return neuronsBSON
+	def getGeneWeightsBSON(self,genes):
+		genesWeightMapArray = []
+		for gene in genes:
+			genesWeightMapArray.append({
+			str(gene.innovation) : gene.weight
+			})
+		return genesWeightMapArray
+			
 		
-	def getGenomeParentsBSON(self,parents):
-		parentsBSON = {}
-		
-		if parents != None:
-			parentsBSON={
-				"1":parents["parent1"],
-				"2":parents["parent2"]
-			}
-		return parentsBSON
-	
-	
-	def addToPool(self,child): # adds a species to its family of species, if not within threshold of any existing species creates a new species.
+#	def addToPool(self,child): # adds a species to its family of species, if not within threshold of any existing species creates a new species.
+#		foundSpecies = False
+#		for specie in range(len(self.species)):
+#			if not foundSpecies and self.sameSpecies(child,self.species[specie].genomes[0]):
+#				child.ID = {
+#					"generation" : self.generation,
+#					"specie" : specie,
+#					"genome" : len(self.species[specie].genomes)+1
+#					}
+#				if self.client != None:
+#					doc = child.ID
+#					doc["game"] = self.gameName
+#					doc = {**doc,**child.parents}
+#					self.updateMongoGenerations(doc)
+#					
+#				self.species[specie].genomes.append(child)
+#				foundSpecies = True
+#		if not foundSpecies:
+#			childSpecies = self.newSpecies(self.Inputs,self.Outputs,self.recurrent)
+#			child.defining = True
+#			child.ID = {
+#					"generation" : self.generation,
+#					"specie"	 : len(self.species)+1,
+#					"genome"	 : 0
+#					}
+#			if self.client != None:
+#				doc = child.ID
+#				doc["game"] = self.gameName
+#				doc = {**doc,**child.parents}
+#				self.updateMongoGenerations(doc)
+#			childSpecies.genomes.append(child)
+#			self.species.append(childSpecies)
+
+	def addToPool(self,child);
 		foundSpecies = False
-		for specie in range(len(self.species)):
-			if not foundSpecies and self.sameSpecies(child,self.species[specie].genomes[0]):
-				child.ID ={
-					"generation" : self.generation,
-					"specie" : specie,
-					"genome" : len(self.species[specie].genomes)+1
-				}
-				self.species[specie].genomes.append(child)
-				foundSpecies = True
-		if not foundSpecies:
-			childSpecies = self.newSpecies(self.Inputs,self.Outputs,self.recurrent)
-			child.ID = {
-				"generation" : self.generation,
-				"specie"	:len(self.species)+1,
-				"genome"	 :0
-			}
-			childSpecies.genomes.append(child)
-			self.species.append(childSpecies)
+		definingGenomes = self.getDefiningGenomes(self,child)
+				
+				
+	def getDefiningSpecies(self,genome,parent=None):
+		definingGenomes = []
+		if parent = None:
+			genomeToCheck = genome
+		else:
+			genomeToCheck = parent
+		for parent in genomeToCheck.parents.values():
+			if parent.defining:
+				generation = parent["generation"]
+				specie = parent["specie"]
+				genome = parent["genome"]
+				parentGenome = self.generations[generation].species[specie].genomes[genome]
+				if sameSpecies(genome,parentGenome) & parentGenome.defining:
+					for parentParent in parentGenome.parents.values():
+						if parentParent == None:
+							definingGenomes.append(parent.ID)
+						else:
+							generation = parentParent["generation"]
+							specie = parentParent["specie"]
+							genome = parentParent["genome"]
+							getDefingGenome(genome,self.generations[generation].species[specie].genomes[genome])
+				else:
+					 definingGenomes.append(parent.ID)
+			else:
+				getDefiningSpecies
 				  
 	def sameSpecies(self,genome1,genome2):
 		threshold = 1
-		if genome1.fitness == genome2.fitness:
-			threshold = genome1.mutationRates["DeltaThreshold"]
-			DeltaDisjoint = genome1.mutationRates["DeltaDisjoint"]
-			DeltaWeights = genome1.mutationRates["DeltaWeights"]
-
-		if genome1.fitness > genome2.fitness:
+		if genome1.fitness >= genome2.fitness:
 			threshold = genome1.mutationRates["DeltaThreshold"]
 			DeltaDisjoint = genome1.mutationRates["DeltaDisjoint"]
 			DeltaWeights = genome1.mutationRates["DeltaWeights"]
@@ -164,21 +170,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		dd = DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
 		dw = DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes 
-
-		if genome1.fitness > genome2.fitness:
-			threshold = genome1.mutationRates["DeltaThreshold"]
-		if genome1.fitness < genome2.fitness:
-			threshold = genome2.mutationRates["DeltaThreshold"]
-		dd = DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
-		dw = DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes 
 		return dd + dw < threshold
 
-	def initializeRun(self): #generates a network for current species
+	#generates a network for current species
+	def initializeRun(self): 
 		species = self.species[self.currentSpecies]
 		genome = species.genomes[self.currentGenome]
 		generateNetwork(genome) 
-			
-	def nextGenome(self):# cycles through genomes
+	
+	# cycles through genomes
+	def nextGenome(self):
 		self.currentGenome = self.currentGenome + 1
 		if self.currentGenome +1 > len(self.species[self.currentSpecies].genomes):
 			self.currentGenome = 0
@@ -196,10 +197,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				   
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
+		
+		
 		self.generations.append(self.species)
 		for specie in self.species:
 			specie.calculateAverageRemainingMultiplyer()
 			specie.caclulateAverageBreedRate()
+		self.updateMongoGenomes(self.species)
 		self.cullSpecies(False)  
 		self.rankGlobally() 
 		self.removeStaleSpecies()
@@ -298,7 +302,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			breed = specie.averageFitness / sum * self.Population
 			if breed >= specie.averageBreed:
-				print(breed,specie.averageBreed)
 				survived.append(specie)
 	
 		self.species = survived
@@ -350,6 +353,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		return self.best[len(self.best)-1]
 
 	def disjoint(self,genes1,genes2): # mesures the amount of shared in a genes in a genomes genes.
+		#self.client = MongoClient(self.databaseName, 27017)
+		#db = self.client["runs"]
+		#generationsCollection = db["Genomes"]
+		#i = []
+		#for gene in genes1:
+		#	i.append(gene.innovation)
+		#generation = generationsCollection.find({"game": self.gameName ,"generation":self.generation,"genes":{"$in":i}})
+		#for specie in generation:
+		#	print("specie",i)
+		#	print(specie["genes"])
 		i1 = {}
 		for gene in genes1:
 			i1[gene.innovation] = True
@@ -369,6 +382,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		if n == 0:
 			return 0
 		return disjointGenes / n
+
+
 		
 	def weights(self,genes1,genes2): # mesures the difference of weights in a shared gene due to mutation 
 		i2 = {}
@@ -381,7 +396,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				gene2 = i2.get(gene.innovation)
 				sum = sum + abs(gene.weight - gene2.weight)
 				coincident = coincident + 1
-		if sum == 0 and coincident == 0:
+		if sum == 0 or coincident == 0:
 			return 0
 		return sum / coincident
 
@@ -422,6 +437,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.Outputs = Outputs
 			self.recurrent = recurrent
 			self.ID = None
+			self.defining = False
 			self.parents = {
 				"parent1" : None,
 				"parent2" : None
@@ -771,8 +787,7 @@ class newNeuron():
 	def __init__(self):
 		self.incoming = []
 		self.value = 0.0
-	 
-
+		
 
 
 
