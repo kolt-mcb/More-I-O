@@ -28,17 +28,19 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.client = None
 		self.gameName = gameName
 		self.timeStamp = time.time()
+		children = []
 		for x in range(self.Population):# potpulate with random nets
 			newGenome = self.newGenome(Inputs,Outputs,recurrent)
 			while newGenome.genes == []:
 				newGenome.mutate()
-			self.addToPool(newGenome)
+				children.append(newGenome)
+		self.addToPool(children)
 		for specie in self.species:
 			for genome in specie.genomes:
 				genome.generateNetwork()
-		self.updateMongoGenomes(self.species)
 		if database != None:
 			self.client = MongoClient(self.databaseName, 27017)
+		self.updateMongoGenomes(self.species)
 		if gameName == None:
 			self.gameName = str(self.Inputs)+" "+str(self.Outputs)+" "+str(self.timeStamp)
 
@@ -125,36 +127,78 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 #			childSpecies.genomes.append(child)
 #			self.species.append(childSpecies)
 
-	def addToPool(self,child);
+	def addToPool(self,children):
 		foundSpecies = False
-		definingGenomes = self.getDefiningGenomes(self,child)
+		for child in children:
+			child.definingGenomes = self.getDefiningGenomes(self,child)
+		for child in children:
+			for specie in range(len(self.species)):
+				for genome in self.species[specie].genomes:
+					print("add to pool specie:",specie)
+					for definingGenome in genome.definingGenomes:
+						if definingGenome in child.definingGenomes:
+							if self.sameSpecies(child,genome) and not foundSpecies:
+								child.ID = {
+									"generation" : self.generation,
+									"specie" : specie,
+									"genome" : len(self.species[specie].genomes)+1
+								}
+								if self.client != None:
+									doc = child.ID
+									doc["game"] = self.gameName
+									doc = {**doc,**child.parents}
+									self.updateMongoGenerations(doc)					
+								self.species[specie].genomes.append(child)
+								foundSpecies = True
+			if not foundSpecies:
+				specie = self.newSpecies(self.Inputs,self.Outputs,self.recurrent)
+				child.defining = True
+				child.ID = {
+					"generation" : self.generation,
+					"specie"	 : len(self.species)+1,
+					"genome"	 : 0
+					}
+				if self.client != None:
+					doc = child.ID
+					doc["game"] = self.gameName
+					doc = {**doc,**child.parents}
+					self.updateMongoGenerations(doc)
+				specie.genomes.append(child)
+				self.species.append(specie)
+								
 				
-				
-	def getDefiningSpecies(self,genome,parent=None):
+	def getDefiningGenomes(self,genome,parent=None):
 		definingGenomes = []
-		if parent = None:
+		if parent == None:
 			genomeToCheck = genome
 		else:
 			genomeToCheck = parent
 		for parent in genomeToCheck.parents.values():
-			if parent.defining:
+			if parent == None:
+				definingGenomes.append(genomeToCheck.ID)
+			else:
 				generation = parent["generation"]
 				specie = parent["specie"]
 				genome = parent["genome"]
-				parentGenome = self.generations[generation].species[specie].genomes[genome]
-				if sameSpecies(genome,parentGenome) & parentGenome.defining:
-					for parentParent in parentGenome.parents.values():
-						if parentParent == None:
-							definingGenomes.append(parent.ID)
-						else:
-							generation = parentParent["generation"]
-							specie = parentParent["specie"]
-							genome = parentParent["genome"]
-							getDefingGenome(genome,self.generations[generation].species[specie].genomes[genome])
+				print( "gen:",generation," specie:",specie," genome:",genome, " len gen:",len(self.generations)," len generations:",len(self.generations[generation])," genomes:",len(self.generations[generation][specie].genomes))
+				parentGenome = self.generations[generation][specie].genomes[genome]
+				if parentGenome.defining:
+					if self.sameSpecies(genomeToCheck,parentGenome) & parentGenome.defining:
+						for parentParent in parentGenome.parents.values():
+							if parentParent == None:
+								definingGenomes.append(parent.ID)
+							else:
+								generation = parentParent["generation"]
+								specie = parentParent["specie"]
+								genome = parentParent["genome"]
+								definingGenomes.append(self.getDefingGenome(genomeToCheck,self.generations[generation][specie].genomes[genome]))
+					else:
+						definingGenomes.append(parentGenome.ID)
 				else:
-					 definingGenomes.append(parent.ID)
-			else:
-				getDefiningSpecies
+					definingGenomes.append(self.getDefiningSpecies(genomeToCheck,parent))
+		if definingGenomes == [None,None]:
+			return []
+		return definingGenomes
 				  
 	def sameSpecies(self,genome1,genome2):
 		threshold = 1
@@ -244,8 +288,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				parent = random.choice(self.species)
 				child = parent.breedChildren()
 				children.append(child)
-		for child in children: # adds all children there species in the pool
-			self.addToPool(child)
+		# adds all children to there species in the pool
+		self.addToPool(children)
 		self.generation = self.generation + 1
 		
 	def cullOldSpecies(self):
@@ -433,6 +477,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["age"] = 10
 			self.currentAge = self.mutationRates["age"]
 			self.parents = []
+			self.defining = False
 			self.Inputs = Inputs
 			self.Outputs = Outputs
 			self.recurrent = recurrent
