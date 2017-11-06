@@ -168,7 +168,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				self.species.append(specie)
 								
 				
-	def getRelatives(self,genome,parent=None):
+	def getRelatives(self,genome,parent=None,num=0):
+		num +=1
 		relatives = []
 		if parent == None:
 			genomeToCheck = genome
@@ -181,9 +182,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				generation = parent["generation"]
 				specie = parent["specie"]
 				genome = parent["genome"]
-				print( "gen:",generation," specie:",specie)#," genome:",genome, " len gen:",len(self.generations)," len generations:",len(self.generations[generation])," genomes:",len(self.generations[generation][specie].genomes))
+				print( self.generations[generation][specie].genomes,specie)#," genome:",genome, " len gen:",len(self.generations)," len generations:",len(self.generations[generation])," genomes:",len(self.generations[generation][specie].genomes))
 				parentGenome = self.generations[generation][specie].genomes[genome]
-				if self.sameSpecies(genomeToCheck,parentGenome):
+				if self.sameSpecies(genome,parentGenome):
 					if not genome.definingGenome:
 						for parentParent in parentGenome.parents.values():
 							if parentParent == None:
@@ -192,11 +193,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 								generation = parentParent["generation"]
 								specie = parentParent["specie"]
 								genome = parentParent["genome"]
-								relatives.append(self.getRelatives(genomeToCheck,self.generations[generation][specie].genomes[genome]))
+								relatives.append(self.getRelatives(genomeToCheck,self.generations[generation][specie].genomes[genome],num))
 					else:
 						relatives.append(genomeToCheck.ID)
 				else:
-					relatives.append(self.getRelatives(genomeToCheck,parentGenome))
+					relatives.append(genomeToCheck)
 		if relatives == [None,None]:
 			return []
 		return relatives
