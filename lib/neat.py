@@ -130,14 +130,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	def addToPool(self,children):
 		foundSpecies = False
 		for child in children:
-			child.definingGenomes = self.getDefiningGenomes(self,child)
+			child.relatives = self.getRelatives(self,child)
 		for child in children:
 			for specie in range(len(self.species)):
 				for genome in self.species[specie].genomes:
-					print("add to pool specie:",specie)
-					for definingGenome in genome.definingGenomes:
-						if definingGenome in child.definingGenomes:
+					#print("add to pool specie:",specie)
+					for definingGenome in genome.relatives:
+						if definingGenome in child.relatives:
 							if self.sameSpecies(child,genome) and not foundSpecies:
+								print(foundSpecies)
 								child.ID = {
 									"generation" : self.generation,
 									"specie" : specie,
@@ -167,38 +168,38 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				self.species.append(specie)
 								
 				
-	def getDefiningGenomes(self,genome,parent=None):
-		definingGenomes = []
+	def getRelatives(self,genome,parent=None):
+		relatives = []
 		if parent == None:
 			genomeToCheck = genome
 		else:
 			genomeToCheck = parent
 		for parent in genomeToCheck.parents.values():
 			if parent == None:
-				definingGenomes.append(genomeToCheck.ID)
+				relatives.append(genomeToCheck.ID)
 			else:
 				generation = parent["generation"]
 				specie = parent["specie"]
 				genome = parent["genome"]
-				print( "gen:",generation," specie:",specie," genome:",genome, " len gen:",len(self.generations)," len generations:",len(self.generations[generation])," genomes:",len(self.generations[generation][specie].genomes))
+				print( "gen:",generation," specie:",specie)#," genome:",genome, " len gen:",len(self.generations)," len generations:",len(self.generations[generation])," genomes:",len(self.generations[generation][specie].genomes))
 				parentGenome = self.generations[generation][specie].genomes[genome]
-				if parentGenome.defining:
-					if self.sameSpecies(genomeToCheck,parentGenome) & parentGenome.defining:
+				if self.sameSpecies(genomeToCheck,parentGenome):
+					if not genome.definingGenome:
 						for parentParent in parentGenome.parents.values():
 							if parentParent == None:
-								definingGenomes.append(parent.ID)
+								relatives.append(parent.ID)
 							else:
 								generation = parentParent["generation"]
 								specie = parentParent["specie"]
 								genome = parentParent["genome"]
-								definingGenomes.append(self.getDefingGenome(genomeToCheck,self.generations[generation][specie].genomes[genome]))
+								relatives.append(self.getRelatives(genomeToCheck,self.generations[generation][specie].genomes[genome]))
 					else:
-						definingGenomes.append(parentGenome.ID)
+						relatives.append(genomeToCheck.ID)
 				else:
-					definingGenomes.append(self.getDefiningSpecies(genomeToCheck,parent))
-		if definingGenomes == [None,None]:
+					relatives.append(self.getRelatives(genomeToCheck,parentGenome))
+		if relatives == [None,None]:
 			return []
-		return definingGenomes
+		return relatives
 				  
 	def sameSpecies(self,genome1,genome2):
 		threshold = 1
