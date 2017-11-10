@@ -29,20 +29,22 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.gameName = gameName
 		self.timeStamp = time.time()
 		children = []
-		for x in range(self.Population):# potpulate with random nets
+		if gameName == None:
+			self.gameName = str(self.Inputs)+" "+str(self.Outputs)+" "+str(self.timeStamp)
+		if database != None:
+			self.client = MongoClient(self.databaseName, 27017)
+		for x in range(self.Population+1):# potpulate with random nets
 			newGenome = self.newGenome(Inputs,Outputs,recurrent)
 			while newGenome.genes == []:
 				newGenome.mutate()
-				children.append(newGenome)
+			children.append(newGenome)
 		self.addToPool(children)
+		self.generations.append(self.species)
 		for specie in self.species:
 			for genome in specie.genomes:
 				genome.generateNetwork()
-		if database != None:
-			self.client = MongoClient(self.databaseName, 27017)
 		self.updateMongoGenomes(self.species)
-		if gameName == None:
-			self.gameName = str(self.Inputs)+" "+str(self.Outputs)+" "+str(self.timeStamp)
+
 
 
 
@@ -128,27 +130,26 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 #			self.species.append(childSpecies)
 
 	def addToPool(self,children):
-		foundSpecies = False
 		for child in children:
-			child.relatives = self.getRelatives(self,child)
-		for child in children:
+			child.relatives = self.getRelatives(child)
+			foundSpecies = False
 			for specie in range(len(self.species)):
 				for genome in self.species[specie].genomes:
 					#print("add to pool specie:",specie)
 					for definingGenome in genome.relatives:
-						if definingGenome in child.relatives:
-							if self.sameSpecies(child,genome) and not foundSpecies:
-								print(foundSpecies)
+						if definingGenome in child.relatives and not foundSpecies:
+							if self.sameSpecies(child,genome):
 								child.ID = {
 									"generation" : self.generation,
 									"specie" : specie,
-									"genome" : len(self.species[specie].genomes)+1
+									"genome" : len(self.species[specie].genomes)
 								}
 								if self.client != None:
 									doc = child.ID
 									doc["game"] = self.gameName
 									doc = {**doc,**child.parents}
-									self.updateMongoGenerations(doc)					
+									self.updateMongoGenerations(doc)
+								print("test",self.generation,specie,self.species[specie].genomes)
 								self.species[specie].genomes.append(child)
 								foundSpecies = True
 			if not foundSpecies:
@@ -156,7 +157,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				child.defining = True
 				child.ID = {
 					"generation" : self.generation,
-					"specie"	 : len(self.species)+1,
+					"specie"	 : len(self.species),
 					"genome"	 : 0
 					}
 				if self.client != None:
@@ -166,40 +167,45 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					self.updateMongoGenerations(doc)
 				specie.genomes.append(child)
 				self.species.append(specie)
-								
+				foundSpecies = True
 				
-	def getRelatives(self,genome,parent=None,num=0):
+	def getRelatives(self,child,parent=None,num=0):
 		num +=1
 		relatives = []
 		if parent == None:
-			genomeToCheck = genome
+			genomeToCheck = child
 		else:
 			genomeToCheck = parent
-		for parent in genomeToCheck.parents.values():
-			if parent == None:
-				relatives.append(genomeToCheck.ID)
+		for parentGenomeDic in genomeToCheck.parents.values():
+			if parentGenomeDic == None:
+				if genomeToCheck != child:
+					relatives.append(genomeToCheck.ID)
 			else:
-				generation = parent["generation"]
-				specie = parent["specie"]
-				genome = parent["genome"]
-				print( self.generations[generation][specie].genomes,specie)#," genome:",genome, " len gen:",len(self.generations)," len generations:",len(self.generations[generation])," genomes:",len(self.generations[generation][specie].genomes))
+				generation = parentGenomeDic["generation"]
+				specie = parentGenomeDic["specie"]
+				genome = parentGenomeDic["genome"]
+				print(specie)
+				print( self.generations[generation][specie].genomes,generation,specie,genome,num)#," genome:",genome, " len gen:",len(self.generations)," len generations:",len(self.generations[generation])," genomes:",len(self.generations[generation][specie].genomes))
 				parentGenome = self.generations[generation][specie].genomes[genome]
-				if self.sameSpecies(genome,parentGenome):
-					if not genome.definingGenome:
+				print(parentGenome.ID)
+				if self.sameSpecies(child,parentGenome):
+					print("same species", parentGenome.defining)
+					relatives.append(parentGenome.ID)
+					if not parentGenome.defining:
+						print("parentParent",parentGenome.parents.values())
 						for parentParent in parentGenome.parents.values():
-							if parentParent == None:
-								relatives.append(parent.ID)
-							else:
+							print(parentParent,"parentparent")
+							if parentParent != None:
+								print("recursive same species")
 								generation = parentParent["generation"]
 								specie = parentParent["specie"]
 								genome = parentParent["genome"]
 								relatives.append(self.getRelatives(genomeToCheck,self.generations[generation][specie].genomes[genome],num))
-					else:
-						relatives.append(genomeToCheck.ID)
 				else:
-					relatives.append(genomeToCheck)
+					relatives.append(genomeToCheck.ID)
 		if relatives == [None,None]:
 			return []
+		print("relatives",relatives)
 		return relatives
 				  
 	def sameSpecies(self,genome1,genome2):
@@ -233,7 +239,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if self.currentSpecies >= len(self.species):
 				self.currentSpecies = 0
 				self.currentGenome = 0
-				newGeneration()
+				nextGeneration()
 				
 	def evaluateCurrent(self,inputs,discrete=False): # runs current species network 
 		species = self.species[self.currentSpecies]
@@ -243,9 +249,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				   
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
-		
-		
-		self.generations.append(self.species)
 		for specie in self.species:
 			specie.calculateAverageRemainingMultiplyer()
 			specie.caclulateAverageBreedRate()
@@ -253,7 +256,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.cullSpecies(False)  
 		self.rankGlobally() 
 		self.removeStaleSpecies()
-
 		# reranks after removeing stales species and  stores best player for later play
 		self.rankGlobally(addBest=True)
 		for specie in self.species:
@@ -263,12 +265,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			specie.calculateAverageCrossoverRate()
 		self.removeWeakSpecies() 
 		Sum = self.totalAverageFitness()
-
 		#defines new children list
 		children = []
 		c = 0
 		for specie in self.species:
 			for genome in specie.genomes:
+				print(genome)
 				c += 1
 				
 		while (len(children)+c < self.Population):
@@ -285,48 +287,57 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			for genome in specie.genomes:
 				c += 1
-				
+				print(genome)
 		while (len(children)+c < self.Population):
-				parent = random.choice(self.species)
-				child = parent.breedChildren()
-				children.append(child)
+			parent = random.choice(self.species)
+			child = parent.breedChildren()
+			children.append(child)
+		g = 0
+		for generation in self.generations:
+			g+=1
+			s = 0
+			for specie in generation:
+				m = 0
+				for genome in specie.genomes:
+					print(genome.ID,g,s,m)
+					m+=1
+				s += 1
 		# adds all children to there species in the pool
-		self.addToPool(children)
 		self.generation = self.generation + 1
+		self.addToPool(children)
+		self.generations.append(self.species)
 		
 	def cullOldSpecies(self):
-		species = self.species
-		s = 0
-		for specie in species:
-			g = 0
+		species = []
+		for specie in self.species:
+			survivedGenomes = []
 			for genome in specie.genomes:
 				p = genome.currentAge
-				if random.random() > p:
-					self.species[s].genomes.pop(g)
-					if len(self.species[s].genomes) == 0:
-						self.species.pop(s)
-				else:
-					if len(self.species[s].genomes) != 0:
-						self.species[s].genomes[g].currentAge -= 1
-				g += 1
-			s += 1	
+				if 1 < p:
+					survivedGenomes.append(genome)
+			if len(survivedGenomes) >= 1:
+				specie.genomes = survivedGenomes
+				species.append(specie)
+		self.species = species
+
 
 	def cullSpecies(self,cutToOne): #sorts genomes by fitness and removes half of them or cuts to one
-		species = self.species
-		S = 0
+		species = []
 		
-		for specie in species:
+		for specie in self.species:
 			specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
+			genomes = []
 			if not cutToOne:
 				remaining = math.ceil(len(specie.genomes)/specie.remainingMultiplyer)
 			if cutToOne:
-				remaining = specie.remainingRate		
-			while len(self.species[S].genomes) > remaining:
-				self.species[S].genomes.remove(specie.genomes[len(self.species[S].genomes)-1])
-			if len(self.species[S].genomes) == 0:
-				self.species.remove(specie)
-			S += 1
-			
+				remaining = specie.remainingRate
+			cutoff = 0
+			while (not len(genomes) >remaining) and len(specie.genomes) != len(genomes):
+				genomes.append(specie.genomes[cutoff])
+				cutoff +=1
+			specie.genomes=genomes
+			species.append(specie)
+		self.species = species
 	def removeStaleSpecies(self): # removes species that have not gotten a high score past a threshold
 		survived = []
 		for specie in self.species:
@@ -467,7 +478,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["enable"] = 0.05
 			self.mutationRates["disable"] = 0.1
 			self.mutationRates["step"] = 0.1
-			self.mutationRates["DeltaThreshold"] = 1
+			self.mutationRates["DeltaThreshold"] = 1.5
 			self.mutationRates["DeltaDisjoint"] = 2
 			self.mutationRates["DeltaWeights"] = 0.4 
 			self.mutationRates["crossoverRate"] = .75
