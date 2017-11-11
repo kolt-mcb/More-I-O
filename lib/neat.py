@@ -108,7 +108,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					for genome in self.species[specie].genomes:
 						for relative in genome.relatives:
 							print("relatives")
-							if relatives in child.relatives:
+							if relative in child.relatives:
 								rating = self.sameSpecies(child,genome,rating=True)
 								if rating>0:
 									mates.append((rating,genome.ID))
