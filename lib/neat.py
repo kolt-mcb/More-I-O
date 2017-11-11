@@ -136,7 +136,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if not foundSpecies:
 				specie = self.newSpecies(self.Inputs,self.Outputs,self.recurrent)
 				child.defining = True
-				print(self.generations[generation][len(self.species)],len(self.species))
+				print(self.generations[self.generation][len(self.species)],len(self.species))
 				child.ID = {
 					"generation" : self.generation,
 					"specie"	 : len(self.species),
