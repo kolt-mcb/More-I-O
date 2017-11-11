@@ -157,7 +157,7 @@ def jobTrainer(envName):
 	env.close()
 	return results
 
-def singleGame(genome,genomePipe,envName,eval):
+def singleGame(genome,envName,eval):
 	env = gym.make(envName)
 	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True)
 	runs = 1
@@ -438,9 +438,9 @@ class gui:
     f.close()
 	
   def playBest(self,eval=True):
-    parentPipe, childPipe = multiprocessing.Pipe()
+    #parentPipe, childPipe = multiprocessing.Pipe()
     genome = self.pool.getBest()
-    process = multiprocessing.Process(target = singleGame,args=(genome,childPipe,self.envEntry.get(),eval))
+    process = multiprocessing.Process(target = singleGame,args=(genome,self.envEntry.get(),eval))
     process.start()
     #display = networkDisplay.newNetworkDisplay(genome,parentPipe)
     #display.checkGenomePipe()
