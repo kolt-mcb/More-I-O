@@ -100,7 +100,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 	def addToPool(self,children):
 		for child in children:
-			print("child",child,ID)
+			print("child",child.ID)
 			child.relatives = self.getRelatives(child)
 			foundSpecies = False
 			mates = []
