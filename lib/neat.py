@@ -181,6 +181,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		if relatives == [None,None]:
 			return
+		print("added all",relatives)
 		return relatives
 				  
 	def sameSpecies(self,genome1,genome2,rating=False):
