@@ -39,8 +39,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			while newGenome.genes == []:
 				newGenome.mutate()
 			children.append(newGenome)
-		self.addToPool(children)
 		self.generations.append(self.species)
+		self.addToPool(children)
+
 		for specie in self.species:
 			for genome in specie.genomes:
 				genome.generateNetwork()
