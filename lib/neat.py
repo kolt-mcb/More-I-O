@@ -109,11 +109,14 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 						for relative in genome.relatives:
 							print("relatives")
 							if relative in child.relatives:
-								rating = self.sameSpecies(child,genome,rating=True)
-								if rating>0:
-									print("added individual",genome.ID)
-									mates.append((rating,genome.ID))
-									foundSpecies = True
+								if relative in mates:
+									pass
+								else:
+									rating = self.sameSpecies(child,genome,rating=True)
+									if rating>0:
+										print("added individual",genome.ID)
+										mates.append((rating,genome.ID))
+										foundSpecies = True
 			if foundSpecies:
 				print("mates",mates)
 				newSpecies = max(mates,key=itemgetter(0))[1]
@@ -179,7 +182,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					if self.sameSpecies(child,parentGenome):
 						relatives.append(parentGenome)
 
-		if relatives == [None,None]:
+		if relatives == [None,None] or []:
 			return
 		print("added all",relatives)
 		return relatives
