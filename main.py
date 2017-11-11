@@ -185,11 +185,11 @@ def singleGame(genome,genomePipe,envName,eval):
 			if not eval:
 				pass
 				#env.render()
-			genomePipe.send(genome)
+			#genomePipe.send(genome)
 		print(score)
 	env.reset
-	genomePipe.send("quit")
-	genomePipe.close()
+	#genomePipe.send("quit")
+	#genomePipe.close()
 	env.close()
 
 
@@ -442,9 +442,9 @@ class gui:
     genome = self.pool.getBest()
     process = multiprocessing.Process(target = singleGame,args=(genome,childPipe,self.envEntry.get(),eval))
     process.start()
-    display = networkDisplay.newNetworkDisplay(genome,parentPipe)
-    display.checkGenomePipe()
-    display.Tk.mainloop()
+    #display = networkDisplay.newNetworkDisplay(genome,parentPipe)
+    #display.checkGenomePipe()
+    #display.Tk.mainloop()
     process.join()
 
 
