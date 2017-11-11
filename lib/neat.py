@@ -173,14 +173,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					print(parentGenomeDic)
 					if self.sameSpecies(child,parentGenome):
 						relatives.append(parentGenome)
-						for parentParent in parentGenome.parents.values():
-							if parentParent != None:
-								generation = parentParent["generation"]
-								specie = parentParent["specie"]
-								genome = parentParent["genome"]
-								_relatives = self.getRelatives(genomeToCheck,self.generations[generation][specie].genomes[genome])
-								if _relatives != None:
-									relatives.append(_relatives)
+						relatives.append(self.getRelatives(genomeToCheck,parentGenome))
 				else:
 					if self.sameSpecies(child,parentGenome):
 						relatives.append(parentGenome)
