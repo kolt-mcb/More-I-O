@@ -158,6 +158,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		else:
 			genomeToCheck = parent
 		for parentGenomeDic in genomeToCheck.parents.values():
+			print("BUG FIXING",parentGenomeDic)
 			if parentGenomeDic != None:
 				generation = parentGenomeDic["generation"]
 				specie = parentGenomeDic["specie"]
