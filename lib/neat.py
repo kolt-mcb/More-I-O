@@ -173,7 +173,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					s += 1
 				print(parentGenomeDic)
 				parentGenome = self.generations[generation][specie].genomes[genome]
-				if (not parentGenome.defining) or generation == 0:
+				if ((not parentGenome.defining) or generation == 0) and parentGenome not in relatives:
 					print(parentGenomeDic)
 					if self.sameSpecies(child,parentGenome):
 						relatives.append(parentGenome)
@@ -182,7 +182,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					if self.sameSpecies(child,parentGenome):
 						relatives.append(parentGenome)
 
-		if relatives == [None,None] or []:
+		if relatives == [None,None] or relatives == []:
 			return
 		print("added all",relatives)
 		return relatives
