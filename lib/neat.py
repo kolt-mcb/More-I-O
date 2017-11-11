@@ -100,7 +100,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 	def addToPool(self,children):
 		for child in children:
-			print("child",child.ID)
 			child.relatives = self.getRelatives(child)
 			foundSpecies = False
 			mates = []
@@ -137,7 +136,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if not foundSpecies:
 				specie = self.newSpecies(self.Inputs,self.Outputs,self.recurrent)
 				child.defining = True
-				print(self.generation, len(self.species))
+				print(self.generation, len(self.species),child.ID)
 				child.ID = {
 					"generation" : self.generation,
 					"specie"	 : len(self.species),
