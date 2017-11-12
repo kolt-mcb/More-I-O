@@ -108,9 +108,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				for childRelative in child.relatives:
 					for specie in range(len(self.species)):
 						for genome in self.species[specie].genomes:
-							
 							print("relatives")
+							print(childRelative,genome.relatives)
 							if childRelative in genome.relatives:
+
 								if genome not in seen:
 									rating = self.sameSpecies(child,genome,rating=True)
 									if rating>0:
