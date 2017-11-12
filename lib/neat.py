@@ -112,11 +112,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 							print(childRelative,genome.relatives)
 							if genome.relatives != None:
 								if childRelative in genome.relatives:
-
 									if genome not in seen:
 										rating = self.sameSpecies(child,genome,rating=True)
 										if rating>0:
 											seen.add(genome)
+											print(seen)
 											print("added individual",genome.ID)
 											mates.append((rating,genome.ID))
 											foundSpecies = True
