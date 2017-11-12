@@ -463,6 +463,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["age"] = 10
 			self.currentAge = self.mutationRates["age"]
 			self.parents = []
+			self.relatives = []
 			self.mates = []
 			self.defining = False
 			self.Inputs = Inputs
