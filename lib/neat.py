@@ -39,8 +39,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			while newGenome.genes == []:
 				newGenome.mutate()
 			children.append(newGenome)
+		
 		self.addToPool(children)
+		self.generation += 1
 		self.generations.append(self.species)
+
 		for specie in self.species:
 			for genome in specie.genomes:
 				genome.generateNetwork()
@@ -104,51 +107,48 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			foundSpecies = False
 			mates = []
 			seen = set()
+			foundedSpecie = None
+			maxRating = 0
 			if child.relatives != None:
 				for childRelative in child.relatives:
 					for specie in range(len(self.species)):
 						for genome in self.species[specie].genomes:
-							print("relatives")
-							print(childRelative,genome.relatives)
 							if genome.relatives != None:
 								if childRelative in genome.relatives:
 									if genome not in seen:
 										rating = self.sameSpecies(child,genome,rating=True)
 										if rating>0:
+											if rating > maxRating:
+												maxRating = rating
+												foundedSpecie = specie
 											seen.add(genome)
-											print(list(seen))
-											print("added individual",genome.ID)
-											mates.append((rating,genome.ID))
+
+											mates.append(genome.ID)
 											foundSpecies = True
 			if foundSpecies:
-				print("mates",mates)
-				newSpecies = max(mates,key=itemgetter(0))[1]
-				print(newSpecies)
-				generation = newSpecies["generation"]
-				specie = newSpecies["specie"]
+				genome = len(self.species[foundedSpecie].genomes)
 				child.ID = {
 							"generation" : self.generation,
-							"specie" : specie,
-							"genome" : len(self.generations[generation][specie].genomes)
+							"specie" : foundedSpecie,
+							"genome" : genome
 						}
 				if self.client != None:
 					doc = child.ID
 					doc["game"] = self.gameName
 					doc = {**doc,**child.parents}
 					self.updateMongoGenerations(doc)
-				for mate in mates:
-					child.mates.append(mate[1])
-				self.generations[generation][specie].genomes.append(child)
-				print(mates)
+				child.mates = mates
+				self.species[foundedSpecie].genomes.append(child)
 			if not foundSpecies:
 				specie = self.newSpecies(self.Inputs,self.Outputs,self.recurrent)
 				child.defining = True
-				print(self.generation, len(self.species),child.ID)
+				
 				child.ID = {
 					"generation" : self.generation,
 					"specie"	 : len(self.species),
 					"genome"	 : 0
 					}
+
 				if self.client != None:
 					doc = child.ID
 					doc["game"] = self.gameName
@@ -165,29 +165,17 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		else:
 			genomeToCheck = parent
 		for parentGenomeDic in genomeToCheck.parents.values():
-			print("BUG FIXING",parentGenomeDic)
 			if parentGenomeDic != None:
 				generation = parentGenomeDic["generation"]
 				specie = parentGenomeDic["specie"]
 				genome = parentGenomeDic["genome"]
-				s = 0
-				for _specie in self.generations[generation]:
-					#print(_specie.genomes,s)
-					s += 1
-				print(parentGenomeDic)
 				parentGenome = self.generations[generation][specie].genomes[genome]
-				if ((not parentGenome.defining) or generation == 0):
-					print(parentGenomeDic)
-					if self.sameSpecies(child,parentGenome):
-						relatives.append(parentGenome)
-						relatives.append(self.getRelatives(genomeToCheck,parentGenome))
-				else:
-					if self.sameSpecies(child,parentGenome):
-						relatives.append(parentGenome)
+				if self.sameSpecies(child,parentGenome):
+					relatives.append(parentGenome)
+					relatives.append(self.getRelatives(child,parentGenome))
 
 		if relatives == [None,None] or relatives == []:
 			return 
-		print("added all",relatives)
 		return relatives
 				  
 	def sameSpecies(self,genome1,genome2,rating=False):
@@ -236,8 +224,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				   
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
-		self.generation = self.generation + 1
-		self.generations.append(self.species)
+
+
 		for specie in self.species:
 			specie.calculateAverageRemainingMultiplyer()
 			specie.caclulateAverageBreedRate()
@@ -277,8 +265,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			children.append(child)
 
 		# adds all children to there species in the pool
-
 		self.addToPool(children)
+		self.generations.append(self.species)
+		self.generation = self.generation + 1
+
 
 		
 	def cullOldSpecies(self):
