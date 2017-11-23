@@ -104,7 +104,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.generations.append([])
 		for child in children:
 			child.relatives = self.getRelatives(child)
-			print("relatives",child.relatives)
 			foundSpecies = False
 			foundedSpecie = None
 			maxRating = 0
@@ -115,7 +114,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 						for genome in range(len(self.species[specie].genomes)):
 							_genome = self.species[specie].genomes[genome]
 							if childRelative in _genome.relatives or childRelative == _genome.ID:
-								print(childRelative,_genome.relatives)
 								rating = self.sameSpecies(child,_genome,rating=True)
 								if rating>0:
 									if rating > maxRating:
@@ -136,7 +134,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for mate in mates:
 				specie = mate["specie"]
 				genome = mate["genome"]
-				print(mate)
 				self.species[specie].genomes[genome].mates.append(child.ID)
 			self.generations[self.generation].append(child)
 			if foundSpecies:
@@ -154,8 +151,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 				
 				
-	def getRelatives(self,child,parent=None,num=0):
-		num += 1
+	def getRelatives(self,child,parent=None):
 		relatives = []
 		if parent == None:
 			genomeToCheck = child
@@ -168,34 +164,26 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				generation = parentGenomeDic["generation"]
 				position = parentGenomeDic["position"]
 				parentGenome = self.generations[generation][position]
-				print("parent genome ",self.sameSpecies(genomeToCheck,parentGenome),num)
 				if not generation == 0:
 					if self.sameSpecies(child,parentGenome):
 						if parentGenome.ID != None:
 							relatives.append(parentGenome.ID)
-							parentRelatives = self.getRelatives(child,parentGenome,num)
+							parentRelatives = self.getRelatives(child,parentGenome)
 							if parentRelatives != None:
-								relatives.extend(parentRelatives)
+								relativesSet = (frozenset(relative.items()) for relative in relatives)
+								parentRelatives = (frozenset(relative.items()) for relative in parentRelatives)
+								newRelatives = set(parentRelatives).difference(relativesSet)
+								newRelatives = [dict(tuple) for tuple in newRelatives]
+								relatives.extend(list(newRelatives))
 		if relatives != None or relatives != []:
 			return relatives
 				  
 	def sameSpecies(self,genome1,genome2,rating=False):
 
-		Threshold1 = genome1.mutationRates["DeltaThreshold"]
-		DeltaDisjoint1 = genome1.mutationRates["DeltaDisjoint"]
-		DeltaWeights1 = genome1.mutationRates["DeltaWeights"]
+		Threshold = genome1.mutationRates["DeltaThreshold"]
+		DeltaDisjoint = genome1.mutationRates["DeltaDisjoint"]
+		DeltaWeights = genome1.mutationRates["DeltaWeights"]
 
-
-		Threshold2 = genome2.mutationRates["DeltaThreshold"]
-		DeltaDisjoint2 = genome2.mutationRates["DeltaDisjoint"]
-		DeltaWeights2 = genome2.mutationRates["DeltaWeights"]
-		
-		threshold = (Threshold1 + Threshold2)/2
-		DeltaDisjoint = (DeltaDisjoint1 + DeltaDisjoint2)/2
-		DeltaWeights = (DeltaWeights1 + DeltaWeights2)/2
-		
-		
-		
 		dd = DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
 		dw = DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes
 		if rating:
@@ -750,22 +738,14 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		def breedChildren(self): # breeds children of a species
 			genome1 = random.choice(self.genomes)
-			print("WAT",genome1.ID,len(genome1.mates))
 			if random.random() < self.crossoverRate and len(genome1.mates)>0:
-				print("TEST..............................................")
 				mate = random.choice(genome1.mates)
-				print(mate)
 				generation = mate["generation"]
 				position = mate["position"]
-				print("mate",mate)
-				for genome in pool.generations[generation]:
-					print(genome.ID)
 				genome2 = pool.generations[generation][position]
 				child = self.crossover(genome1,genome2)
 			else:
-				print("cloning",genome1.ID)
 				child = genome1.copyGenome()
-
 			child.mutate()
 			return child
 		
