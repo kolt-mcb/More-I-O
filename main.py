@@ -152,12 +152,12 @@ def jobTrainer(envName):
 			
 			scores += score
 		finalScore = round(scores/attemps)	
-		print("species:",currentSpecies, " genome:",currentGenome," Scored:",finalScore)
+		print("species:",currentSpecies, " genome:",currentGenome," Scored:",finalScore," ",genome.ID,genome.parents)
 		results.append((finalScore,job))
 	env.close()
 	return results
 
-def singleGame(genome,envName,eval):
+def singleGame(genome,genomePipe,envName,eval):
 	env = gym.make(envName)
 	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True)
 	runs = 1
@@ -184,12 +184,12 @@ def singleGame(genome,envName,eval):
 			score += reward
 			if not eval:
 				pass
-				#env.render()
-			#genomePipe.send(genome)
+				env.render()
+			genomePipe.send(genome)
 		print(score)
 	env.reset
-	#genomePipe.send("quit")
-	#genomePipe.close()
+	genomePipe.send("quit")
+	genomePipe.close()
 	env.close()
 
 
@@ -438,13 +438,13 @@ class gui:
     f.close()
 	
   def playBest(self,eval=True):
-    #parentPipe, childPipe = multiprocessing.Pipe()
+    parentPipe, childPipe = multiprocessing.Pipe()
     genome = self.pool.getBest()
-    process = multiprocessing.Process(target = singleGame,args=(genome,self.envEntry.get(),eval))
+    process = multiprocessing.Process(target = singleGame,args=(genome,childPipe,self.envEntry.get(),eval))
     process.start()
-    #display = networkDisplay.newNetworkDisplay(genome,parentPipe)
-    #display.checkGenomePipe()
-    #display.Tk.mainloop()
+    display = networkDisplay.newNetworkDisplay(genome,parentPipe)
+    display.checkGenomePipe()
+    display.Tk.mainloop()
     process.join()
 
 

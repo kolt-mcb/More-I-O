@@ -40,13 +40,13 @@ def playBest(pool):
 	process.join()
 
 
-def trainPool(population,envNum,pool,queue,env): 
+def trainPool(population,envNum,species,queue,env): 
 	before = time.time()
 	results = []
 	jobs = Queue()
 	lock = multiprocessing.Lock()
 	s = 0
-	for specie in pool.species:
+	for specie in species:
 		g=0
 		for genome in specie.genomes:
 			genome.generateNetwork()
@@ -66,11 +66,10 @@ def trainPool(population,envNum,pool,queue,env):
 		for result in resultChunk:
 			currentSpecies = result[1][0]
 			currentGenome = result[1][1]
-			pool.species[currentSpecies].genomes[currentGenome].fitness = result[0]
+			species[currentSpecies].genomes[currentGenome].fitness = result[0]
 	print("next generation")
-	pool.nextGeneration()
-	print("gen " ,pool.generation, "in ",int(after-before)," best", pool.getBest().fitness)
-	queue.put(pool)
+
+	queue.put(species)
 	 
 
 def get_pid(name):
@@ -151,7 +150,7 @@ def jobTrainer(envName):
 		finalScore = round(finalScore/5)
 		results.append((finalScore,job))
 	
-		print("species:",currentSpecies, "genome:",currentGenome,"Scored:",finalScore)
+		print("species:",currentSpecies, "genome:",currentGenome,"Scored:",finalScore," ",genome.ID,genome.parents)
 
 	return (results)
 
@@ -392,7 +391,7 @@ class gui:
 		if self.running:
 			queue = multiprocessing.Queue()
 			self.pool.Population = self.population.get()
-			self.netProcess = multiprocessing.Process(target=trainPool,args=(self.population.get(),self.envNum.get(),self.pool,queue,self.env))
+			self.netProcess = multiprocessing.Process(target=trainPool,args=(self.population.get(),self.envNum.get(),self.pool.species,queue,self.env))
 			self.netProcess.start()
 			self.master.after(250,lambda: self.checkRunCompleted(queue,pausing=False))
 		if not self.running:
@@ -416,7 +415,9 @@ class gui:
 		try:
 			msg = queue.get_nowait()
 			if msg is not sentinel:
-				self.pool = msg
+				self.pool.species = msg
+				self.pool.nextGeneration()
+				print("gen " ,self.pool.generation," best", self.pool.getBest().fitness)
 				self.netProcess.join()
 				self.updateStackPlot(self.pool.species)
 				playBest(self.pool)
