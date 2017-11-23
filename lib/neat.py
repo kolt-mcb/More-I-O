@@ -188,11 +188,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		dw = DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes
 		if rating:
 			
-			if	dd + dw > threshold:
-				return dd+dw - threshold 
+			if	dd + dw > Threshold:
+				return dd+dw - Threshold 
 			else:
 				return 0
-		return dd + dw > threshold
+		return dd + dw > Threshold
 
 	#generates a network for current species
 	def initializeRun(self): 
