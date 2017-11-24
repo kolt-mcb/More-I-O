@@ -73,7 +73,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		"recurrent" : genome.recurrent,
 		"parents" : genome.parents,
 		"generation" : genome.ID["generation"],
-		"genome"	 : genome.ID["position"]
+		"genome"	 : genome.ID["genome"]
 		}
 		db = self.client["runs"]
 		collection = db["Genomes"]
@@ -125,7 +125,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 			child.ID = {
 				"generation" : self.generation,
-				"position" : len(self.generations[self.generation])
+				"genome" : len(self.generations[self.generation])
 				}
 			for mate in mates:
 				specie = mate["specie"]
@@ -160,8 +160,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			
 			if parentGenomeDic != None:
 				generation = parentGenomeDic["generation"]
-				position = parentGenomeDic["position"]
-				parentGenome = self.generations[generation][position]
+				genome = parentGenomeDic["genome"]
+				parentGenome = self.generations[generation][genome]
 				if not generation == 0:
 					if self.sameSpecies(child,parentGenome):
 						if parentGenome.ID != None:
@@ -738,8 +738,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if random.random() < self.crossoverRate and len(genome1.mates)>0:
 				mate = random.choice(genome1.mates)
 				generation = mate["generation"]
-				position = mate["position"]
-				genome2 = pool.generations[generation][position]
+				genome = mate["genome"]
+				genome2 = pool.generations[generation][genome]
 				child = self.crossover(genome1,genome2)
 			else:
 				child = genome1.copyGenome()
