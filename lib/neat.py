@@ -58,30 +58,30 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		collection = db["Generations"]
 		collection.insert_one(doc)
 		
-	def updateMongoGenomes(self,species):
-		docs = []
-		for specie in species:
-			for genome in specie.genomes:
-				docs.append({
-				"game" : str(self.Inputs)+" "+str(self.Outputs)+" "+str(self.timeStamp),
-				"genes" : self.getGenesBSON(genome.genes),
-				"weightMaps" : self.getGeneWeightsBSON(genome.genes),
-				"fitness" : genome.fitness,
-				"maxNeuron" : genome.maxneuron,
-				"mutationRates" : genome.mutationRates,
-				"globalRank" : genome.globalRank,
-				"maxNodes" : genome.maxNodes,
-				"currentAge" : genome.mutationRates["age"],
-				"inputs" : genome.Inputs,
-				"Outputs" : genome.Outputs,
-				"recurrent" : genome.recurrent,
-				"parents" : genome.parents,
-				"generation" : genome.ID["generation"],
-				"genome"	 : genome.ID["position"]
-				})
+	def updateMongoGenome(self,genome):
+
+
+		doc = {
+		"game" : str(self.Inputs)+" "+str(self.Outputs)+" "+str(self.timeStamp),
+		"genes" : self.getGenesBSON(genome.genes),
+		"relatives" : genome.relatives,
+		"weightMaps" : self.getGeneWeightsBSON(genome.genes),
+		"fitness" : genome.fitness,
+		"maxNeuron" : genome.maxneuron,
+		"mutationRates" : genome.mutationRates,
+		"globalRank" : genome.globalRank,
+		"maxNodes" : genome.maxNodes,
+		"currentAge" : genome.mutationRates["age"],
+		"inputs" : genome.Inputs,
+		"Outputs" : genome.Outputs,
+		"recurrent" : genome.recurrent,
+		"parents" : genome.parents,
+		"generation" : genome.ID["generation"],
+		"genome"	 : genome.ID["position"]
+		}
 		db = self.client["runs"]
 		collection = db["Genomes"]
-		collection.insert_many(docs)
+		collection.insert_one(doc)
 		
 	
 	def getGenesBSON(self,genes):
@@ -149,6 +149,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				doc["game"] = self.gameName
 				doc = {**doc,**child.parents}
 				self.updateMongoGenerations(doc)
+				self.updateMongoGenome(child)
 
 				
 				
@@ -215,8 +216,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			specie.calculateAverageRemainingMultiplyer()
 			specie.caclulateAverageBreedRate()
-		if self.client != None:
-			self.updateMongoGenomes(self.species)
+
 		self.cullSpecies(False)  
 		self.rankGlobally() 
 		self.removeStaleSpecies()
