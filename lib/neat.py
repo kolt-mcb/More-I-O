@@ -148,6 +148,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				doc = child.ID
 				doc["game"] = self.gameName
 				doc = {**doc,**child.parents}
+				self.updateMongoGenerations(doc)
 
 				
 				
