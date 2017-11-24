@@ -41,13 +41,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			
 		self.addToPool(children)
 
-
-
 		for specie in self.species:
 			for genome in specie.genomes:
 				genome.generateNetwork()
-		if self.client != None:
-			self.updateMongoGenomes(self.species)
 
 
 
