@@ -210,9 +210,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
 		self.generation += 1
-		for specie in self.species:
-			specie.calculateAverageRemainingMultiplyer()
-			specie.caclulateAverageBreedRate()
+
 
 		self.cullSpecies(False)  
 		self.rankGlobally() 
@@ -222,7 +220,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			#calculateAverageFitness of a specie
 			specie.calculateAverageFitness()
-			specie.calculateAverageRemainingRate()
 			specie.calculateAverageCrossoverRate()
 		self.removeWeakSpecies() 
 		Sum = self.totalAverageFitness()
@@ -277,17 +274,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
 			genomes = []
-			if not cutToOne:
-				remaining = math.ceil(len(specie.genomes)/specie.remainingMultiplyer)
+			remaining = math.ceil(len(specie.genomes)/2)
 			if cutToOne:
-				remaining = specie.remainingRate
-			cutoff = 0
-			while (not len(genomes) > remaining) and len(specie.genomes) != len(genomes):
-				genomes.append(specie.genomes[cutoff])
-				cutoff +=1
-			specie.genomes=genomes.copy()
-			species.append(specie)
-		self.species = species
+				remaining = 1
+			total = len(specie.genomes)
+			while len(specie.genomes) > remaining:
+				specie.genomes.remove(specie.genomes[total-1])
+				total += -1
 	def removeStaleSpecies(self): # removes species that have not gotten a high score past a threshold
 		survived = []
 		for specie in self.species:
@@ -415,8 +408,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["crossoverRate"] = .2
 			self.mutationRates["PerturbChance"] = 0.5
 			self.mutationRates["ConectionCostRate"] = 1
-			self.mutationRates["RemainingMultiplyer"] = 3
-			self.mutationRates["Remaining"] = 2
 			self.mutationRates["breed"] = 1
 			self.mutationRates["age"] = 10
 			self.currentAge = self.mutationRates["age"]
@@ -703,32 +694,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				total = total + genome.globalRank
 			self.averageFitness = total / len(self.genomes)
 
-		def calculateAverageRemainingRate(self):
-			total = 0			
-			for genome in self.genomes:
-				total += genome.mutationRates["Remaining"] 
-			total = total / len(self.genomes)
-			if total < 1:
-				self.remainingRate = 1
-			else:
-				self.remainingRate = total
-		
-		def caclulateAverageBreedRate(self):
-			total = 0
-			for genome in self.genomes:
-				total += genome.mutationRates["breed"]
-			total = total / len(self.genomes)
-			self.averageBreed = total
 
-		def calculateAverageRemainingMultiplyer(self):
-			total = 0
-			for genome in self.genomes:
-				total += genome.mutationRates["RemainingMultiplyer"] 
-			total = total / len(self.genomes)
-			if total < 2:
-				self.remainingMultiplyer = 2
-			else:
-				self.remainingMultiplyer = total
+
 
 		def calculateAverageCrossoverRate(self):
 			totalAverage = 0
