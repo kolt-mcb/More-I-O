@@ -708,8 +708,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for genome in self.genomes:
 				total += genome.mutationRates["Remaining"] 
 			total = total / len(self.genomes)
-			if total < 1:
-				self.remainingRate = 1
+			if total < 2:
+				self.remainingRate = 2
 			else:
 				self.remainingRate = total
 		
