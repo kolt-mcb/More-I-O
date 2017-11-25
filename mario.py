@@ -150,7 +150,7 @@ def jobTrainer(envName):
 		finalScore = round(finalScore/5)
 		results.append((finalScore,job))
 	
-		print("species:",currentSpecies, "genome:",currentGenome,"Scored:",finalScore," ",genome.ID,genome.parents)
+		print("species:",currentSpecies, "genome:",currentGenome,"Scored:",finalScore)
 
 	return (results)
 

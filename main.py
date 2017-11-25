@@ -152,7 +152,7 @@ def jobTrainer(envName):
 			
 			scores += score
 		finalScore = round(scores/attemps)	
-		print("species:",currentSpecies, " genome:",currentGenome," Scored:",finalScore," ",genome.ID,genome.parents)
+		print("species:",currentSpecies, " genome:",currentGenome," Scored:",finalScore)
 		results.append((finalScore,job))
 	env.close()
 	return results
@@ -184,7 +184,7 @@ def singleGame(genome,genomePipe,envName,eval):
 			score += reward
 			if not eval:
 				pass
-				env.render()
+				#env.render()
 			genomePipe.send(genome)
 		print(score)
 	env.reset

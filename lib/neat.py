@@ -12,7 +12,7 @@ from pymongo import MongoClient
 
 class pool: #holds all species data, crossspecies settings and the current gene innovation
 	generations = []
-	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None,gameName=None):
+	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None):
 		self.species = []
 		self.generation = 0
 		self.currentSpecies = 0
@@ -27,11 +27,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.recurrent = recurrent
 		self.databaseName = database
 		self.client = None
-		self.gameName = gameName
 		self.timeStamp = time.time()
 		children = []
-		if gameName == None:
-			self.gameName = str(self.Inputs)+" "+str(self.Outputs)+" "+str(self.timeStamp)
 		if database != None:
 			self.client = MongoClient(self.databaseName, 27017)
 		for x in range(self.Population):# potpulate with random nets
@@ -58,7 +55,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 
 		doc = {
-		"game" : str(self.Inputs)+" "+str(self.Outputs)+" "+str(self.timeStamp),
+		"timestamp" : str(self.timeStamp),
 		"genes" : self.getGenesBSON(genome.genes),
 		"relatives" : genome.relatives,
 		"weightMaps" : self.getGeneWeightsBSON(genome.genes),
@@ -115,7 +112,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 									if rating > maxRating:
 										maxRating = rating
 										foundedSpecie = specie
-										print("family",rating,foundedSpecie)
 										foundSpecies = True
 									mates.append({
 										"specie" : specie,
@@ -142,7 +138,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				foundSpecies = True
 			if self.client != None:
 				doc = child.ID
-				doc["game"] = self.gameName
+				doc["game"] = self.timeStamp
 				doc = {**doc,**child.parents}
 				self.updateMongoGenerations(doc)
 				self.updateMongoGenome(child)
@@ -177,15 +173,20 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			return relatives
 				  
 	def sameSpecies(self,genome1,genome2,rating=False):
+		Threshold = 1
+		if genome1.fitness >= genome2.fitness:
+			Threshold = genome1.mutationRates["DeltaThreshold"]
+			DeltaDisjoint = genome1.mutationRates["DeltaDisjoint"]
+			DeltaWeights = genome1.mutationRates["DeltaWeights"]
 
-		Threshold = genome1.mutationRates["DeltaThreshold"]
-		DeltaDisjoint = genome1.mutationRates["DeltaDisjoint"]
-		DeltaWeights = genome1.mutationRates["DeltaWeights"]
+		if genome1.fitness < genome2.fitness:
+			Threshold = genome2.mutationRates["DeltaThreshold"]
+			DeltaDisjoint = genome2.mutationRates["DeltaDisjoint"]
+			DeltaWeights = genome2.mutationRates["DeltaWeights"]
 
 		dd = DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
 		dw = DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes
 		if rating:
-			
 			if	dd + dw > Threshold:
 				return dd+dw - Threshold 
 			else:
@@ -359,16 +360,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		return self.best[len(self.best)-1]
 
 	def disjoint(self,genes1,genes2): # mesures the amount of shared in a genes in a genomes genes.
-		#self.client = MongoClient(self.databaseName, 27017)
-		#db = self.client["runs"]
-		#generationsCollection = db["Genomes"]
-		#i = []
-		#for gene in genes1:
-		#	i.append(gene.innovation)
-		#generation = generationsCollection.find({"game": self.gameName ,"generation":self.generation,"genes":{"$in":i}})
-		#for specie in generation:
-		#	print("specie",i)
-		#	print(specie["genes"])
 		i1 = []
 		i2 = []
 		for gene in genes1:
@@ -419,7 +410,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["disable"] = 0.1
 			self.mutationRates["step"] = 0.1
 			self.mutationRates["DeltaThreshold"] = .25
-			self.mutationRates["DeltaDisjoint"] = 5
+			self.mutationRates["DeltaDisjoint"] = 1
 			self.mutationRates["DeltaWeights"] = 1
 			self.mutationRates["crossoverRate"] = .2
 			self.mutationRates["PerturbChance"] = 0.5
@@ -460,42 +451,48 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 			
 		def mutate(self): # runs all mutation types at rate set, while probabilty is over the rate set.
-			for mutation,rate in self.mutationRates.items():
-				if random.randint(1,2) == 1:
-					self.mutationRates[mutation] = 0.95*rate
-				else:
-					self.mutationRates[mutation] = 1.05263*rate
-					
-			if random.random() < self.mutationRates["connections"]:
-
-				self.pointMutate()
-			p = self.mutationRates["link"]
-			while p > 0:
-				if random.random() < p:
-					self.linkMutate(False)
-				p = p -1
-			p = self.mutationRates["bias"]
-			while p > 0:
-				if random.random() < p:
-					self.linkMutate(True)
-				p = p -1
-			p = self.mutationRates["node"] 
-			while p > 0:
-
-				if random.random() < p:
-					self.nodeMutate()
-				p = p -1
-			p = self.mutationRates["enable"]
-			while p > 0:
-
-				if random.random() < p:
-					self.enableDisableMutate(True)
-				p = p -1
-			p = self.mutationRates["disable"]
-			while p > 0:
-				if random.random() < p:
-					self.enableDisableMutate(False)
-				p = p -1
+			hasLink  = False
+			while not hasLink:
+				for gene in self.genes:
+					if gene.enabled:
+						hasLink = True
+						break
+				for mutation,rate in self.mutationRates.items():
+					if random.randint(1,2) == 1:
+						self.mutationRates[mutation] = 0.95*rate
+					else:
+						self.mutationRates[mutation] = 1.05263*rate
+						
+				if random.random() < self.mutationRates["connections"]:
+	
+					self.pointMutate()
+				p = self.mutationRates["link"]
+				while p > 0:
+					if random.random() < p:
+						self.linkMutate(False)
+					p = p -1
+				p = self.mutationRates["bias"]
+				while p > 0:
+					if random.random() < p:
+						self.linkMutate(True)
+					p = p -1
+				p = self.mutationRates["node"] 
+				while p > 0:
+	
+					if random.random() < p:
+						self.nodeMutate()
+					p = p -1
+				p = self.mutationRates["enable"]
+				while p > 0:
+	
+					if random.random() < p:
+						self.enableDisableMutate(True)
+					p = p -1
+				p = self.mutationRates["disable"]
+				while p > 0:
+					if random.random() < p:
+						self.enableDisableMutate(False)
+					p = p -1
 
 					
 						   
@@ -766,7 +763,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			child.maxneuron = max(g1.maxneuron,g2.maxneuron)
 			for mutation,rate in g1.mutationRates.items():
 				child.mutationRates[mutation] = rate
-			print("PARNTS BREWEEDING",g1.ID,g2.ID)
 			child.parents["parent1"] = g1.ID
 			child.parents["parent2"] = g2.ID   
 			return child
