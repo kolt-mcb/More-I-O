@@ -68,13 +68,20 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		"inputs" : genome.Inputs,
 		"Outputs" : genome.Outputs,
 		"recurrent" : genome.recurrent,
-		"parents" : genome.parents,
-		"generation" : genome.ID["generation"],
-		"genome"	 : genome.ID["genome"]
+		"parents" : self.getparentsBSON(genome),
+		"generation" : genome.ID[0],
+		"genome"	 : genome.ID[1]
 		}
 		db = self.client["runs"]
 		collection = db["Genomes"]
 		collection.insert_one(doc)
+		
+	def getparentsBSON(self,genome):
+		parentsBSON = {}
+		parentsBSON["parent1"] = genome.parents[0]
+		parentsBSON["parent2"] = genome.parents[1]
+		return parentsBSON
+	
 		
 	
 	def getGenesBSON(self,genes):
@@ -96,6 +103,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	
 		self.generations.append([])
 		for child in children:
+			before = time.time()
 			child.relatives = self.getRelatives(child)
 			foundSpecies = False
 			foundedSpecie = None
@@ -136,6 +144,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				doc = {**doc,**child.parents}
 				self.updateMongoGenerations(doc)
 				self.updateMongoGenome(child)
+			after = time.time()
+			print(after-before)
 
 				
 				
@@ -401,7 +411,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["ConectionCostRate"] = 1
 			self.mutationRates["age"] = 10
 			self.currentAge = self.mutationRates["age"]
-			self.parents = []
+			self.parents = ()
 			self.relatives = set()
 			self.mates = set()
 			self.defining = False
@@ -424,48 +434,42 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 			
 		def mutate(self): # runs all mutation types at rate set, while probabilty is over the rate set.
-			hasLink  = False
-			while not hasLink:
-				for gene in self.genes:
-					if gene.enabled:
-						hasLink = True
-						break
-				for mutation,rate in self.mutationRates.items():
-					if random.randint(1,2) == 1:
-						self.mutationRates[mutation] = 0.95*rate
-					else:
-						self.mutationRates[mutation] = 1.05263*rate
-						
-				if random.random() < self.mutationRates["connections"]:
-	
-					self.pointMutate()
-				p = self.mutationRates["link"]
-				while p > 0:
-					if random.random() < p:
-						self.linkMutate(False)
-					p = p -1
-				p = self.mutationRates["bias"]
-				while p > 0:
-					if random.random() < p:
-						self.linkMutate(True)
-					p = p -1
-				p = self.mutationRates["node"] 
-				while p > 0:
-	
-					if random.random() < p:
-						self.nodeMutate()
-					p = p -1
-				p = self.mutationRates["enable"]
-				while p > 0:
-	
-					if random.random() < p:
-						self.enableDisableMutate(True)
-					p = p -1
-				p = self.mutationRates["disable"]
-				while p > 0:
-					if random.random() < p:
-						self.enableDisableMutate(False)
-					p = p -1
+			for mutation,rate in self.mutationRates.items():
+				if random.randint(1,2) == 1:
+					self.mutationRates[mutation] = 0.95*rate
+				else:
+					self.mutationRates[mutation] = 1.05263*rate
+					
+			if random.random() < self.mutationRates["connections"]:
+
+				self.pointMutate()
+			p = self.mutationRates["link"]
+			while p > 0:
+				if random.random() < p:
+					self.linkMutate(False)
+				p = p -1
+			p = self.mutationRates["bias"]
+			while p > 0:
+				if random.random() < p:
+					self.linkMutate(True)
+				p = p -1
+			p = self.mutationRates["node"] 
+			while p > 0:
+
+				if random.random() < p:
+					self.nodeMutate()
+				p = p -1
+			p = self.mutationRates["enable"]
+			while p > 0:
+
+				if random.random() < p:
+					self.enableDisableMutate(True)
+				p = p -1
+			p = self.mutationRates["disable"]
+			while p > 0:
+				if random.random() < p:
+					self.enableDisableMutate(False)
+				p = p -1
 
 					
 						   
