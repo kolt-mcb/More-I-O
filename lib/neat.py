@@ -308,7 +308,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		S= 0 
 		for specie in self.species:
 			breed = specie.averageFitness / sum * self.Population
-			if breed >= specie.averageBreed:
+			if breed >= 1:
 				survived.append(specie)
 	
 		self.species = survived
