@@ -237,8 +237,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 							children.append(specie.breedChildren())
 		# leave only the top member of each species.
 		self.cullSpecies(True) 
-		self.cullOldSpecies()
-		
 		c = 0
 		for specie in self.species:
 			for genome in specie.genomes:
@@ -253,19 +251,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 
 
-		
-	def cullOldSpecies(self):
-		species = []
-		for specie in self.species:
-			survivedGenomes = []
-			for genome in specie.genomes:
-				p = genome.currentAge
-				if 1 < p:
-					survivedGenomes.append(genome)
-			if len(survivedGenomes) >= 1:
-				specie.genomes = survivedGenomes
-				species.append(specie)
-		self.species = species
 
 
 	def cullSpecies(self,cutToOne): #sorts genomes by fitness and removes half of them or cuts to one
@@ -334,11 +319,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					if gene.enabled:
 						geneEnabledCount += 1
 				geneEnabledCount = 0 -geneEnabledCount
-				sIndex.append((s,g,genome.fitness,genome.mutationRates["ConectionCostRate"]*geneEnabledCount))
+				sIndex.append((s,g,genome.fitness))
 				g += 1
 			s += 1
 
-		sIndex.sort(key=lambda tup: (tup[2],tup[3]))
+		sIndex.sort(key=lambda tup: (tup[2]))
 		
 		c = 1
 		for rank in sIndex:
@@ -409,8 +394,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["crossoverRate"] = .2
 			self.mutationRates["PerturbChance"] = 0.5
 			self.mutationRates["ConectionCostRate"] = 1
-			self.mutationRates["age"] = 10
-			self.currentAge = self.mutationRates["age"]
 			self.parents = ()
 			self.relatives = set()
 			self.mates = set()
