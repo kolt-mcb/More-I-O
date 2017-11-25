@@ -432,7 +432,7 @@ class gui:
     self.pool.species = species
     self.pool.best = loadedPool[1]
     self.pool.generation = len(self.pool.best)
-    self.pool.generations = loadedPool[7]
+    neat.pool.generations = loadedPool[7]
     self.population.set(self.pool.Population)
     self.poolInitialized = True
     f.close()
