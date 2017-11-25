@@ -708,7 +708,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for genome in self.genomes:
 				total += genome.mutationRates["Remaining"] 
 			total = total / len(self.genomes)
-			self.remainingRate = total
+			if total < 1:
+				self.remainingRate = 1
+			else:
+				self.remainingRate = total
 		
 		def caclulateAverageBreedRate(self):
 			total = 0
