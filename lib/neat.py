@@ -708,8 +708,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for genome in self.genomes:
 				total += genome.mutationRates["Remaining"] 
 			total = total / len(self.genomes)
-			if total < 2:
-				self.remainingRate = 2
+			if total < 1:
+				self.remainingRate = 1
 			else:
 				self.remainingRate = total
 		
@@ -725,7 +725,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for genome in self.genomes:
 				total += genome.mutationRates["RemainingMultiplyer"] 
 			total = total / len(self.genomes)
-			self.remainingMultiplyer = total
+			if total < 2:
+				self.remainingMultiplyer = 2
+			else:
+				self.remainingMultiplyer = total
 
 		def calculateAverageCrossoverRate(self):
 			totalAverage = 0
