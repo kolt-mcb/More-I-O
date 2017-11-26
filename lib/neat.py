@@ -72,7 +72,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		"mutationRates" : genome.mutationRates,
 		"globalRank" : genome.globalRank,
 		"maxNodes" : genome.maxNodes,
-		"currentAge" : genome.mutationRates["age"],
 		"inputs" : genome.Inputs,
 		"Outputs" : genome.Outputs,
 		"recurrent" : genome.recurrent,
