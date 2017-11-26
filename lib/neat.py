@@ -90,8 +90,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		parentsBSON["parent2"] = genome.parents[1]
 		return parentsBSON
 	
+	def getIDBSON(self,genome):
+		IDBSON = {}
+		IDBSON["generation"] = genome.ID[0]
+		IDBSON["genome"] = genome.ID[1]
+		return IDBSON
 		
-	
 	def getGenesBSON(self,genes):
 		genesArray = []
 		for gene in genes:
@@ -148,6 +152,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				foundSpecies = True
 			if self.client != None:
 				doc = child.ID
+				
 				doc["game"] = self.timeStamp
 				doc = {**doc,**child.parents}
 				self.updateMongoGenerations(doc)
