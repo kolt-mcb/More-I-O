@@ -65,7 +65,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		doc = {
 		"timestamp" : str(self.timeStamp),
 		"genes" : self.getGenesBSON(genome.genes),
-		"relatives" : genome.relatives,
+		"relatives" : list(genome.relatives),
 		"weightMaps" : self.getGeneWeightsBSON(genome.genes),
 		"fitness" : genome.fitness,
 		"maxNeuron" : genome.maxneuron,
