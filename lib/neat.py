@@ -152,7 +152,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if self.client != None:
 				doc = self.getIDBSON(child.ID)
 				doc["game"] = self.timeStamp
-				doc = {**doc,**child.parents}
+				doc = {**doc,**self.getParentBSON(child.parents)}
 				self.updateMongoGenerations(doc)
 				self.updateMongoGenome(child)
 			after = time.time()
