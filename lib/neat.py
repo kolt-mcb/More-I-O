@@ -76,7 +76,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		"inputs" : genome.Inputs,
 		"Outputs" : genome.Outputs,
 		"recurrent" : genome.recurrent,
-		"parents" : self.getparentsBSON(genome),
+		"parents" : self.getParentsBSON(genome),
 		"generation" : genome.ID[0],
 		"genome"	 : genome.ID[1]
 		}
@@ -84,7 +84,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		collection = db["Genomes"]
 		collection.insert_one(doc)
 		
-	def getparentsBSON(self,genome):
+	def getParentsBSON(self,genome):
 		parentsBSON = {}
 		parentsBSON["parent1"] = genome.parents[0]
 		parentsBSON["parent2"] = genome.parents[1]
