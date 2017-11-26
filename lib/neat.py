@@ -28,16 +28,24 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.databaseName = database
 		self.client = None
 		self.timeStamp = time.time()
+		
 		children = []
 		if database != None:
 			self.client = MongoClient(self.databaseName, 27017)
+			db = self.client["runs"]
+			collection = db["Runs"]
+			collection.insert_one({
+				"time stamp" : self.timeStamp,
+				"inputs" : self.Inputs,
+				"outputs" : self.Outputs,
+				"population" : self.Population
+								  })
 		for x in range(self.Population):# potpulate with random nets
 			newGenome = self.newGenome(Inputs,Outputs,recurrent)
 			newGenome.mutate()
 			children.append(newGenome)
 			
 		self.addToPool(children)
-
 		for specie in self.species:
 			for genome in specie.genomes:
 				genome.generateNetwork()
@@ -438,7 +446,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				p = p -1
 			p = self.mutationRates["node"] 
 			while p > 0:
-
 				if random.random() < p:
 					self.nodeMutate()
 				p = p -1

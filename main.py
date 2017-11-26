@@ -183,8 +183,7 @@ def singleGame(genome,genomePipe,envName,eval):
 			ob, reward, done, _ = env.step(o)
 			score += reward
 			if not eval:
-				pass
-				#env.render()
+				env.render()
 			genomePipe.send(genome)
 		print(score)
 	env.reset
