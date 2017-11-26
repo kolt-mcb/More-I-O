@@ -59,7 +59,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		collection = db["Generations"]
 		collection.insert_one(doc)
 		
-	def updateMongoGenome(self,genome):
+	def updateMongoGenome(self,genome,specie):
 
 
 		doc = {
@@ -77,7 +77,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		"recurrent" : genome.recurrent,
 		"parents" : self.getParentsBSON(genome.parents),
 		"generation" : genome.ID[0],
-		"genome"	 : genome.ID[1]
+		"genome" : genome.ID[1],
+		"specie" : specie
 		}
 		db = self.client["runs"]
 		collection = db["Genomes"]
@@ -142,10 +143,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.generations[self.generation].append(child)
 			if foundSpecies:
 				self.species[foundedSpecie].genomes.append(child)
-			if not foundSpecies:
+				s = foundedSpecie
+			else:
 				specie = self.newSpecies(self.Inputs,self.Outputs,self.recurrent)
 				child.defining = True
 				specie.genomes.append(child)
+				s = len(self.species)
 				self.species.append(specie)
 				foundSpecies = True
 			if self.client != None:
@@ -153,7 +156,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				doc["game"] = self.timeStamp
 				doc = {**doc,**self.getParentsBSON(child.parents)}
 				self.updateMongoGenerations(doc)
-				self.updateMongoGenome(child)
+				self.updateMongoGenome(child,s)
 			after = time.time()
 			print(after-before)
 
