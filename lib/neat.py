@@ -76,7 +76,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		"inputs" : genome.Inputs,
 		"Outputs" : genome.Outputs,
 		"recurrent" : genome.recurrent,
-		"parents" : self.getParentsBSON(genome),
+		"parents" : self.getParentsBSON(genome.parents),
 		"generation" : genome.ID[0],
 		"genome"	 : genome.ID[1]
 		}
@@ -84,10 +84,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		collection = db["Genomes"]
 		collection.insert_one(doc)
 		
-	def getParentsBSON(self,genome):
+	def getParentsBSON(self,parents):
 		parentsBSON = {}
-		parentsBSON["parent1"] = genome.parents[0]
-		parentsBSON["parent2"] = genome.parents[1]
+		parentsBSON["parent1"] = parents[0]
+		parentsBSON["parent2"] = parents[1]
 		return parentsBSON
 	
 	def getIDBSON(self,ID):
@@ -152,7 +152,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if self.client != None:
 				doc = self.getIDBSON(child.ID)
 				doc["game"] = self.timeStamp
-				doc = {**doc,**self.getParentsBSON(child.parents)}
+				doc = {**doc,**self.getParentsBSON(parents)}
 				self.updateMongoGenerations(doc)
 				self.updateMongoGenome(child)
 			after = time.time()
