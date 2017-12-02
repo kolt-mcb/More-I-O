@@ -112,19 +112,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	
 
 	def addToPool(self,children):
-		if pool.client != None:
-			for specie in range(len(self.species)):
-				for genome in range(len(self.species[specie].genomes)):
-					_genome = self.species[specie].genomes[genome]
-					_genome.age +=1
-					_genome.ID = (self.generation,genome)
-					self.updateMongoGenome(_genome,specie)
 		pool.generations.append([])
-
-
 		for child in children:
-			before = time.time()
-			child.relatives = self.getRelatives(child)
+			if child.relatives == set():
+				child.relatives = self.getRelatives(child)
 			child.mates = set()
 			foundSpecies = False
 			foundedSpecie = None
@@ -143,9 +134,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 									foundSpecies = True
 								updatedMates.append((specie,genome))
 								child.mates.add(_genome.ID)
-
-
-			child.ID = (self.generation,len(self.generations[self.generation]))
+			idSet = False
+			if child.ID != None:
+				idSet = True
+				child.ID = (self.generation,len(self.generations[self.generation]))
 			for mate in updatedMates:
 				specie = mate[0]
 				genome = mate[1]
@@ -161,12 +153,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				s = len(self.species)
 				self.species.append(specie)
 				foundSpecies = True
+			if idSet:
+				print("child specie:",s," genome:",len(self.species[s].genomes)-1,"was born")
 			if pool.client != None:
 				doc = self.getIDBSON(child.ID)
 				doc["game"] = pool.timeStamp
+				doc["generation"] = self.generation
 				doc = {**doc,**self.getParentsBSON(child.parents)}
 				self.updateMongoGenerations(doc)
-				self.updateMongoGenome(child,s)
+				if idSet:
+					self.updateMongoGenome(child,s)
 
 
 				
@@ -237,8 +233,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
 		self.generation += 1
-
-
 		self.cullSpecies(False)  
 		self.rankGlobally() 
 		self.removeStaleSpecies()
@@ -248,7 +242,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			#calculateAverageFitness of a specie
 			specie.calculateAverageFitness()
 			
-		self.removeWeakSpecies() 
+		self.removeWeakSpecies()
 		_sum = self.totalAverageFitness()
 		c = 0
 		for specie in self.species:
@@ -262,6 +256,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				for i in range(breed):
 						if len(children)+c < self.Population:
 							children.append(specie.breedChildren())
+
 		# leave only the top member of each species.
 		self.cullSpecies(True) 
 		c = 0
@@ -274,14 +269,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			parent = random.choice(self.species)
 			child = parent.breedChildren()
 			children.append(child)
-			
+
 		for specie in self.species:
 			for genome in specie.genomes:
 				children.append(genome)
 		self.species = []
 		# adds all children to there species in the pool
 		self.addToPool(children)
-
 
 	def cullSpecies(self,cutToOne): #sorts genomes by fitness and removes half of them or cuts to one
 		species = []
