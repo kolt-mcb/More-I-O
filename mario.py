@@ -54,22 +54,16 @@ def trainPool(population,envNum,species,queue,env):
 			g+=1
 		s+=1
 
-		
 	mPool = multiprocessing.Pool(processes=envNum,initializer = poolInitializer,initargs=(jobs,lock,))
-	
 	results = mPool.map(jobTrainer,[env]*envNum)
 	mPool.close()
 	mPool.join()
 	after = time.time()
 	killFCEUX()
-	for resultChunk in results:
-		for result in resultChunk:
-			currentSpecies = result[1][0]
-			currentGenome = result[1][1]
-			species[currentSpecies].genomes[currentGenome].fitness = result[0]
+
 	print("next generation")
 
-	queue.put(species)
+	queue.put(results)
 	 
 
 def get_pid(name):
@@ -415,7 +409,11 @@ class gui:
 		try:
 			msg = queue.get_nowait()
 			if msg is not sentinel:
-				self.pool.species = msg
+				for resultChunk in msg:
+          for result in resultChunk:
+            currentSpecies = result[1][0]
+            currentGenome = result[1][1]
+            self.pool.species[currentSpecies].genomes[currentGenome].setFitness(result[0])
 				self.pool.nextGeneration()
 				print("gen " ,self.pool.generation," best", self.pool.getBest().fitness)
 				self.netProcess.join()
