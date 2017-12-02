@@ -8,7 +8,7 @@ import numpy
 import math
 import time 
 import multiprocessing
-from multiprocessing import Queue
+from multiprocessing import Queue 
 from queue import Empty
 from tkinter import *
 from tkinter import filedialog,messagebox
@@ -33,7 +33,7 @@ def poolInitializer(q): # manages the job queue for genomes/players
 	jobs = q
 
 
-def trainPool(envNum,species,queue,env,attemps): # creates multiprocessing job for pool and trains pool 
+def trainPool(envNum,species,runQueue,env,attemps): # creates multiprocessing job for pool and trains pool 
     before = time.time()
     results = []
     jobs = Queue()
@@ -45,20 +45,16 @@ def trainPool(envNum,species,queue,env,attemps): # creates multiprocessing job f
         jobs.put((s,g,genome,attemps))
         g+=1
       s+=1
-    mPool = multiprocessing.Pool(processes=envNum,initializer =poolInitializer,initargs=(jobs,))
+    mPool = multiprocessing.Pool(processes=envNum,initializer=poolInitializer,initargs=(jobs,))
     results = mPool.map(jobTrainer,[env]*envNum)
     mPool.close()
     mPool.join()
     
-    for resultChunk in results:
-        for result in resultChunk:
-            currentSpecies = result[1][0]
-            currentGenome = result[1][1]
-            species[currentSpecies].genomes[currentGenome].fitness = result[0] # sets results from result list
+	 # sets results from result list
     after = time.time()
     print("finished in ",int(after-before))
 
-    queue.put(species) # sends message to main tkinter process
+    runQueue.put(results) # sends message to main tkinter process
    
 
 def obFixer(observation_space,observation): # fixes observation ranges, uses hyperbolic tangent for infinite values
@@ -157,19 +153,21 @@ def jobTrainer(envName):
 	env.close()
 	return results
 
-def singleGame(genome,genomePipe,envName,eval):
+def singleGame(genome,genomePipe,envName):
 	env = gym.make(envName)
 	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True)
 	runs = 1
+
 	print("playing best")
 	if eval:
 		#env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False)
-		runs = 100
+		runs = 1
+	if env.action_space.__class__ == gym.spaces.discrete.Discrete:
+		discrete = True
+	else:
+		discrete = False
 	for i in range(runs):
-		if env.action_space.__class__ == gym.spaces.discrete.Discrete:
-			discrete = True
-		else:
-			discrete = False
+
 		ob = env.reset()
 		done = False
 		distance = 0
@@ -182,11 +180,10 @@ def singleGame(genome,genomePipe,envName,eval):
 			o = acFixer(env.action_space,o)
 			ob, reward, done, _ = env.step(o)
 			score += reward
-			if not eval:
-				env.render()
+			env.render()
 			genomePipe.send(genome)
 		print(score)
-	env.reset
+	env.reset()
 	genomePipe.send("quit")
 	genomePipe.close()
 	env.close()
@@ -319,8 +316,7 @@ class gui:
     self.ax.stackplot(list(range(len(self.plotData[0]))),*self.plotData,baseline='wiggle')
     canvas = FigureCanvasTkAgg(self.fig,self.master)
     canvas.get_tk_widget().grid(row=5,column=0,rowspan=5,sticky="nesw")
-	
-	
+
 	
   def handleUpload(self):
     gym.upload('tmp/'+self.envEntry.get(),api_key="sk_8j3LQ561SH20sk0YN3qpg")
@@ -328,7 +324,6 @@ class gui:
 
   def toggleRun(self):
     env = gym.make(self.envEntry.get())
-	
     if not self.running:
       if not self.poolInitialized:
         if env.action_space.__class__ == gym.spaces.discrete.Discrete:
@@ -339,7 +334,7 @@ class gui:
            observation = env.observation_space.n 
         else:
            observation = env.observation_space.shape[0]
-        self.pool = neat.pool(int(self.populationEntry.get()),observation,actions,recurrent=False)
+        self.pool = neat.pool(int(self.populationEntry.get()),observation,actions,recurrent=False,database="192.168.1.119")
         env.close()
         self.poolInitialized = True
       self.running = True
@@ -352,11 +347,11 @@ class gui:
 
   def checkRunPaused(self):
     if self.running:
-      queue = multiprocessing.Queue()
+      runQueue = Queue()
       self.pool.Population = self.population.get()
-      self.netProcess = multiprocessing.Process(target=trainPool,args=(int(self.envNumEntry.get()),self.pool.species,queue,self.envEntry.get(),int(self.attempsEntry.get())))
+      self.netProcess = multiprocessing.Process(target=trainPool,args=(int(self.envNumEntry.get()),self.pool.species,runQueue,self.envEntry.get(),int(self.attempsEntry.get())))
       self.netProcess.start()
-      self.master.after(250,lambda: self.checkRunCompleted(queue,pausing=False))
+      self.master.after(250,lambda: self.checkRunCompleted(runQueue,pausing=False))
     if not self.running:
       self.runButton.config(text='run')
          
@@ -364,33 +359,35 @@ class gui:
 
   def onClosing(self):
     if messagebox.askokcancel("Quit","do you want to Quit?"):
-      for child in multiprocessing.active_children():
-        kill_proc_tree(child.pid)
       self.master.destroy()
       self.master.quit()
 
 
 
-  def checkRunCompleted(self,queue,pausing=True):
+  def checkRunCompleted(self,runQueue,pausing=True):
     try:
-        msg = queue.get_nowait()
+        msg = runQueue.get_nowait()
         if msg is not sentinel:
-          self.pool.species = msg
+          for resultChunk in msg:
+            for result in resultChunk:
+              currentSpecies = result[1][0]
+              currentGenome = result[1][1]
+              self.pool.species[currentSpecies].genomes[currentGenome].setFitness(result[0])
           self.netProcess.join()
           print("next generation")
           self.pool.nextGeneration() # applies rewards and breeds new species
           print("gen " ,self.pool.generation," best", self.pool.getBest().fitness)
           self.updateStackPlot(self.pool.species)
-          self.playBest(eval = False)
+          self.playBest()
           if pausing:
             self.running = False
-            self.master.after(250,lambda: self.checkRunCompleted(queue,pausing))
+            self.master.after(250,lambda: self.checkRunCompleted(runQueue,pausing))
             return
           else:
            self.master.after(250,self.checkRunPaused)
-        self.master.after(250,lambda: self.checkRunCompleted(queue,pausing))
+        self.master.after(250,lambda: self.checkRunCompleted(runQueue,pausing))
     except Empty:
-        self.master.after(250,lambda: self.checkRunCompleted(queue,pausing))
+        self.master.after(250,lambda: self.checkRunCompleted(runQueue,pausing))
 
   def saveFile(self):
     if self.pool == None:
@@ -436,10 +433,11 @@ class gui:
     self.poolInitialized = True
     f.close()
 	
-  def playBest(self,eval=True):
+  def playBest(self):
     parentPipe, childPipe = multiprocessing.Pipe()
     genome = self.pool.getBest()
-    process = multiprocessing.Process(target = singleGame,args=(genome,childPipe,self.envEntry.get(),eval))
+    genome.generateNetwork()
+    process = multiprocessing.Process(target = singleGame,args=(genome,childPipe,self.envEntry.get()))
     process.start()
     display = networkDisplay.newNetworkDisplay(genome,parentPipe)
     display.checkGenomePipe()
