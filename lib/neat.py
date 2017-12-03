@@ -292,18 +292,14 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.addToPool(children)
 
 	def cullSpecies(self,cutToOne): #sorts genomes by fitness and removes half of them or cuts to one
-		species = []
-		
 		for specie in self.species:
 			specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
 			genomes = []
 			remaining = math.ceil(len(specie.genomes)/2)
 			if cutToOne:
 				remaining = 1
-			total = len(specie.genomes)
 			while len(specie.genomes) > remaining:
-				specie.genomes.remove(specie.genomes[total-1])
-				total += -1
+				species.genomes.pop()
 				
 	def removeStaleSpecies(self): # removes species that have not gotten a high score past a threshold
 		survived = []
