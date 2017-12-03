@@ -1,15 +1,20 @@
 from operator import attrgetter
+from operator import itemgetter
 import sys
 import time
 import random
 import math
+from pymongo import MongoClient
 
 
 
 
 
 class pool: #holds all species data, crossspecies settings and the current gene innovation
-	def __init__(self,population,Inputs,Outputs,recurrent=False):
+	generations = []
+	client = None
+	timeStamp = time.time()
+	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None,timeStamp=None):
 		self.species = []
 		self.generation = 0
 		self.currentSpecies = 0
@@ -17,119 +22,288 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.maxFitness = 0
 		self.Population = population
 		self.best = []
-		self.DeltaDisjoint = 2.0
-		self.DeltaWeights = 0.4
-		self.DeltaThreshold = 1.0
 		self.StaleSpecies = 15
-		self.CrossOverSpeciesRate = .01
 		self.Inputs = Inputs
 		self.Outputs = Outputs
-		self.newGenome.innovation = Inputs #  sets the class variable to the current number of inputs
+        #  sets the class variable to the current number of inputs
+		self.newGenome.innovation = Inputs 
 		self.recurrent = recurrent
-		for x in range(self.Population):# potpulate with random nets
+		self.databaseName = database
+        
+        # use saved time stamp
+		if timeStamp != None:
+			pool.timeStamp = timeStamp
+		#children for initial population
+		children = []
+		if database != None and timeStamp == None:
+			pool.client = MongoClient(self.databaseName, 27017)
+			db = pool.client["runs"]
+			collection = db["Runs"]
+			collection.insert_one({
+				"time stamp" : pool.timeStamp,
+				"inputs" : self.Inputs,
+				"outputs" : self.Outputs,
+				"population" : self.Population
+								  })
+		#potpulate with random nets
+		for x in range(self.Population):#
 			newGenome = self.newGenome(Inputs,Outputs,recurrent)
-			while newGenome.genes == []:
-				newGenome.mutate()
-			self.addToPool(newGenome)
+			newGenome.mutate()
+			children.append(newGenome)
+    
+		#adds to population
+		self.addToPool(children)
+
+        #generate networks
 		for specie in self.species:
 			for genome in specie.genomes:
-				genome.generateNetwork()		
- 
+				genome.generateNetwork()
+				
+				
+				
 
-	def addToPool(self,child): # adds a species to its family of species, if not within threshold of any existing species creates a new species.
-		foundSpecies = False
-		for specie in self.species:
-			if not foundSpecies and self.sameSpecies(child,specie.genomes[0]): # checks against left overspecies from last gen ie species in index 0
+
+	#updates a mongo database when the genome is added to the population
+	def updateMongoGenerations(self,doc):
+		db = pool.client["runs"]
+		collection = db["Generations"]
+		collection.insert_one(doc)
+	
+    # the main genome doc with genes and lots of things. 
+	def updateMongoGenome(self,genome,specie):
+		doc = {
+		"time stamp" : pool.timeStamp,
+		"genes" : self.getGenesBSON(genome.genes),
+		"relatives" : list(genome.relatives),
+		"weightMaps" : self.getGeneWeightsBSON(genome.genes),
+		"fitness" : genome.fitness,
+		"age" : genome.age,
+		"maxNeuron" : genome.maxneuron,
+		"mutationRates" : genome.mutationRates,
+		"globalRank" : genome.globalRank,
+		"maxNodes" : genome.maxNodes,
+		"inputs" : genome.Inputs,
+		"Outputs" : genome.Outputs,
+		"recurrent" : genome.recurrent,
+		"parents" : self.getParentsBSON(genome.parents),
+		"generation" : genome.ID[0],
+		"genome" : genome.ID[1],
+		"specie" : specie
+		}
+		db = pool.client["runs"]
+		collection = db["Genomes"]
+		collection.insert_one(doc)
+	
+    # turns parent tuple into bson
+	def getParentsBSON(self,parents):
+		parentsBSON = {}
+		parentsBSON["parent1"] = parents[0]
+		parentsBSON["parent2"] = parents[1]
+		return parentsBSON
+
+	# turns ID tuple into bson
+	def getIDBSON(self,ID):
+		IDBSON = {}
+		IDBSON["generation"] = ID[0]
+		IDBSON["genome"] = ID[1]
+		return IDBSON
+		
+    # turns gene array into bson
+	def getGenesBSON(self,genes):
+		genesArray = []
+		for gene in genes:
+			genesArray.append(gene.innovation)
+		return genesArray
+	
+    # turns gene weights into bson
+	def getGeneWeightsBSON(self,genes):
+		genesWeightMapArray = []
+		for gene in genes:
+			genesWeightMapArray.append({
+			str(gene.innovation) : gene.weight
+			})
+		return genesWeightMapArray
+	
+    # adds a list of children to the pool
+	def addToPool(self,children):
+		pool.generations.append([])
+		for child in children:
+			if child.relatives == set():
+				child.relatives = self.getRelatives(child)
+			child.mates = set()
+			foundSpecies = False
+			foundedSpecie = None
+			closestMatch = math.inf
+			updatedMates = []
+			if child.relatives != None:
+				for specie in range(len(self.species)):
+					for genome in range(len(self.species[specie].genomes)):
+						_genome = self.species[specie].genomes[genome]
+						if not child.relatives.isdisjoint(_genome.relatives):
+							match = self.sameSpecies(child,_genome,rating=True)
+							if match < math.inf:
+								if match < closestMatch:
+									closestMatch = match
+									foundedSpecie = specie
+									foundSpecies = True
+								updatedMates.append((specie,genome))
+								child.mates.add(_genome.ID)
+			idSet = False
+			if child.ID != None:
+				idSet = True
+				child.ID = (self.generation,len(self.generations[self.generation]))
+			for mate in updatedMates:
+				specie = mate[0]
+				genome = mate[1]
+				self.species[specie].genomes[genome].mates.add(child.ID)
+			pool.generations[self.generation].append(child)
+			if foundSpecies:
+				self.species[foundedSpecie].genomes.append(child)
+				s = foundedSpecie
+			else:
+				specie = self.newSpecies(self.Inputs,self.Outputs,self.recurrent)
+				child.defining = True
 				specie.genomes.append(child)
+				s = len(self.species)
+				self.species.append(specie)
 				foundSpecies = True
-		if not foundSpecies:
-			childSpecies = self.newSpecies(self.Inputs,self.Outputs,self.recurrent)
-			childSpecies.genomes.append(child)
-			self.species.append(childSpecies)
-			      
-	def sameSpecies(self,genome1,genome2):
-		dd = self.DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
-		dw = self.DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes 
-		return dd + dw < self.DeltaThreshold
+			if idSet:
+				print("child specie:",s," genome:",len(self.species[s].genomes)-1,"was born")
+			if pool.client != None:
+				doc = self.getIDBSON(child.ID)
+				doc["game"] = pool.timeStamp
+				doc["generation"] = self.generation
+				doc = {**doc,**self.getParentsBSON(child.parents)}
+				self.updateMongoGenerations(doc)
+				if idSet:
+					self.updateMongoGenome(child,s)
 
-	def initializeRun(self): #generates a network for current species
+
+				
+				
+	def getRelatives(self,child,parent=None):
+		relatives = set()
+		if parent == None:
+			genomeToCheck = child
+		else:
+			genomeToCheck = parent
+			
+		for parentGenomeTup in genomeToCheck.parents:
+			
+			if parentGenomeTup != None:
+				generation = parentGenomeTup[0]
+				genome = parentGenomeTup[1]
+				parentGenome = self.generations[generation][genome]
+				if self.sameSpecies(child,parentGenome):
+					if parentGenome.ID != None:
+						relatives.add(parentGenome.ID)
+						parentRelatives = self.getRelatives(child,parentGenome)
+						if parentRelatives != None:
+							relatives.update(parentRelatives)
+
+		return relatives
+				  
+	def sameSpecies(self,genome1,genome2,rating=False):
+		Threshold1 = genome1.mutationRates["DeltaThreshold"]
+		DeltaDisjoint1 = genome1.mutationRates["DeltaDisjoint"]
+		DeltaWeights1 = genome1.mutationRates["DeltaWeights"]
+		DeltaMutation1 = genome1.mutationRates["DeltaMutation"]
+
+		Threshold2 = genome2.mutationRates["DeltaThreshold"]
+		DeltaDisjoint2 = genome2.mutationRates["DeltaDisjoint"]
+		DeltaWeights2 = genome2.mutationRates["DeltaWeights"]
+		DeltaMutation2 = genome2.mutationRates["DeltaMutation"]
+		
+		DeltaMutation = (DeltaMutation1 + DeltaMutation2)/2
+		DeltaDisjoint = (DeltaDisjoint1 + DeltaDisjoint2)/2
+		DeltaWeights = (DeltaWeights1 + DeltaWeights2)/2
+		Threshold = (Threshold1 + Threshold2)/2
+		
+		dm = DeltaMutation * self.mutatationDisjoints(genome1.mutationRates,genome2.mutationRates)
+		dd = DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
+		dw = DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes
+		
+		if rating:
+			if	dd + dw + dm < Threshold:
+				return  Threshold - dd+dw+dm
+			else:
+				return math.inf
+		return dd + dw + dm < Threshold
+
+	#generates a network for current species
+	def initializeRun(self): 
 		species = self.species[self.currentSpecies]
 		genome = species.genomes[self.currentGenome]
 		generateNetwork(genome) 
-			
-	def nextGenome(self):# cycles through genomes
-		self.currentGenome = self.currentGenome + 1
-		if self.currentGenome +1 > len(self.species[self.currentSpecies].genomes):
-			self.currentGenome = 0
-			self.currentSpecies = self.currentSpecies+1
-			if self.currentSpecies >= len(self.species):
-				self.currentSpecies = 0
-				self.currentGenome = 0
-				newGeneration()
+	
+
 				
 	def evaluateCurrent(self,inputs,discrete=False): # runs current species network 
 		species = self.species[self.currentSpecies]
 		genome = species.genomes[self.currentGenome]
 		output = genome.evaluateNetwork(inputs,discrete)
 		return output
-	               
-				
-	def nextGeneration(self): #cuts poor preforming genomes and performs crossover of remaining genomes.
+				   
+	#cuts poor preforming genomes and performs crossover of remaining genomes.
+	def nextGeneration(self):
+		self.generation += 1
 		self.cullSpecies(False)  
 		self.rankGlobally() 
-
 		self.removeStaleSpecies()
-
-		self.rankGlobally(addBest=True) # reranks after removeing stales species and  stores best player for later play
+		# reranks after removeing stales species and  stores best player for later play
+		self.rankGlobally(addBest=True)
 		for specie in self.species:
-			specie.calculateAverageFitness() #calculateAverageFitness of a specie
-		self.removeWeakSpecies() 
-		Sum = self.totalAverageFitness()
-		children = []
-		for specie in self.species:
-			breed = math.floor(specie.averageFitness / Sum * self.Population)-1 # if a species average fitness is over the pool averagefitness it can breed
-			for i in range(breed):
-				children.append(specie.breedChildren())
-		self.cullSpecies(True) # leave only the top member of each species.
-
-
-		if self.generation > 0:
-			while (len(children) < (self.Population-len(self.species))*(1-self.CrossOverSpeciesRate)): # cross over species at species cross over rate 
-				parent = random.choice(self.species)
-				child = parent.breedChildren()
-				children.append(child)
+			#calculateAverageFitness of a specie
+			specie.calculateAverageFitness()
 			
-			while len(children) + len(self.species) < self.Population :
-						r1 = random.choice(self.species)
-						r2 = random.choice(self.species)
-						children.append(r1.crossover(r1.genomes[0],r2.genomes[0])) # cross over is a species function so we must used one of the 2 species cross over functions, maybe move this to the pool in the future
-		else:
-			while (len(children) + len(self.species) < self.Population):
-				parent = random.choice(self.species)
-				child = parent.breedChildren()
-				children.append(child)
-		lastGen = self.species
-		self.species = []
-		for child in children: # adds all children there species in the pool
-			self.addToPool(child)
-		for specie in lastGen:
+		self.removeWeakSpecies()
+		_sum = self.totalAverageFitness()
+		c = 0
+		for specie in self.species:
 			for genome in specie.genomes:
-				self.addToPool(genome)
-		self.generation = self.generation + 1
+				c += 1
+		#defines new children list
+		children = []
+		while (len(children)+c < self.Population):
+			for specie in self.species:
+				 # if a species average fitness is over the pool averagefitness it can breed
+				breed = math.floor(specie.averageFitness / _sum * self.Population)-1
+				for i in range(breed):
+						if len(children)+c < self.Population:
+							children.append(specie.breedChildren())
+
+		# leave only the top member of each species.
+		self.cullSpecies(True) 
+		c = 0
+		for specie in self.species:
+			for genome in specie.genomes:
+				c += 1
+				
 		
+		while (len(children)+c < self.Population):
+			parent = random.choice(self.species)
+			child = parent.breedChildren()
+			children.append(child)
+
+		for specie in self.species:
+			for genome in specie.genomes:
+				children.append(genome)
+		self.species = []
+		# adds all children to there species in the pool
+		self.addToPool(children)
+
 	def cullSpecies(self,cutToOne): #sorts genomes by fitness and removes half of them or cuts to one
 		for specie in self.species:
 			specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
-
+			genomes = []
 			remaining = math.ceil(len(specie.genomes)/2)
 			if cutToOne:
 				remaining = 1
-			total = len(specie.genomes)
 			while len(specie.genomes) > remaining:
-				specie.genomes.remove(specie.genomes[total-1])
-				total += -1
-		
-	def removeStaleSpecies(self): # removes species that have not gotten a high score past a threshold
+				specie.genomes.pop()
+	
+	# removes species that have not gotten a high score past a threshold		
+	def removeStaleSpecies(self): 
 		survived = []
 		for specie in self.species:
 			specie.genomes = sorted(specie.genomes, key=attrgetter('fitness'),reverse=True)
@@ -142,26 +316,28 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if specie.staleness < self.StaleSpecies or specie.topFitness >= self.maxFitness:
 				survived.append(specie)
 		self.species = survived
-		
-	def removeWeakSpecies(self): # removes poor performing species
+	
+	# removes poor performing species
+	def removeWeakSpecies(self): 
 		survived = []
-		sum = self.totalAverageFitness()
+		_sum = self.totalAverageFitness()
 		for specie in self.species:
-			breed = math.floor(specie.averageFitness / sum * self.Population)
+			breed = specie.averageFitness / _sum * self.Population
 			if breed >= 1:
 				survived.append(specie)
-    
 		self.species = survived
 
-	def totalAverageFitness(self): #total of all averages of pool
+	#total of all averages of pool
+	def totalAverageFitness(self):
 		total = 0 
 		for specie in self.species:
 			total = total + specie.averageFitness
 		return total
 
-	def averageFitness(self): #average fitness of entire pool
+	# average fitness of entire pool
+	def averageFitness(self): 
 		total = 0
-		count =+ 1
+		count = 0
 		for specie in self.species:
 			for genome in specie.genomes:
 				count += 1
@@ -169,21 +345,24 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		total = total/count
 		return total
 		
-	def rankGlobally(self,addBest=False): # sets globalRank value for all genomes.
+	# sets globalRank value for all genomes.
+	def rankGlobally(self,addBest=False): 
 		sIndex = []
 		s = 0
+		c = 0
 		for specie in self.species:
 			g = 0
 			for genome in specie.genomes:
 				sIndex.append((s,g,genome.fitness))
+				c += 1
 				g += 1
 			s += 1
-
-		sIndex.sort(key=lambda tup: tup[2])
+		sIndex.sort(key=lambda tup: (tup[2]))
 		
 		c = 1
 		for rank in sIndex:
 			self.species[rank[0]].genomes[rank[1]].globalRank = c
+			print(c,self.species[rank[0]].genomes[rank[1]].fitness)
 			if c == len(sIndex):
 				topGenome = self.species[rank[0]].genomes[rank[1]]
 				if addBest:
@@ -191,53 +370,51 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				self.maxFitness = topGenome.fitness
 			c += 1
 
-	def getBest(self): # returns best genome for current generation
-	
+	# returns best genome for current generation
+	def getBest(self): 
 		return self.best[len(self.best)-1]
 
-	def disjoint(self,genes1,genes2): # mesures the amount of shared in a genes in a genomes genes.
-		i1 = {}
+	# measures the amount of shared in a genes in a genomes genes.
+	def disjoint(self,genes1,genes2): 
+		i1 = []
+		i2 = []
 		for gene in genes1:
-			i1[gene.innovation] = True
-		i2 = {}
+			i1.append(gene.innovation)
 		for gene in genes2:
-			i2[gene.innovation] = True
-    
-		disjointGenes = 0
-		for gene in genes1:
-			if  not i2.get(gene.innovation,False):
-				disjointGenes = disjointGenes+1
-		for gene in genes2:
-			if not i1.get(gene.innovation,False):
-				disjointGenes = disjointGenes+1
-            
+			i2.append(gene.innovation)
 		n = max(len(genes1),len(genes2))
+		disjointGenes = n - len(list(set(i1).intersection(i2)))
+
 		if n == 0:
 			return 0
 		return disjointGenes / n
-	    
-	def weights(self,genes1,genes2): # mesures the difference of weights in a shared gene due to mutation 
+
+	def mutatationDisjoints(self,mutations1,mutations2):
+		difference = 0
+		for mutation,rate in mutations1.items():
+			difference += abs(mutations2[mutation] - rate)
+		return difference/len(mutations1)
+		
+	# mesures the difference of weights in a shared gene due to mutation 
+	def weights(self,genes1,genes2): 
 		i2 = {}
 		for gene in genes2:
 			i2[gene.innovation] = gene
-		sum = 0
+		_sum = 0
 		coincident = 0
 		for gene in genes1:
 			if i2.get(gene.innovation) != None:
 				gene2 = i2.get(gene.innovation)
-				sum = sum + abs(gene.weight - gene2.weight)
+				_sum = _sum + abs(gene.weight - gene2.weight)
 				coincident = coincident + 1
-		if sum == 0 and coincident == 0:
+		if _sum == 0 or coincident == 0:
 			return 0
-		return sum / coincident
+		return _sum / coincident
 
-	def getOutputs(self):
-		return self.Outputs
 
-	
+
 
 	class newGenome:
-
 		def __init__(self,Inputs,Outputs,recurrent):
 			self.genes = []
 			self.fitness = 0
@@ -245,23 +422,35 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.maxneuron = Inputs
 			self.mutationRates = {}
 			self.globalRank = 0
-			self.maxNodes = 10000 
-			self.mutationRates["connections"] =  0.25
-			self.mutationRates["link"] =  .3
+			self.maxNodes = 10000
+			self.mutationRates["connections"] =  0.7
+			self.mutationRates["link"] =  .7
 			self.mutationRates["bias"] = 0.1
-			self.mutationRates["node"] = 0.1
-			self.mutationRates["enable"] = 0.01
-			self.mutationRates["disable"] = 0.05
+			self.mutationRates["node"] = 0.7
+			self.mutationRates["enable"] = 0.05
+			self.mutationRates["disable"] = 0.1
 			self.mutationRates["step"] = 0.1
-			self.PerturbChance = 0.5
+			self.mutationRates["DeltaThreshold"] = 1
+			self.mutationRates["DeltaDisjoint"] = 1
+			self.mutationRates["DeltaWeights"] = .4
+			self.mutationRates["DeltaMutation"] = 1
+			self.perturbChance = .9
+			self.age = 0
+			self.parents = ()
+			self.relatives = set()
+			self.mates = set()
+			self.defining = False
 			self.Inputs = Inputs
 			self.Outputs = Outputs
 			self.recurrent = recurrent
-		
-			if self.recurrent: # initializes first run for reccurrent networks
+			self.ID = (0,0)
+			self.defining = False
+			self.parents = (None,None)
+			# initializes first run for reccurrent networks
+			if self.recurrent: 
 				self.lastEval = Outputs*[0]
 				self.maxneuron = self.Inputs+self.Outputs
-	    
+
 		
 
 		def newInnovation(self):
@@ -269,30 +458,28 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			pool.newGenome.innovation += 1
 			return pool.newGenome.innovation
 
-			
-		def mutate(self): # runs all mutation types at rate set, while probabilty is over the rate set.
+		# runs all mutation types at rate set, while probabilty is over the rate set.
+		def mutate(self): 
 			for mutation,rate in self.mutationRates.items():
 				if random.randint(1,2) == 1:
 					self.mutationRates[mutation] = 0.95*rate
 				else:
 					self.mutationRates[mutation] = 1.05263*rate
+					
 			if random.random() < self.mutationRates["connections"]:
-
 				self.pointMutate()
-			p = self.mutationRates["link"]
+			p = self.mutationRates["link"] 
 			while p > 0:
 				if random.random() < p:
 					self.linkMutate(False)
 				p = p -1
-			p = self.mutationRates["bias"]
+			p = self.mutationRates["bias"] 
 			while p > 0:
-
 				if random.random() < p:
 					self.linkMutate(True)
 				p = p -1
 			p = self.mutationRates["node"] 
 			while p > 0:
-
 				if random.random() < p:
 					self.nodeMutate()
 				p = p -1
@@ -305,19 +492,21 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			p = self.mutationRates["disable"]
 			while p > 0:
 				if random.random() < p:
-
 					self.enableDisableMutate(False)
 				p = p -1
-						   
-		def pointMutate(self): #mutates the weight of a gene
+
+					
+		#mutates the weight of a gene
+		def pointMutate(self): 
 			step = self.mutationRates["step"]
 			for gene in self.genes:
-				if random.random() < self.PerturbChance:
+				if random.random() < self.perturbChance:
 					gene.weight = gene.weight + random.random()*step*2-step
 				else:
-					gene.weight = random.random()*4-2
-
-		def linkMutate(self,forceBias): #adds a link to the network, potentialy forced to bias neuron
+					gene.weight = 1-random.random()*2
+	
+		#adds a link to the network, potentialy forced to bias neuron
+		def linkMutate(self,forceBias): 
 			neuron1 = self.randomNeuron(False)
 			neuron2 = self.randomNeuron(True)
 			newLink = newGene()
@@ -325,7 +514,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				Inputs = self.Inputs+self.Outputs
 			else:
 				Inputs = self.Inputs
-			if neuron1 <=Inputs and neuron2 <= Inputs:     
+			if neuron1 <=Inputs and neuron2 <= Inputs:	 
 				return 
 			if neuron1 == neuron2:
 				return
@@ -340,24 +529,27 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if forceBias:
 				newLink.into = Inputs
 			if self.containsLink(newLink):
-				return     
+				return	 
 			newLink.innovation = self.newInnovation()
-			newLink.weight = (random.random()*4-2)
+			newLink.weight = (1-random.random()*2)
 			self.genes.append(newLink)
 			
-		def containsLink(self,link): # checks if link already exists between neurons
+		# checks if link already exists between neurons
+		def containsLink(self,link): 
 			for gene in self.genes:
 				if gene.into == link.into and gene.out == link.out:
 					return True
-				
-		def nodeMutate(self):# addds a node 
+		
+		# addds a node 
+		def nodeMutate(self):
 			if len(self.genes) == 0:
 				return
 			r = random.randint(0,len(self.genes)-1)
 			gene = self.genes[r]
 			if not gene.enabled:
 				return
-			self.maxneuron += 1 # index of next neuron to point at as seen 3 lines below, gene1.out = self.maxneuron
+			# index of next neuron to point at as seen 3 lines below, gene1.out = self.maxneuron
+			self.maxneuron += 1 
 			gene.enabled = False
 			gene1 = gene.copyGene()
 			gene1.out = self.maxneuron
@@ -371,7 +563,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			gene2.enabled = True
 			self.genes.append(gene2)
 		
-		def enableDisableMutate(self, enable):# enables or disables a gene
+		# enables or disables a gene
+		def enableDisableMutate(self, enable):
 			candidates = []
 			for g in self.genes:
 				if g.enabled == (not enable):
@@ -381,24 +574,21 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			r = random.randint(0,len(candidates)-1)
 			gene = candidates[r]
 			gene.enabled = (not gene.enabled)
-	   
-		def copyGenome(self): # copies a genome perfectly. 
+
+		# copies a genome perfectly. 
+		def copyGenome(self): 
 			genome2 = pool.newGenome(self.Inputs,self.Outputs,self.recurrent)
 			for gene in self.genes:
 				genome2.genes.append(gene.copyGene())
 			genome2.Inputs = self.Inputs
 			genome2.Outputs = self.Outputs
 			genome2.maxneuron = self.maxneuron
-			genome2.mutationRates["connections"] = self.mutationRates["connections"]
-			genome2.mutationRates["link"] = self.mutationRates["link"]
-			genome2.mutationRates["bias"] = self.mutationRates["bias"]
-			genome2.mutationRates["node"] = self.mutationRates["node"]
-			genome2.mutationRates["enable"] = self.mutationRates["enable"]
-			genome2.mutationRates["disable"] = self.mutationRates["disable"]
-		
+			genome2.mutationRates = self.mutationRates
+			genome2.parents = (self.ID,None)
 			return genome2
 		
-		def generateNetwork(self): # generates a network based on genes.
+		# generates a network based on genes.
+		def generateNetwork(self): 
 			neurons = {}
 			self.lastEval = self.Outputs * [0]
 			#input neurons
@@ -419,8 +609,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for gene in self.genes:
 				if gene.enabled:
 					if not(gene.out in neurons):
-
-						neurons[gene.out] = newNeuron() # checks all out links for missing neurons
+						# checks all out links for missing neurons
+						neurons[gene.out] = newNeuron() 
 
 					neuron = neurons[gene.out]
 					neuron.incoming.append(gene)
@@ -429,8 +619,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 						neurons[gene.into] = newNeuron()
 			self.neurons = neurons
 
-		
-		def randomNeuron(self,nonInput): # selects a random neuron with choice of input or not.
+		# selects a random neuron with choice of input or not.
+		def randomNeuron(self,nonInput): 
 			neurons = {}
 			if self.recurrent:
 				inputs = self.Inputs + self.Outputs
@@ -454,7 +644,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					return k
 			return 0
 		
-		def evaluateNetwork(self,inputs,discrete=False): # runs inputs through neural network, this is what runs the brain. 
+		# runs inputs through neural network, this is what runs the brain. 
+		def evaluateNetwork(self,inputs,discrete=False): 
 			if self.recurrent:
 				inputs = inputs + self.lastEval
 			inputs = inputs + [1]
@@ -481,27 +672,49 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				if len(neuron.incoming) > 0:
 					neuron.value = self.sigmoid(total)
 			outputs = []
-			if discrete: # discrete means 0 or 1 eg on or off other wise send unmodified output layer values
+			# discrete means 0 or 1 eg on or off other wise send unmodified output layer values
+			if discrete: 
 				for o in range(1,self.Outputs+1):
 					if self.neurons[self.maxNodes+o].value > 0:
 						outputs.append(1)
 					else:
 						outputs.append(0)
 			else:
-				for o in range(1,self.Outputs+1):    
+				for o in range(1,self.Outputs+1):	
 					outputs.append(self.neurons[self.maxNodes+o].value)
 			if self.recurrent:
 				self.lastEval=[]
-				for o in range(1,self.Outputs+1):    
+				for o in range(1,self.Outputs+1):	
 					self.lastEval.append(self.neurons[self.maxNodes+o].value)
 			return outputs
 				
-		def sigmoid(self,x): # sigmoid function.
+		# sigmoid function.
+		def sigmoid(self,x): 
 			return 2/(1+math.exp(-4.9*x))-1
+		
+		def setFitness(self,fitness):
+			if self.age > 0:
+				self.fitness = (self.fitness + fitness) / 2
+			else:
+				self.fitness = fitness
+			if pool.client != None:
+				db = pool.client["runs"]
+				genomeCollection = db["Genomes"]
+				genomeCollection.update({
+										"genome": self.ID[1],
+										"generation": self.ID[0],
+										"time stamp": pool.timeStamp
+										},
+										{
+										"$set": {
+											"fitness": fitness
+											}
+										})
+
+			
 
 	 
 	class newSpecies():
-
 		def __init__(self,Inputs,Outputs,recurrent):
 			self.Inputs = Inputs
 			self.Outputs = Outputs
@@ -509,30 +722,30 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.staleness = 0
 			self.genomes = []
 			self.averageFitness = 0
-			self.CrossoverChance = 0.75
 			self.recurrent = recurrent
-
+			
 		def calculateAverageFitness(self): 
 			total = 0
 			for genome in self.genomes:
 				total = total + genome.globalRank
 			self.averageFitness = total / len(self.genomes)
-		
-		def breedChildren(self): # breeds children of a species
-			if random.random() < self.CrossoverChance:
-				rand1 = random.randint(0,len(self.genomes)-1)
-				rand2 = random.randint(0,len(self.genomes)-1)
-				g1 = self.genomes[rand1]
-				g2 = self.genomes[rand2]
-				child = self.crossover(g1,g2)
+
+		 # breeds children of a species
+		def breedChildren(self):
+			genome1 = random.choice(self.genomes)
+			if random.random() < .75 and len(genome1.mates)>0:
+				mate = random.sample(genome1.mates,1)
+				generation = mate[0][0]
+				genome = mate[0][1]
+				genome2 = pool.generations[generation][genome]
+				child = self.crossover(genome1,genome2)
 			else:
-				g =  self.genomes[random.randint(0,len(self.genomes)-1)]
-				child = g.copyGenome()
-			
+				child = genome1.copyGenome()
 			child.mutate()
 			return child
 		
-		def crossover(self,g1,g2): # mixes genes of 2 species
+		# mixes genes of 2 species
+		def crossover(self,g1,g2): 
 			if g2.fitness > g1.fitness:
 				tempg = g1
 				g1 = g2
@@ -550,16 +763,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					child.genes.append(gene1.copyGene())
 			child.maxneuron = max(g1.maxneuron,g2.maxneuron)
 			for mutation,rate in g1.mutationRates.items():
-				child.mutationRates[mutation] = rate
+				g2Rate= g2.mutationRates[mutation]
+				child.mutationRates[mutation] = (rate+g2Rate)/2
+			child.parents = (g1.ID,g2.ID)   
 			return child
 
-		
-	   
-		
-
-
-       
-		
 class newGene:
 	def __init__(self):
 		self.into = 0
@@ -567,8 +775,9 @@ class newGene:
 		self.weight = 0.0
 		self.innovation = 0
 		self.enabled = True
-		
-	def copyGene(self): # copies gene perfectly
+	
+	# copies gene perfectly
+	def copyGene(self): 
 		gene2 = newGene()
 		gene2.into = self.into
 		gene2.out = self.out
@@ -578,11 +787,10 @@ class newGene:
 		return gene2
 
 class newNeuron():
-    def __init__(self):
-        self.incoming = []
-        self.value = 0.0
-     
-
+	def __init__(self):
+		self.incoming = []
+		self.value = 0.0
+		
 
 
 
