@@ -35,7 +35,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			pool.timeStamp = timeStamp
 		#children for initial population
 		children = []
-		if database != None and timeStamp=None:
+		if database != None and timeStamp == None:
 			pool.client = MongoClient(self.databaseName, 27017)
 			db = pool.client["runs"]
 			collection = db["Runs"]
@@ -358,7 +358,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		c = 1
 		for rank in sIndex:
 			self.species[rank[0]].genomes[rank[1]].globalRank = c
-            print(c,genome.fitness)
+			print(c,genome.fitness)
 			if c == len(sIndex):
 				topGenome = self.species[rank[0]].genomes[rank[1]]
 				if addBest:
