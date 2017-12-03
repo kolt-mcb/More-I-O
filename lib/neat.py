@@ -299,7 +299,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if cutToOne:
 				remaining = 1
 			while len(specie.genomes) > remaining:
-				species.genomes.pop()
+				specie.genomes.pop()
 				
 	def removeStaleSpecies(self): # removes species that have not gotten a high score past a threshold
 		survived = []
