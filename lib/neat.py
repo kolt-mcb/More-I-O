@@ -347,13 +347,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	def rankGlobally(self,addBest=False): # sets globalRank value for all genomes.
 		sIndex = []
 		s = 0
-        c = 0
+		c = 0
 		for specie in self.species:
 			g = 0
 			for genome in specie.genomes:
-                print(c,genome.fitness)
+				print(c,genome.fitness)
 				sIndex.append((s,g,genome.fitness))
-                c += 1
+				c += 1
 				g += 1
 			s += 1
 		sIndex.sort(key=lambda tup: (tup[2]))
