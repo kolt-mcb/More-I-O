@@ -14,7 +14,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	generations = []
 	client = None
 	timeStamp = time.time()
-	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None):
+	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None,timeStamp=None):
 		self.species = []
 		self.generation = 0
 		self.currentSpecies = 0
@@ -25,12 +25,17 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.StaleSpecies = 15
 		self.Inputs = Inputs
 		self.Outputs = Outputs
-		self.newGenome.innovation = Inputs #  sets the class variable to the current number of inputs
+        #  sets the class variable to the current number of inputs
+		self.newGenome.innovation = Inputs 
 		self.recurrent = recurrent
 		self.databaseName = database
-		
+        
+        # use saved time stamp
+		if timeStamp != None:
+			pool.timeStamp = timeStamp
+		#children for initial population
 		children = []
-		if database != None:
+		if database != None and timeStamp=None:
 			pool.client = MongoClient(self.databaseName, 27017)
 			db = pool.client["runs"]
 			collection = db["Runs"]
@@ -40,12 +45,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				"outputs" : self.Outputs,
 				"population" : self.Population
 								  })
-		for x in range(self.Population):# potpulate with random nets
+		#potpulate with random nets
+		for x in range(self.Population):#
 			newGenome = self.newGenome(Inputs,Outputs,recurrent)
 			newGenome.mutate()
 			children.append(newGenome)
-			
+    
+		#adds to population
 		self.addToPool(children)
+
+        #generate networks
 		for specie in self.species:
 			for genome in specie.genomes:
 				genome.generateNetwork()
@@ -54,12 +63,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				
 
 
-			
+	#updates a mongo database when the genome is added to the population
 	def updateMongoGenerations(self,doc):
 		db = pool.client["runs"]
 		collection = db["Generations"]
 		collection.insert_one(doc)
-		
+	
+    # the main genome doc with genes and lots of things. 
 	def updateMongoGenome(self,genome,specie):
 		doc = {
 		"time stamp" : pool.timeStamp,
@@ -83,25 +93,29 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		db = pool.client["runs"]
 		collection = db["Genomes"]
 		collection.insert_one(doc)
-		
+	
+    # turns parent tuple into bson
 	def getParentsBSON(self,parents):
 		parentsBSON = {}
 		parentsBSON["parent1"] = parents[0]
 		parentsBSON["parent2"] = parents[1]
 		return parentsBSON
-	
+
+	# turns ID tuple into bson
 	def getIDBSON(self,ID):
 		IDBSON = {}
 		IDBSON["generation"] = ID[0]
 		IDBSON["genome"] = ID[1]
 		return IDBSON
 		
+    # turns gene array into bson
 	def getGenesBSON(self,genes):
 		genesArray = []
 		for gene in genes:
 			genesArray.append(gene.innovation)
 		return genesArray
 	
+    # turns gene weights into bson
 	def getGeneWeightsBSON(self,genes):
 		genesWeightMapArray = []
 		for gene in genes:
@@ -110,7 +124,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			})
 		return genesWeightMapArray
 	
-
+    # adds a list of children to the ai  
 	def addToPool(self,children):
 		pool.generations.append([])
 		for child in children:
@@ -322,7 +336,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 	def averageFitness(self): #average fitness of entire pool
 		total = 0
-		count =+ 1
+		count = 0
 		for specie in self.species:
 			for genome in specie.genomes:
 				count += 1
@@ -336,20 +350,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			g = 0
 			for genome in specie.genomes:
-				geneEnabledCount = 0 
-				for gene in genome.genes:
-					if gene.enabled:
-						geneEnabledCount += 1
-				geneEnabledCount = 0 -geneEnabledCount
 				sIndex.append((s,g,genome.fitness))
 				g += 1
 			s += 1
-
 		sIndex.sort(key=lambda tup: (tup[2]))
 		
 		c = 1
 		for rank in sIndex:
 			self.species[rank[0]].genomes[rank[1]].globalRank = c
+            print(c,genome.fitness)
 			if c == len(sIndex):
 				topGenome = self.species[rank[0]].genomes[rank[1]]
 				if addBest:
