@@ -454,40 +454,37 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			return pool.newGenome.innovation
 
 			
-		def mutate(self,clone=False): # runs all mutation types at rate set, while probabilty is over the rate set.
-			standardRate = 1
-			if clone:
-				standardRate = .5 
+		def mutate(self): # runs all mutation types at rate set, while probabilty is over the rate set.
 			for mutation,rate in self.mutationRates.items():
 				if random.randint(1,2) == 1:
 					self.mutationRates[mutation] = 0.95*rate
 				else:
 					self.mutationRates[mutation] = 1.05263*rate
 					
-			if random.random() < self.mutationRates["connections"] *standardRate:
+			if random.random() < self.mutationRates["connections"]:
 				self.pointMutate()
-			p = self.mutationRates["link"] *standardRate
+			p = self.mutationRates["link"] 
 			while p > 0:
 				if random.random() < p:
 					self.linkMutate(False)
 				p = p -1
-			p = self.mutationRates["bias"] *standardRate
+			p = self.mutationRates["bias"] 
 			while p > 0:
 				if random.random() < p:
 					self.linkMutate(True)
 				p = p -1
-			p = self.mutationRates["node"] *standardRate
+			p = self.mutationRates["node"] 
 			while p > 0:
 				if random.random() < p:
 					self.nodeMutate()
 				p = p -1
-			p = self.mutationRates["enable"] *standardRate
+			p = self.mutationRates["enable"]
 			while p > 0:
 
 				if random.random() < p:
 					self.enableDisableMutate(True)
 				p = p -1
-			p = self.mutationRates["disable"] *standardRate
+			p = self.mutationRates["disable"]
 			while p > 0:
 				if random.random() < p:
 					self.enableDisableMutate(False)
@@ -721,7 +718,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		def breedChildren(self): # breeds children of a species
 			genome1 = random.choice(self.genomes)
-			clone = False
 			if random.random() < .75 and len(genome1.mates)>0:
 				mate = random.sample(genome1.mates,1)
 				generation = mate[0][0]
@@ -730,8 +726,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				child = self.crossover(genome1,genome2)
 			else:
 				child = genome1.copyGenome()
-				clone = True
-			child.mutate(clone)
+			child.mutate()
 			return child
 		
 

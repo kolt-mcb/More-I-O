@@ -32,6 +32,7 @@ def poolInitializer(q,l):
 def playBest(pool):
 	parentPipe, childPipe = multiprocessing.Pipe()
 	genome = pool.getBest()
+	genome.generateNetwork()
 	process = multiprocessing.Process(target = singleGame,args=(genome,childPipe))
 	process.start()
 	display = networkDisplay.newNetworkDisplay(genome,parentPipe)
@@ -410,10 +411,10 @@ class gui:
 			msg = queue.get_nowait()
 			if msg is not sentinel:
 				for resultChunk in msg:
-          for result in resultChunk:
-            currentSpecies = result[1][0]
-            currentGenome = result[1][1]
-            self.pool.species[currentSpecies].genomes[currentGenome].setFitness(result[0])
+					for result in resultChunk:
+						currentSpecies = result[1][0]
+						currentGenome = result[1][1]
+						self.pool.species[currentSpecies].genomes[currentGenome].setFitness(result[0])
 				self.pool.nextGeneration()
 				print("gen " ,self.pool.generation," best", self.pool.getBest().fitness)
 				self.netProcess.join()
@@ -442,7 +443,7 @@ class gui:
 					 self.plotDictionary,
 					 self.plotData,
 					 self.genomeDictionary,
-					 self.specieID),file)
+					 self.specieID,self.pool.generations),file)
 
 	def loadFile(self):
 		filename = filedialog.askopenfilename()
@@ -468,6 +469,7 @@ class gui:
 		self.pool.species = species
 		self.pool.best = loadedPool[1]
 		self.pool.generation = len(self.pool.best)
+		neat.pool.generations = loadedPool[7]
 		self.population.set(self.pool.Population)
 		self.poolInitialized = True
 		f.close()
