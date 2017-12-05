@@ -301,7 +301,7 @@ class gui:
 		self.plotData = []
 		self.genomeDictionary = {}
 		self.specieID = 0
-		self.fig,self.ax = plt.subplots(figsize=(10,6))
+		self.fig,self.ax = plt.subplots(figsize=(3.7,3))
 		self.ax.stackplot([],[],baseline='wiggle')
 		canvas = FigureCanvasTkAgg(self.fig,self.master)
 		canvas.get_tk_widget().grid(row=5,column=0,rowspan=4,sticky="nesw")
