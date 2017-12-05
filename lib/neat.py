@@ -689,12 +689,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					self.lastEval.append(self.neurons[self.maxNodes+o].value)
 			return outputs
 				
-<<<<<<< HEAD
-=======
-		# sigmoid function.
-		def sigmoid(self,x): 
-			return 2/(1+math.exp(-4.9*x))-1
->>>>>>> 1c50542b25a76e074649f62c38df8953041cc3b1
 		
 		def setFitness(self,fitness):
 			if self.age > 0:
