@@ -156,12 +156,9 @@ def jobTrainer(envName):
 def singleGame(genome,genomePipe,envName):
 	env = gym.make(envName)
 	#env = wrappers.Monitor(env,'tmp/'+envName,resume=True)
-	runs = 1
+	runs = 10
 
 	print("playing best")
-	if eval:
-		#env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False)
-		runs = 1
 	if env.action_space.__class__ == gym.spaces.discrete.Discrete:
 		discrete = True
 	else:
@@ -378,7 +375,7 @@ class gui:
           self.pool.nextGeneration() # applies rewards and breeds new species
           print("gen " ,self.pool.generation," best", self.pool.getBest().fitness)
           self.updateStackPlot(self.pool.species)
-          self.playBest()
+          #self.playBest()
           if pausing:
             self.running = False
             self.master.after(250,lambda: self.checkRunCompleted(runQueue,pausing))
