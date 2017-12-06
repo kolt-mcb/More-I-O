@@ -671,7 +671,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					total += incoming.weight * other.value
 
 				if len(neuron.incoming) > 0:
-					neuron.value = (2/(1+expit((-4.9)*x)))-1
+					neuron.value = (2/(1+expit((-5)*x)))-1
 			outputs = []
 			# discrete means 0 or 1 eg on or off other wise send unmodified output layer values
 			if discrete: 
