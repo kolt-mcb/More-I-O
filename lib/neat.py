@@ -1,6 +1,5 @@
 from operator import attrgetter
 from operator import itemgetter
-from scipy.special import expit
 import sys
 import time
 import random
@@ -671,7 +670,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					total += incoming.weight * other.value
 
 				if len(neuron.incoming) > 0:
-					neuron.value = (2/(1+expit((-5)*total)))-1
+					neuron.value = self.sigmoid(total)
 			outputs = []
 			# discrete means 0 or 1 eg on or off other wise send unmodified output layer values
 			if discrete: 
@@ -708,7 +707,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 											"fitness": fitness
 											}
 										})
-
+		def sigmoid(self,x):
+			try:
+				value =  2/(1+math.exp(-5*x))-1
+			except OverflowError:
+				if x > 1:
+					value = 1
+				if x < -1:
+					value = -1
+			return value
 			
 
 	 
