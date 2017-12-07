@@ -353,11 +353,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			g = 0
 			for genome in specie.genomes:
-				sIndex.append((s,g,genome.fitness))
+				geneEnabledCount = 0 
+				for gene in genome.genes:
+					if gene.enabled:
+						geneEnabledCount += 1
+				geneEnabledCount = 0 - geneEnabledCount
+				sIndex.append((s,g,genome.fitness,genome.mutationRates["ConectionCostRate"]*geneEnabledCount))
 				c += 1
 				g += 1
 			s += 1
-		sIndex.sort(key=lambda tup: (tup[2]))
+		sIndex.sort(key=lambda tup: (tup[2],tup[3]))
 		
 		c = 1
 		for rank in sIndex:
@@ -434,6 +439,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["DeltaDisjoint"] = 1
 			self.mutationRates["DeltaWeights"] = .4
 			self.mutationRates["DeltaMutation"] = 1
+			self.mutationRates["ConectionCostRate"] = 1
 			self.perturbChance = .9
 			self.age = 0
 			self.parents = ()
