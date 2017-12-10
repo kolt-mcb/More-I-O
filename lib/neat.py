@@ -14,7 +14,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	generations = []
 	client = None
 	timeStamp = time.time()
-	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None,timeStamp=None):
+	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None,timeStamp=None,connectionCost=False):
 		self.species = []
 		self.generation = 0
 		self.currentSpecies = 0
@@ -28,6 +28,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
         #  sets the class variable to the current number of inputs
 		self.newGenome.innovation = Inputs 
 		self.recurrent = recurrent
+		self.connectionCost = connectionCost
 		self.databaseName = database
         
         # use saved time stamp
@@ -353,17 +354,22 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			g = 0
 			for genome in specie.genomes:
-				geneEnabledCount = 0 
-				for gene in genome.genes:
-					if gene.enabled:
-						geneEnabledCount += 1
-				geneEnabledCount = 0 - geneEnabledCount
-				sIndex.append((s,g,genome.fitness,genome.mutationRates["ConectionCostRate"]*geneEnabledCount))
+				if self.connectionCost:
+					geneEnabledCount = 0 
+					for gene in genome.genes:
+						if gene.enabled:
+							geneEnabledCount += 1
+					geneEnabledCount = 0 - geneEnabledCount
+					sIndex.append((s,g,genome.fitness,genome.mutationRates["ConectionCostRate"]*geneEnabledCount))
+				else:
+					sIndex.append((s,g,genome.fitness))
 				c += 1
 				g += 1
 			s += 1
-		sIndex.sort(key=lambda tup: (tup[2],tup[3]))
-		
+		if self.connectionCost:
+			sIndex.sort(key=lambda tup: (tup[2],tup[3]))
+		else:
+			sIndex.sort(key=lambda tup: (tup[2]))
 		c = 1
 		for rank in sIndex:
 			self.species[rank[0]].genomes[rank[1]].globalRank = c
