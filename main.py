@@ -248,7 +248,7 @@ class gui:
         self.runButton.grid(row=2, column=3)
         # play best button
         self.playBestButton = Button(
-            self.frame, text='play best', command=playBest)
+            self.frame, text='play best', command=self.handlePlayBest)
         self.playBestButton.grid(row=2, column=4)
         # uploadButton
         self.uploadButton = Button(
@@ -338,6 +338,9 @@ class gui:
         gym.upload('tmp/' + self.envEntry.get(),
                    api_key="sk_8j3LQ561SH20sk0YN3qpg")
 
+    def handlePlayBest(self):
+        playBest(self.pool.getBest(),self.envEntry.get())
+
     def toggleRun(self):
         env = gym.make(self.envEntry.get())
         if not self.running:
@@ -351,7 +354,7 @@ class gui:
                 else:
                     observation = env.observation_space.shape[0]
                 self.pool = neat.pool(
-                    int(self.populationEntry.get()), observation, actions, recurrent=False)
+                    int(self.populationEntry.get()), observation, actions, recurrent=False,database="192.168.1.119",connectionCost=True)
                 env.close()
                 self.poolInitialized = True
             self.running = True

@@ -208,19 +208,17 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		Threshold1 = genome1.mutationRates["DeltaThreshold"]
 		DeltaDisjoint1 = genome1.mutationRates["DeltaDisjoint"]
 		DeltaWeights1 = genome1.mutationRates["DeltaWeights"]
-		DeltaMutation1 = genome1.mutationRates["DeltaMutation"]
 
 		Threshold2 = genome2.mutationRates["DeltaThreshold"]
 		DeltaDisjoint2 = genome2.mutationRates["DeltaDisjoint"]
 		DeltaWeights2 = genome2.mutationRates["DeltaWeights"]
-		DeltaMutation2 = genome2.mutationRates["DeltaMutation"]
 		
-		DeltaMutation = (DeltaMutation1 + DeltaMutation2)/2
+
 		DeltaDisjoint = (DeltaDisjoint1 + DeltaDisjoint2)/2
 		DeltaWeights = (DeltaWeights1 + DeltaWeights2)/2
 		Threshold = (Threshold1 + Threshold2)/2
 		
-		dm = DeltaMutation * self.mutatationDisjoints(genome1.mutationRates,genome2.mutationRates)
+		
 		dd = DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
 		dw = DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes
 		
@@ -400,11 +398,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			return 0
 		return disjointGenes / n
 
-	def mutatationDisjoints(self,mutations1,mutations2):
-		difference = 0
-		for mutation,rate in mutations1.items():
-			difference += abs(mutations2[mutation] - rate)
-		return difference/len(mutations1)
+
 		
 	# mesures the difference of weights in a shared gene due to mutation 
 	def weights(self,genes1,genes2): 
@@ -444,7 +438,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["DeltaThreshold"] = 1
 			self.mutationRates["DeltaDisjoint"] = 1
 			self.mutationRates["DeltaWeights"] = .4
-			self.mutationRates["DeltaMutation"] = 1
 			self.mutationRates["ConectionCostRate"] = 1
 			self.perturbChance = .9
 			self.age = 0
