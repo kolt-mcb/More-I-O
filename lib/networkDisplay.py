@@ -11,7 +11,7 @@ height = 480
 
 
 class newNetworkDisplay():
-    def __init__(self,genome,genomePipe):
+    def __init__(self,genome,genomePipe=None):
        
         
         #Set up the main window frame as a grid
