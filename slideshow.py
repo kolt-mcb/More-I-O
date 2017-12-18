@@ -28,14 +28,15 @@ class gui:
 
     
     def button2(self):
-        self.currentGenome +=1
-        self.refreshNetworkDisplay()
+        if self.currentGenome < len(self.best):
+            self.currentGenome +=1
+            self.refreshNetworkDisplay()
 
     def refreshNetworkDisplay(self):
-        self.display._quit()
         genome = self.best[self.currentGenome]
-        self.display = networkDisplay.newNetworkDisplay(genome)
-        self.display.Tk.mainloop()
+        print(genome.fitness,len(genome.genes))
+        genome.evaluateNetwork([1]*genome.Inputs)
+        self.display.update(genome)
 
         
 

@@ -37,6 +37,24 @@ class newNetworkDisplay():
         self.canvas.focus_set()
         self.canvas.pack()
         self.canvas.update()
+        
+        
+    def update(self,genome):
+        self.canvas.delete("all")
+        self.lastGenome = None
+        self.cells = {} 
+        self.lines = {}
+        self.drawnCells = {}
+        self.drawnLines = {}
+        self.placeInputNeurons(genome)
+        self.placeOutputNeurons(genome)
+        self.placeHiddenNeurons(genome)
+        self.mutationRates(genome)
+        self.drawCells() 
+        self.drawLines(genome)
+        self.canvas.focus_set()
+        self.canvas.pack()
+        self.canvas.update()
 
     def _quit(self):
         self.Tk.destroy()
@@ -141,9 +159,8 @@ class newNetworkDisplay():
         x = (height//(Inputs+1))+100
         y = 10
         for mutation,Rate in genome.mutationRates.items():
-            Text = mutation," ",str(round(Rate,2))
-            self.canvas.create_text((x,y),text=Text)
-            x += (.05*width)+10 
+            self.canvas.create_text((x,y),text='{} {}'.format(mutation,str(round(Rate,2))))
+            x += (.05*width)+25 
 
 
     def pickCellColor(self,value):
