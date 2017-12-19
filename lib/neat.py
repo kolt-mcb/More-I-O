@@ -556,8 +556,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				return
 			r = random.randint(0,len(self.genes)-1)
 			gene = self.genes[r]
-			while not gene.enabled:
-				gene = self.genes[r]
 			# index of next neuron to point at as seen 3 lines below, gene1.out = self.maxneuron
 			self.maxneuron += 1 
 			gene.enabled = False
