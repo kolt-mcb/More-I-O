@@ -470,9 +470,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					self.mutationRates[mutation] = 0.95*rate
 				else:
 					self.mutationRates[mutation] = 1.05263*rate
-					
-			if random.random() < self.mutationRates["connections"]:
-				self.pointMutate()
+			
+			p = self.mutationRates["connections"]
+			while p > 0:
+				if random.random() < p:
+					self.pointMutate()
+				p = p -1	
 			p = self.mutationRates["link"] 
 			while p > 0:
 				if random.random() < p:
@@ -504,7 +507,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		#mutates the weight of a gene
 		def pointMutate(self): 
 			step = self.mutationRates["step"]
-			for gene in self.genes:
+			if len(self.genes) > 1:
+				r = random.randint(0,len(self.genes)-1)
+				gene = self.genes[r]
 				if random.random() < self.perturbChance:
 					gene.weight = gene.weight + random.random()*step*2-step
 				else:
@@ -551,8 +556,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				return
 			r = random.randint(0,len(self.genes)-1)
 			gene = self.genes[r]
-			if not gene.enabled:
-				return
+			while not gene.enabled:
+				gene = self.genes[r]
 			# index of next neuron to point at as seen 3 lines below, gene1.out = self.maxneuron
 			self.maxneuron += 1 
 			gene.enabled = False
