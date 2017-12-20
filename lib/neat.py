@@ -198,9 +198,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				if self.sameSpecies(child,parentGenome):
 					if parentGenome.ID != None:
 						relatives.add(parentGenome.ID)
-						parentRelatives = self.getRelatives(child,parentGenome)
-						if parentRelatives != None:
-							relatives.update(parentRelatives)
+						if not parentGenome.defining:
+							parentRelatives = self.getRelatives(child,parentGenome)
+							if parentRelatives != None:
+								relatives.update(parentRelatives)
 
 		return relatives
 				  
@@ -297,7 +298,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			genomes = []
 			remaining = math.ceil(len(specie.genomes)/2)
 			if cutToOne:
-				remaining = 1
+				remaining = 2
 			while len(specie.genomes) > remaining:
 				specie.genomes.pop()
 	
@@ -449,7 +450,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.Outputs = Outputs
 			self.recurrent = recurrent
 			self.ID = (0,0)
-			self.defining = False
 			self.parents = (None,None)
 			# initializes first run for reccurrent networks
 			if self.recurrent: 
@@ -469,7 +469,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				if random.randint(1,2) == 1:
 					self.mutationRates[mutation] = 0.95*rate
 				else:
-					self.mutationRates[mutation] = 1.05263*rate
+					self.mutationRates[mutation] = 1.05*rate
 			
 			p = self.mutationRates["connections"]
 			while p > 0:
