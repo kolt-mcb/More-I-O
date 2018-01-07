@@ -401,8 +401,8 @@ class gui:
                 kill_proc_tree(child.pid)
             if self.running:
                 killFCEUX()
-                self.master.destroy()
-                self.master.quit()
+            self.master.destroy()
+            self.master.quit()
 
     def checkRunCompleted(self, queue, pausing=True):
         try:
