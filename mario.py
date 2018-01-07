@@ -372,7 +372,7 @@ class gui:
         if not self.running:
             if not self.poolInitialized:
                 self.pool = neat.pool(
-                    self.population.get(), 208, 4, recurrent=True,connectionCost=False, database="192.168.1.119")
+                    self.population.get(), 208, 4, recurrent=False,connectionCost=False)
                 self.poolInitialized = True
                 self.running = True
                 self.runButton.config(text='running')

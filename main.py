@@ -354,7 +354,7 @@ class gui:
                 else:
                     observation = env.observation_space.shape[0]
                 self.pool = neat.pool(
-                    int(self.populationEntry.get()), observation, actions, recurrent=False,database="192.168.1.119",connectionCost=False)
+                    int(self.populationEntry.get()), observation, actions, recurrent=False,connectionCost=False)
                 env.close()
                 self.poolInitialized = True
             self.running = True
@@ -437,6 +437,7 @@ class gui:
                      self.plotData,
                      self.genomeDictionary,
                      self.specieID, self.pool.generations), file)
+        print("file saved",filename)
 
     def loadFile(self):
         filename = filedialog.askopenfilename()
@@ -467,6 +468,7 @@ class gui:
         self.population.set(self.pool.Population)
         self.poolInitialized = True
         f.close()
+        print(filename, "loaded")
 
 
 
