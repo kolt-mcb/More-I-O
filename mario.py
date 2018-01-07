@@ -462,6 +462,7 @@ class gui:
                      self.plotData,
                      self.genomeDictionary,
                      self.specieID, self.pool.generations), file)
+        print("file saved",filename)
 
     def loadFile(self):
         filename = filedialog.askopenfilename()
@@ -492,6 +493,7 @@ class gui:
         self.population.set(self.pool.Population)
         self.poolInitialized = True
         f.close()
+        print(filename, "loaded")
 
 
 if __name__ == '__main__':
