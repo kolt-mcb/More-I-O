@@ -14,7 +14,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	generations = []
 	client = None
 	timeStamp = time.time()
-	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None,timeStamp=None):
+	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None,timeStamp=None,connectionCost=False):
 		self.species = []
 		self.generation = 0
 		self.currentSpecies = 0
@@ -28,6 +28,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
         #  sets the class variable to the current number of inputs
 		self.newGenome.innovation = Inputs 
 		self.recurrent = recurrent
+		self.connectionCost = connectionCost
 		self.databaseName = database
         
         # use saved time stamp
@@ -197,9 +198,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				if self.sameSpecies(child,parentGenome):
 					if parentGenome.ID != None:
 						relatives.add(parentGenome.ID)
-						parentRelatives = self.getRelatives(child,parentGenome)
-						if parentRelatives != None:
-							relatives.update(parentRelatives)
+						if not parentGenome.defining:
+							parentRelatives = self.getRelatives(child,parentGenome)
+							if parentRelatives != None:
+								relatives.update(parentRelatives)
 
 		return relatives
 				  
@@ -207,28 +209,26 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		Threshold1 = genome1.mutationRates["DeltaThreshold"]
 		DeltaDisjoint1 = genome1.mutationRates["DeltaDisjoint"]
 		DeltaWeights1 = genome1.mutationRates["DeltaWeights"]
-		DeltaMutation1 = genome1.mutationRates["DeltaMutation"]
 
 		Threshold2 = genome2.mutationRates["DeltaThreshold"]
 		DeltaDisjoint2 = genome2.mutationRates["DeltaDisjoint"]
 		DeltaWeights2 = genome2.mutationRates["DeltaWeights"]
-		DeltaMutation2 = genome2.mutationRates["DeltaMutation"]
 		
-		DeltaMutation = (DeltaMutation1 + DeltaMutation2)/2
+
 		DeltaDisjoint = (DeltaDisjoint1 + DeltaDisjoint2)/2
 		DeltaWeights = (DeltaWeights1 + DeltaWeights2)/2
 		Threshold = (Threshold1 + Threshold2)/2
 		
-		dm = DeltaMutation * self.mutatationDisjoints(genome1.mutationRates,genome2.mutationRates)
+		
 		dd = DeltaDisjoint*self.disjoint(genome1.genes,genome2.genes) #checks for genes
 		dw = DeltaWeights*self.weights(genome1.genes,genome2.genes) # checks values in genes
 		
 		if rating:
-			if	dd + dw + dm < Threshold:
-				return  Threshold - dd+dw+dm
+			if	dd + dw < Threshold:
+				return  Threshold - dd+dw
 			else:
 				return math.inf
-		return dd + dw + dm < Threshold
+		return dd + dw< Threshold
 
 	#generates a network for current species
 	def initializeRun(self): 
@@ -298,7 +298,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			genomes = []
 			remaining = math.ceil(len(specie.genomes)/2)
 			if cutToOne:
-				remaining = 1
+				remaining = 2
 			while len(specie.genomes) > remaining:
 				specie.genomes.pop()
 	
@@ -353,12 +353,22 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			g = 0
 			for genome in specie.genomes:
-				sIndex.append((s,g,genome.fitness))
+				if self.connectionCost:
+					geneEnabledCount = 0 
+					for gene in genome.genes:
+						if gene.enabled:
+							geneEnabledCount += 1
+					geneEnabledCount = 0 - geneEnabledCount
+					sIndex.append((s,g,genome.fitness,genome.mutationRates["ConectionCostRate"]*geneEnabledCount))
+				else:
+					sIndex.append((s,g,genome.fitness))
 				c += 1
 				g += 1
 			s += 1
-		sIndex.sort(key=lambda tup: (tup[2]))
-		
+		if self.connectionCost:
+			sIndex.sort(key=lambda tup: (tup[2],tup[3]))
+		else:
+			sIndex.sort(key=lambda tup: (tup[2]))
 		c = 1
 		for rank in sIndex:
 			self.species[rank[0]].genomes[rank[1]].globalRank = c
@@ -389,11 +399,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			return 0
 		return disjointGenes / n
 
-	def mutatationDisjoints(self,mutations1,mutations2):
-		difference = 0
-		for mutation,rate in mutations1.items():
-			difference += abs(mutations2[mutation] - rate)
-		return difference/len(mutations1)
+
 		
 	# mesures the difference of weights in a shared gene due to mutation 
 	def weights(self,genes1,genes2): 
@@ -423,17 +429,17 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates = {}
 			self.globalRank = 0
 			self.maxNodes = 10000
-			self.mutationRates["connections"] =  0.7
-			self.mutationRates["link"] =  .7
-			self.mutationRates["bias"] = 0.1
-			self.mutationRates["node"] = 0.7
-			self.mutationRates["enable"] = 0.05
-			self.mutationRates["disable"] = 0.1
+			self.mutationRates["connections"] = 2
+			self.mutationRates["link"] =  2
+			self.mutationRates["bias"] = .5
+			self.mutationRates["node"] = 2
+			self.mutationRates["enable"] = .5
+			self.mutationRates["disable"] = .2
 			self.mutationRates["step"] = 0.1
 			self.mutationRates["DeltaThreshold"] = 1
 			self.mutationRates["DeltaDisjoint"] = 1
 			self.mutationRates["DeltaWeights"] = .4
-			self.mutationRates["DeltaMutation"] = 1
+			self.mutationRates["ConectionCostRate"] = 1
 			self.perturbChance = .9
 			self.age = 0
 			self.parents = ()
@@ -444,7 +450,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.Outputs = Outputs
 			self.recurrent = recurrent
 			self.ID = (0,0)
-			self.defining = False
 			self.parents = (None,None)
 			# initializes first run for reccurrent networks
 			if self.recurrent: 
@@ -464,10 +469,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				if random.randint(1,2) == 1:
 					self.mutationRates[mutation] = 0.95*rate
 				else:
-					self.mutationRates[mutation] = 1.05263*rate
-					
-			if random.random() < self.mutationRates["connections"]:
-				self.pointMutate()
+					self.mutationRates[mutation] = 1.05*rate
+			
+			p = self.mutationRates["connections"]
+			while p > 0:
+				if random.random() < p:
+					self.pointMutate()
+				p = p -1	
 			p = self.mutationRates["link"] 
 			while p > 0:
 				if random.random() < p:
@@ -499,7 +507,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		#mutates the weight of a gene
 		def pointMutate(self): 
 			step = self.mutationRates["step"]
-			for gene in self.genes:
+			if len(self.genes) > 1:
+				r = random.randint(0,len(self.genes)-1)
+				gene = self.genes[r]
 				if random.random() < self.perturbChance:
 					gene.weight = gene.weight + random.random()*step*2-step
 				else:
@@ -546,8 +556,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				return
 			r = random.randint(0,len(self.genes)-1)
 			gene = self.genes[r]
-			if not gene.enabled:
-				return
 			# index of next neuron to point at as seen 3 lines below, gene1.out = self.maxneuron
 			self.maxneuron += 1 
 			gene.enabled = False
@@ -688,9 +696,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					self.lastEval.append(self.neurons[self.maxNodes+o].value)
 			return outputs
 				
-		# sigmoid function.
-		def sigmoid(self,x): 
-			return 2/(1+math.exp(-4.9*x))-1
 		
 		def setFitness(self,fitness):
 			if self.age > 0:
@@ -710,7 +715,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 											"fitness": fitness
 											}
 										})
-
+		def sigmoid(self,x):
+			try:
+				value =  2/(1+math.exp(-5*x))-1
+			except OverflowError:
+				if x > 1:
+					value = 1
+				if x < -1:
+					value = -1
+			return value
 			
 
 	 
