@@ -468,6 +468,10 @@ class gui:
         self.population.set(self.pool.Population)
         self.poolInitialized = True
         f.close()
+        self.ax.stackplot(
+            list(range(len(self.plotData[0]))), *self.plotData, baseline='wiggle')
+        canvas = FigureCanvasTkAgg(self.fig, self.master)
+        canvas.get_tk_widget().grid(row=5, column=0, rowspan=5, sticky="nesw")
         print(filename, "loaded")
 
 
