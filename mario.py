@@ -105,7 +105,7 @@ def jobTrainer(envName):
         finalScore = 0
         done = False
         maxReward = 0
-        for LVint in [2, 10, 14, 18, 22]:
+        for LVint in range(32):
             maxDistance = 0
             oldDistance = 0
             bonus = 0
