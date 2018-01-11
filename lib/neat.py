@@ -448,6 +448,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["DeltaDisjoint"] = 1
 			self.mutationRates["DeltaWeights"] = .4
 			self.mutationRates["ConectionCostRate"] = 1
+			self.rate = 1
 			self.perturbChance = .9
 			self.age = 0
 			self.parents = ()
@@ -473,11 +474,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		# runs all mutation types at rate set, while probabilty is over the rate set.
 		def mutate(self): 
+			if random.randint(1,2) == 1:
+				self.rate = self.rate*0.95
+			else:
+				self.rate = self.rate*1.05
 			for mutation,rate in self.mutationRates.items():
 				if random.randint(1,2) == 1:
-					self.mutationRates[mutation] = 0.95*rate
+					self.mutationRates[mutation] = self.rate*rate
 				else:
-					self.mutationRates[mutation] = 1.05*rate
+					self.mutationRates[mutation] = self.*rate
 			
 			p = self.mutationRates["connections"]
 			while p > 0:
