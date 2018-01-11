@@ -145,7 +145,7 @@ def jobTrainer(envName):
                 oldDistance = distance
         for score in scores:
             finalScore += score
-        finalScore = round(finalScore / 5)
+        finalScore = round(finalScore / 32)
         results.append((finalScore, job))
 
         print("species:", currentSpecies, "genome:",
