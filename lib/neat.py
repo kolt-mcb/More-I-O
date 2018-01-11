@@ -270,7 +270,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				breed = math.floor(specie.averageFitness / _sum * self.Population)-1
 				for i in range(breed):
 						if len(children)+c < self.Population:
-							children.append(specie.breedChildren())
+							children.append(specie.breedChildren(self.InPopulation))
 
 		# leave only the top member of each species.
 		self.cullSpecies(True) 
@@ -282,7 +282,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		
 		while (len(children)+c < self.Population):
 			parent = random.choice(self.species)
-			child = parent.breedChildren()
+			child = parent.breedChildren(self.InPopulation)
 			children.append(child)
 
 		for specie in self.species:
@@ -301,6 +301,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				remaining = 2
 			while len(specie.genomes) > remaining:
 				specie.genomes.pop()
+
+	
+	def InPopulation(self,genome):
+		for specie in self.species:
+			for populationGenome in specie.genomes:
+				if genome == populationGenome.ID:
+					return True
+		return False
+		
 	
 	# removes species that have not gotten a high score past a threshold		
 	def removeStaleSpecies(self): 
@@ -743,16 +752,20 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.averageFitness = total / len(self.genomes)
 
 		 # breeds children of a species
-		def breedChildren(self):
+		def breedChildren(self,InPopulation):
 			genome1 = random.choice(self.genomes)
-			if random.random() < .75 and len(genome1.mates)>0:
-				mate = random.sample(genome1.mates,1)
-				generation = mate[0][0]
-				genome = mate[0][1]
-				genome2 = pool.generations[generation][genome]
-				child = self.crossover(genome1,genome2)
-			else:
-				child = genome1.copyGenome()
+			child = None
+			while child == None:
+				if random.random() < .75 and len(genome1.mates)>0:
+					mate = random.sample(genome1.mates,1)
+					if InPopulation(mate):
+						generation = mate[0][0]
+						genome = mate[0][1]
+						genome2 = pool.generations[generation][genome]
+						child = self.crossover(genome1,genome2)
+
+				else:
+					child = genome1.copyGenome()
 			child.mutate()
 			return child
 		
