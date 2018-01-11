@@ -482,7 +482,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				if random.randint(1,2) == 1:
 					self.mutationRates[mutation] = self.rate*rate
 				else:
-					self.mutationRates[mutation] = self.*rate
+					self.mutationRates[mutation] = self.rate*rate
 			
 			p = self.mutationRates["connections"]
 			while p > 0:
