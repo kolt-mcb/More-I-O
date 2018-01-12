@@ -273,7 +273,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 							children.append(specie.breedChildren(self.InPopulation))
 
 		# leave only the top member of each species.
-		self.cullSpecies(True) 
+		#self.cullSpecies(True) 
 		c = 0
 		for specie in self.species:
 			for genome in specie.genomes:
@@ -439,10 +439,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.maxNodes = 10000
 			self.mutationRates["connections"] = 1
 			self.mutationRates["link"] =  1
-			self.mutationRates["bias"] = .5
+			self.mutationRates["bias"] = .1
 			self.mutationRates["node"] = 1
-			self.mutationRates["enable"] = .5
-			self.mutationRates["disable"] = .2
+			self.mutationRates["enable"] = .05
+			self.mutationRates["disable"] = .1
 			self.mutationRates["step"] = 0.1
 			self.mutationRates["DeltaThreshold"] = 1
 			self.mutationRates["DeltaDisjoint"] = 1
@@ -480,9 +480,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				self.rate = self.rate*1.01
 			for mutation,rate in self.mutationRates.items():
 				if random.randint(1,2) == 1:
-					self.mutationRates[mutation] = self.rate*rate
+					self.mutationRates[mutation] = (1/self.rate)*rate
 				else:
-					self.mutationRates[mutation] = self.rate*rate
+					self.mutationRates[mutation] = (self.rate/1)*rate
 			
 			p = self.mutationRates["connections"]
 			while p > 0:
