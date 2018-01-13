@@ -36,7 +36,7 @@ Now, we need to install the cloned gym environment done in the last command. Run
 
 Do not alter anything else. This sets up a symlink so gym can see the environments on disk, but now you need to register them by editing `$HOME/.local/lib/python3.X/site-packages/gym/envs/__init__.py` and putting the following at the bottom of it:
 
-``
+```
 register(
 	id='meta-SuperMarioBros-Tiles-v0',
 	entry_point='gym.envs.gym_super_mario:MetaSuperMarioBrosEnv',
@@ -44,7 +44,7 @@ register(
 	reward_threshold=(3266 - 40),
 	nondeterministic=True,
 )	
-``
+```
 Save the file. You're done. Let's get it started.
 
 ## Running the environment
