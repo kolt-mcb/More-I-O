@@ -55,7 +55,7 @@ After changing jobs and population to your liking hit "Start Run". It will then 
 Right now, the AI will go through all 32 levels in Super Mario Bros. It won't do glitch levels like minus world or other levels that are accessible by exploiting logic flaws in the game unless the AI becomes aware of those strats. This might be slow, but give it about half a day and you'll see the AI start making progress at attempting to beat the levels. Keep in mind that this will be a slow evolution process.
 
 ## Copyright concerns
-While this project does use emulated NES hardware via emulators and a copy of the Super Mario Bros NES ROM, the term "emulator" can be disputed in some countries. While emulators are legal, if you are concerned that the big N is going to hunt you down you should do some research and decide for yourself. You're on your own.
+While this project does use emulated NES hardware via emulators and a copy of the Super Mario Bros NES ROM, the term "emulator" can be disputed in some countries. The version of mario that is played is cloned from an unofficial openAI and has no mention of copyright, neither I or this project are affiliated with Nintendo, openAI, or any other company for that matter. 
 
 ## Things to do, in no particular order:
 1. clean up tkinter ui add in a way to save config files with mutation rates and ability to disbale rendering. basicly a bunch of boring work. 
