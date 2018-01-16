@@ -22,7 +22,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.maxFitness = 0
 		self.Population = population
 		self.best = []
-		self.StaleSpecies = 15
+		self.StaleSpecies = 10
 		self.Inputs = Inputs
 		self.Outputs = Outputs
         #  sets the class variable to the current number of inputs
@@ -273,7 +273,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 							children.append(specie.breedChildren(self.InPopulation))
 
 		# leave only the top member of each species.
-		self.cullSpecies(True) 
+		#self.cullSpecies(True) 
 		c = 0
 		for specie in self.species:
 			for genome in specie.genomes:
@@ -437,12 +437,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates = {}
 			self.globalRank = 0
 			self.maxNodes = 10000
-			self.mutationRates["connections"] = 2
-			self.mutationRates["link"] =  2
-			self.mutationRates["bias"] = .5
-			self.mutationRates["node"] = 2
-			self.mutationRates["enable"] = .5
-			self.mutationRates["disable"] = .2
+			self.mutationRates["connections"] = 1
+			self.mutationRates["link"] =  1
+			self.mutationRates["bias"] = .1
+			self.mutationRates["node"] = 1
+			self.mutationRates["enable"] = .05
+			self.mutationRates["disable"] = .1
 			self.mutationRates["step"] = 0.1
 			self.mutationRates["DeltaThreshold"] = 1
 			self.mutationRates["DeltaDisjoint"] = 1
@@ -458,6 +458,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.Outputs = Outputs
 			self.recurrent = recurrent
 			self.ID = (0,0)
+			self.rate = 1
 			self.parents = (None,None)
 			# initializes first run for reccurrent networks
 			if self.recurrent: 
@@ -473,11 +474,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		# runs all mutation types at rate set, while probabilty is over the rate set.
 		def mutate(self): 
+			if random.randint(1,2) == 1:
+				self.rate = self.rate*0.99
+			else:
+				self.rate = self.rate*1.01
 			for mutation,rate in self.mutationRates.items():
 				if random.randint(1,2) == 1:
-					self.mutationRates[mutation] = 0.95*rate
+					self.mutationRates[mutation] = (1/self.rate)*rate
 				else:
-					self.mutationRates[mutation] = 1.05*rate
+					self.mutationRates[mutation] = (self.rate/1)*rate
 			
 			p = self.mutationRates["connections"]
 			while p > 0:
@@ -790,7 +795,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for mutation,rate in g1.mutationRates.items():
 				g2Rate= g2.mutationRates[mutation]
 				child.mutationRates[mutation] = (rate+g2Rate)/2
-			child.parents = (g1.ID,g2.ID)   
+			child.parents = (g1.ID,g2.ID)  
+			child.rate = (genome1.rate + genome2.rate)/2
 			return child
 
 class newGene:

@@ -354,7 +354,7 @@ class gui:
                 else:
                     observation = env.observation_space.shape[0]
                 self.pool = neat.pool(
-                    int(self.populationEntry.get()), observation, actions, recurrent=False,connectionCost=False)
+                    int(self.populationEntry.get()), observation, actions, recurrent=False,connectionCost=True)
                 env.close()
                 self.poolInitialized = True
             self.running = True
