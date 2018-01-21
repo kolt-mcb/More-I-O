@@ -302,9 +302,7 @@ class gui:
         self.poolInitialized = False
         self.pool = None
         self.env = 'meta-SuperMarioBros-Tiles-v0'
-        self.lastPopulation = []
-        self.plotDictionary = {}
-        self.plotData = []
+        self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
         self.fig, self.ax = plt.subplots(figsize=(3.7, 3))
@@ -312,55 +310,35 @@ class gui:
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
 
-    def updateStackPlot(self, species):
-        if self.lastPopulation == []:
-            for specie in species:
-                genome = specie.genomes[0]
-                self.plotDictionary[self.specieID] = len(specie.genomes)
-                self.genomeDictionary[genome] = self.specieID
-                self.specieID += 1
-        else:
-            self.plotDictionary = dict.fromkeys(self.plotDictionary, 0)
-            for specie in species:
-                for genome in specie.genomes:
-                    foundSpecies = False
-                    for oldSpecie, specieID in self.genomeDictionary.items():
-                        definingGenome = oldSpecie
-                        if not foundSpecies and self.pool.sameSpecies(genome, definingGenome):
-                            specieID = self.genomeDictionary[definingGenome]
-                            self.plotDictionary[specieID] += 1
+    def updateStackPlot(self):
+
+        for specie in self.pool.species:
+            for genome in specie.genomes:
+                foundSpecies = False
+                for relative in genome.relatives:
+                    if relative in self.genomeDictionary:
+                        relativeGenome = self.pool.generations[relative[0]][relative[1]]
+                        if self.pool.sameSpecies(genome,relativeGenome):
+                            specieID = self.genomeDictionary[relative]
+                            if len(self.plotData[specieID]) != self.pool.generation:
+                                self.plotData[specieID].append(0)
+                            self.plotData[specieID][self.pool.generation-1] +=1
                             foundSpecies = True
-                    if not foundSpecies:
-                        definingGenome = specie.genomes[0]
-                        if self.genomeDictionary.get(definingGenome, None) != None:
-                            specieID = self.genomeDictionary[definingGenome]
-                            self.plotDictionary[specieID] += 1
-                        else:
-                            self.plotDictionary[self.specieID] = 1
-                            self.genomeDictionary[definingGenome] = self.specieID
-                            self.specieID += 1
-        self.lastPopulation = species
-
-        for genome, specieID in sorted(self.genomeDictionary.items(), key=itemgetter(1)):
-            speciesLen = self.plotDictionary[specieID]
-            if speciesLen == 0:
-                del self.plotDictionary[specieID]
-                del self.genomeDictionary[genome]
-
-            if len(self.plotData) <= specieID:
-                if len(self.plotData) == 0:
-                    self.plotData.append([])
-                else:
-                    self.plotData.append([0] * (len(self.plotData[0]) - 1))
-                self.plotData[specieID].append(speciesLen)
-            else:
-                self.plotData[specieID].append(speciesLen)
-        for specieArray in self.plotData:
-            if len(specieArray) != self.pool.generation:
-                specieArray.append(0)
+                if not foundSpecies:
+                    self.genomeDictionary[genome.ID] = self.specieID
+                    self.plotData[self.specieID] = [0] * self.pool.generation
+                    self.plotData[self.specieID][self.pool.generation-1] += 1
+                    self.specieID += 1
+        for k,v in self.plotData.items():
+            if len(v) != self.pool.generation:
+                self.plotData[k].append(0)
+        sortedPlots = sorted(self.plotData.keys())
+        plotList = []
+        for plot in sortedPlots:
+            plotList.append(self.plotData[plot])
         self.ax.clear()
         self.ax.stackplot(
-            list(range(len(self.plotData[0]))), *self.plotData, baseline='wiggle')
+            list(range(len(plotList[0]))), *plotList, baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=5, sticky="nesw")
 
@@ -457,7 +435,7 @@ class gui:
             return
         file = open(filename, "wb")
         pickle.dump((self.pool.species, self.pool.best,
-                     self.lastPopulation,
+                     None,
                      self.plotDictionary,
                      self.plotData,
                      self.genomeDictionary,
@@ -471,7 +449,6 @@ class gui:
         f = open(filename, "rb")
         loadedPool = pickle.load(f)
         species = loadedPool[0]
-        self.lastPopulation = loadedPool[2]
         self.plotDictionary = loadedPool[3]
         self.plotData = loadedPool[4]
         self.genomeDictionary = loadedPool[5]

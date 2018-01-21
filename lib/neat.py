@@ -198,10 +198,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				if self.sameSpecies(child,parentGenome):
 					if parentGenome.ID != None:
 						relatives.add(parentGenome.ID)
-						if not parentGenome.defining:
-							parentRelatives = self.getRelatives(child,parentGenome)
-							if parentRelatives != None:
-								relatives.update(parentRelatives)
+						parentRelatives = self.getRelatives(child,parentGenome)
+						if parentRelatives != None:
+							relatives.update(parentRelatives)
 
 		return relatives
 				  
