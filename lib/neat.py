@@ -198,9 +198,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				if self.sameSpecies(child,parentGenome):
 					if parentGenome.ID != None:
 						relatives.add(parentGenome.ID)
-						parentRelatives = self.getRelatives(child,parentGenome)
-						if parentRelatives != None:
-							relatives.update(parentRelatives)
+						if not parentGenome.defining:
+							parentRelatives = self.getRelatives(child,parentGenome)
+							if parentRelatives != None:
+								relatives.update(parentRelatives)
 
 		return relatives
 				  
@@ -284,10 +285,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			child = parent.breedChildren(self.InPopulation)
 			children.append(child)
 
-		for specie in self.species:
-			for genome in specie.genomes:
-				children.append(genome)
-		self.species = []
 		# adds all children to there species in the pool
 		self.addToPool(children)
 
@@ -573,12 +570,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			gene.enabled = False
 			gene1 = gene.copyGene()
 			gene1.out = self.maxneuron
-			gene1.weight = 1.0
+			gene1.weight = 1
 			gene1.innovation = self.newInnovation()
 			gene1.enabled = True
 			self.genes.append(gene1)
 			gene2 = gene.copyGene()
 			gene2.into = self.maxneuron
+			gene2.weight = gene.weight
+			if random.randint(1,2) == 1:
+				gene1.weight = (1-random.random()*2)
+				gene2.weight = (1-random.random()*2)
 			gene2.innovation = self.newInnovation()
 			gene2.enabled = True
 			self.genes.append(gene2)
@@ -714,6 +715,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				self.fitness = (self.fitness + fitness) / 2
 			else:
 				self.fitness = fitness
+			self.age += 1
 			if pool.client != None:
 				db = pool.client["runs"]
 				genomeCollection = db["Genomes"]
