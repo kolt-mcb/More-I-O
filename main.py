@@ -148,24 +148,27 @@ def jobTrainer(envName):
         genome = job[2]
         attemps = job[3]
         scores = 0
-        for run in range(attemps):  # runs for number of attemps
-            score = 0
-            done = False
-            ob = env.reset()
-            while not done:
-                ob = obFixer(env.observation_space, ob)
-                # evalutes brain, getting button presses
-                o = genome.evaluateNetwork(ob, discrete)
-                o = acFixer(env.action_space, o)
-                ob, reward, done, _ = env.step(o)
-                # env.render() # disabled render
-                score += reward
+        if genome.age == 0:
+            for run in range(attemps):  # runs for number of attemps
+                score = 0
+                done = False
+                ob = env.reset()
+                while not done:
+                    ob = obFixer(env.observation_space, ob)
+                    # evalutes brain, getting button presses
+                    o = genome.evaluateNetwork(ob, discrete)
+                    o = acFixer(env.action_space, o)
+                    ob, reward, done, _ = env.step(o)
+                    # env.render() # disabled render
+                    score += reward
 
-            scores += score
-        finalScore = round(scores / attemps)
-        print("species:", currentSpecies, " genome:",
-              currentGenome, " Scored:", finalScore)
-        results.append((finalScore, job))
+                scores += score
+            finalScore = round(scores / attemps)
+            print("species:", currentSpecies, " genome:",
+                currentGenome, " Scored:", finalScore)
+        if genome.age == 0:
+            results.append((finalScore, job))
+        else:results.append((genome.fitness,job))
     env.close()
     return results
 

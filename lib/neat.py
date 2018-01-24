@@ -579,6 +579,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.genes.append(gene1)
 			gene2 = gene.copyGene()
 			gene2.into = self.maxneuron
+			gene2.weight = gene.weight
+			if random.randint(1,2) == 1:
+ 				gene1.weight = (1-random.random()*2)
+ 				gene2.weight = (1-random.random()*2)
 			gene2.innovation = self.newInnovation()
 			gene2.enabled = True
 			self.genes.append(gene2)
@@ -714,6 +718,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				self.fitness = (self.fitness + fitness) / 2
 			else:
 				self.fitness = fitness
+			self.age += 1
 			if pool.client != None:
 				db = pool.client["runs"]
 				genomeCollection = db["Genomes"]
