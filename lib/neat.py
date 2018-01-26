@@ -285,11 +285,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			parent = random.choice(self.species)
 			child = parent.breedChildren(self.InPopulation)
 			children.append(child)
-
-<<<<<<< HEAD
-=======
-
->>>>>>> 18eb254479e30b1768daf2752a26ab549e056f9b
 		# adds all children to there species in the pool
 		self.addToPool(children)
 
