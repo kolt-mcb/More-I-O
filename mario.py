@@ -72,6 +72,8 @@ def trainPool(population, envNum, species, queue, env):
     queue.put(results)
 
 
+
+
 def get_pid(name):
     return check_output(["pidof", name]).split()
 
@@ -309,6 +311,21 @@ class gui:
         self.ax.stackplot([], [], baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
+		self.jobs = Queue()
+		self.lock = multiprocessing.Lock()
+
+
+	def makeJobs(self,species):
+    
+    s = 0
+    for specie in species:
+        g = 0
+        for genome in specie.genomes:
+            genome.generateNetwork()
+            self.jobs.put((s, g, genome))
+            g += 1
+        s += 1	
+
 
     def updateStackPlot(self):
 
@@ -392,19 +409,18 @@ class gui:
                     for result in resultChunk:
                         jobs.append(result)
                 self.updateFitness(jobs)
-                nextGenJob = threading.Thread(target=self.pool.nextGeneration)
-                nextGenJob.start()
-                nextGenJob.join()
+                self.pool.nextGeneration()
+ 
 
-                playBestJob = threading.Thread(
-                    target=playBest, args=(self.pool.getBest(),))
+
+                playBest(self.pool.getBest())
 
                 print("gen ", self.pool.generation,
                       " best", self.pool.getBest().fitness)
-                playBestJob.start()
+
                 
-                self.updateStackPlot(self.pool.species)
-                playBestJob.join()
+                self.updateStackPlot()
+
 
             if pausing:
                 self.running = False
