@@ -163,7 +163,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				s = foundedSpecie
 			else:
 				specie = self.newSpecies(self.Inputs,self.Outputs,self.recurrent)
-				child.defining = True
+				if self.generation !=1:
+					child.defining = True
 				specie.genomes.append(child)
 				s = len(self.species)
 				self.species.append(specie)
@@ -285,6 +286,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			child = parent.breedChildren(self.InPopulation)
 			children.append(child)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 18eb254479e30b1768daf2752a26ab549e056f9b
 		# adds all children to there species in the pool
 		self.addToPool(children)
 
