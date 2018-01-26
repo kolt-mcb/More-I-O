@@ -56,12 +56,11 @@ def trainPool(envNum, species, runQueue, env, attemps):
     for specie in species:  # generates network for each genome and creates a job with species and genome index, env name and number of trials/attemps
         g = 0
         for genome in specie.genomes:
-            genome.generateNetwork()
+
             jobs.put((s, g, genome, attemps))
             g += 1
         s += 1
-    mPool = multiprocessing.Pool(
-        processes=envNum, initializer=poolInitializer, initargs=(jobs,))
+    mPool = multiprocessing.Pool(processes=envNum, initializer=poolInitializer, initargs=(jobs,))
     results = mPool.map(jobTrainer, [env] * envNum)
     mPool.close()
     mPool.join()
@@ -148,27 +147,26 @@ def jobTrainer(envName):
         genome = job[2]
         attemps = job[3]
         scores = 0
-        if genome.age == 0:
-            for run in range(attemps):  # runs for number of attemps
-                score = 0
-                done = False
-                ob = env.reset()
-                while not done:
-                    ob = obFixer(env.observation_space, ob)
-                    # evalutes brain, getting button presses
-                    o = genome.evaluateNetwork(ob, discrete)
-                    o = acFixer(env.action_space, o)
-                    ob, reward, done, _ = env.step(o)
-                    # env.render() # disabled render
-                    score += reward
 
-                scores += score
+        for run in range(attemps):  # runs for number of attemps
+            genome.generateNetwork()
+            score = 0
+            done = False
+            ob = env.reset()
+            while not done:
+                ob = obFixer(env.observation_space, ob)
+                # evalutes brain, getting button presses
+                o = genome.evaluateNetwork(ob, discrete)
+                o = acFixer(env.action_space, o)
+                ob, reward, done, _ = env.step(o)
+                # env.render() # disabled render
+                score += reward
+
+            scores += score
             finalScore = round(scores / attemps)
-            print("species:", currentSpecies, " genome:",
+        print("species:", currentSpecies, " genome:",
                 currentGenome, " Scored:", finalScore)
-        if genome.age == 0:
-            results.append((finalScore, job))
-        else:results.append((genome.fitness,job))
+        results.append((finalScore, job))
     env.close()
     return results
 
@@ -372,17 +370,15 @@ class gui:
                     for result in resultChunk:
                         jobs.append(result)
                 self.updateFitness(jobs)
-                nextGenJob = threading.Thread(target=self.pool.nextGeneration)
-                nextGenJob.start()
-                nextGenJob.join()
+                self.pool.nextGeneration()
 
-                playBestJob = threading.Thread(target=playBest,args=(self.pool.getBest(),self.envEntry.get(),))
+                playBest(self.pool.getBest(),self.envEntry.get())
                 
                 print("gen ", self.pool.generation," best ", self.pool.getBest().fitness)
-                playBestJob.start()
+
                 
                 self.updateStackPlot()
-                playBestJob.join()
+
             if pausing:
                 self.running = False
                 self.master.after(
@@ -413,8 +409,8 @@ class gui:
             return
         file = open(filename, "wb")
         pickle.dump((self.pool.species, self.pool.best,
-                     self.lastPopulation,
-                     self.plotDictionary,
+                     None,
+                     None,
                      self.plotData,
                      self.genomeDictionary,
                      self.specieID, self.pool.generations), file)
@@ -449,10 +445,7 @@ class gui:
         self.population.set(self.pool.Population)
         self.poolInitialized = True
         f.close()
-        self.ax.stackplot(
-            list(range(len(self.plotData[0]))), *self.plotData, baseline='wiggle')
-        canvas = FigureCanvasTkAgg(self.fig, self.master)
-        canvas.get_tk_widget().grid(row=5, column=0, rowspan=5, sticky="nesw")
+
         print(filename, "loaded")
 
 
