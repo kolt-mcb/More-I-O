@@ -30,6 +30,8 @@ sentinel = object()  # tells the main tkinter window if a generattion is in prog
 
 lock = multiprocessing.Lock()  # lock needed for env process
 
+runQueue = Queue()
+jobs = Queue()
 
 def poolInitializer(q):  # manages the job queue for genomes/players
     global jobs
@@ -51,18 +53,15 @@ def playBest(genome,game):
 def trainPool(envNum, species, runQueue, env, attemps):
     before = time.time()
     results = []
-    jobs = Queue()
-    s=0
+    s = 0
     for specie in species:  # generates network for each genome and creates a job with species and genome index, env name and number of trials/attemps
-        g=0
+        g = 0
         for genome in specie.genomes:
-            genome.generateNetwork()
-            jobs.put((s,g, genome, attemps))
-            g+=1
-        s+=1
-    mPool = multiprocessing.Pool(
-        processes=envNum, initializer=poolInitializer, initargs=(jobs,))
 
+            jobs.put((s, g, genome, attemps))
+            g += 1
+        s += 1
+    mPool = multiprocessing.Pool(processes=envNum, initializer=poolInitializer, initargs=(jobs,))
     results = mPool.map(jobTrainer, [env] * envNum)
     mPool.close()
     mPool.join()
@@ -149,27 +148,26 @@ def jobTrainer(envName):
         genome = job[2]
         attemps = job[3]
         scores = 0
-        if genome.age == 0:
-            for run in range(attemps):  # runs for number of attemps
-                score = 0
-                done = False
-                ob = env.reset()
-                while not done:
-                    ob = obFixer(env.observation_space, ob)
-                    # evalutes brain, getting button presses
-                    o = genome.evaluateNetwork(ob, discrete)
-                    o = acFixer(env.action_space, o)
-                    ob, reward, done, _ = env.step(o)
-                    # env.render() # disabled render
-                    score += reward
-                    
-                scores += score
+
+        for run in range(attemps):  # runs for number of attemps
+            genome.generateNetwork()
+            score = 0
+            done = False
+            ob = env.reset()
+            while not done:
+                ob = obFixer(env.observation_space, ob)
+                # evalutes brain, getting button presses
+                o = genome.evaluateNetwork(ob, discrete)
+                o = acFixer(env.action_space, o)
+                ob, reward, done, _ = env.step(o)
+                # env.render() # disabled render
+                score += reward
+
+            scores += score
             finalScore = round(scores / attemps)
-            print("species:", currentSpecies, " genome:",
-    			  currentGenome, " Scored:", finalScore)
-        if genome.age == 0:
-            results.append((finalScore, job))
-        else: results.append((genome.fitness, job))
+        print("species:", currentSpecies, " genome:",
+                currentGenome, " Scored:", finalScore)
+        results.append((finalScore, job))
     env.close()
     return results
 
@@ -336,7 +334,7 @@ class gui:
                 else:
                     observation = env.observation_space.shape[0]
                 self.pool = neat.pool(
-                    int(self.populationEntry.get()), observation, actions, recurrent=False,connectionCost=False)
+                    int(self.populationEntry.get()), observation, actions, recurrent=False,connectionCost=True)
                 env.close()
                 self.poolInitialized = True
             self.running = True
@@ -348,7 +346,7 @@ class gui:
 
     def checkRunPaused(self):
         if self.running:
-            runQueue = Queue()
+            
             self.pool.Population = self.population.get()
             self.netProcess = multiprocessing.Process(target=trainPool, args=(int(self.envNumEntry.get(
             )), self.pool.species, runQueue, self.envEntry.get(), int(self.attempsEntry.get())))
@@ -378,8 +376,10 @@ class gui:
                 playBest(self.pool.getBest(),self.envEntry.get())
                 
                 print("gen ", self.pool.generation," best ", self.pool.getBest().fitness)
-                self.updateStackPlot()
+
                 
+                self.updateStackPlot()
+
             if pausing:
                 self.running = False
                 self.master.after(
@@ -424,6 +424,8 @@ class gui:
         f = open(filename, "rb")
         loadedPool = pickle.load(f)
         species = loadedPool[0]
+        self.lastPopulation = loadedPool[2]
+        self.plotDictionary = loadedPool[3]
         self.plotData = loadedPool[4]
         self.genomeDictionary = loadedPool[5]
         self.specieID = loadedPool[6]
@@ -444,10 +446,7 @@ class gui:
         self.population.set(self.pool.Population)
         self.poolInitialized = True
         f.close()
-        self.ax.stackplot(
-            list(range(len(self.plotData[0]))), *self.plotData, baseline='wiggle')
-        canvas = FigureCanvasTkAgg(self.fig, self.master)
-        canvas.get_tk_widget().grid(row=5, column=0, rowspan=5, sticky="nesw")
+
         print(filename, "loaded")
 
 
