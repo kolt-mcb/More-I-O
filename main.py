@@ -82,7 +82,7 @@ def acFixer(action_space, action):  # fixes action ranges, uses hyperbolic tange
 class workerClass(object):
     def __init__(self,numJobs,species,runQueue,env,attempts):
         manager = multiprocessing.Manager()
-        self.jobs = manager.Queue()
+        self.jobs = Queue()
         self.results = manager.Queue()
         self.numJobs = numJobs
         self.species = species
@@ -135,8 +135,8 @@ class workerClass(object):
         else:
             discrete = False
         genomeResults = []
-
-        if not self.jobs.empty():  # gets a new player index from queue
+        
+        while not self.jobs.empty():  # gets a new player index from queue
             try:
                 job = self.jobs.get()
             except Empty:
@@ -163,9 +163,8 @@ class workerClass(object):
             print("species:", currentSpecies, " genome:",
                     currentGenome, " Scored:", finalScore)
             genomeResults.append((finalScore, job))
-        else:
-            env.close()
-            self.results.put(genomeResults)
+        env.close()
+        self.results.put(genomeResults)
 
                    
     
@@ -377,7 +376,7 @@ class gui:
                     jobs.append(result)
             self.updateFitness(jobs)
             self.pool.nextGeneration()
-            playBest(self.pool.getBest(),self.envEntry.get())
+            #playBest(self.pool.getBest(),self.envEntry.get())
             print("gen ", self.pool.generation," best ", self.pool.getBest().fitness)
             self.updateStackPlot(self.generateStackPlot())
 
