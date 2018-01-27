@@ -367,7 +367,7 @@ class gui:
 
     def checkRunCompleted(self, runQueue, pausing=True):
         if not runQueue.empty():
-            msg = runQueue.getno_wait()
+            msg = runQueue.get()
             self.netProcess.join()
             jobs = []
             for resultChunk in msg:
