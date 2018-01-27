@@ -114,6 +114,7 @@ class workerClass(object):
             p.start()
         
         for i in range(self.numJobs):
+            print(i)
             processedResults.append(self.results.get())
 
         for p in proccesses:
@@ -365,10 +366,8 @@ class gui:
 
 
     def checkRunCompleted(self, runQueue, pausing=True):
-        print("test")
         if not runQueue.empty():
-            msg = runQueue.get()
-            print("test2")
+            msg = runQueue.getno_wait()
             self.netProcess.join()
             jobs = []
             for resultChunk in msg:
