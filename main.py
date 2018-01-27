@@ -135,7 +135,8 @@ class workerClass(object):
         else:
             discrete = False
         genomeResults = []
-        while not self.jobs.empty():  # gets a new player index from queue
+
+        if not self.jobs.empty():  # gets a new player index from queue
             try:
                 job = self.jobs.get()
             except Empty:
@@ -162,8 +163,9 @@ class workerClass(object):
             print("species:", currentSpecies, " genome:",
                     currentGenome, " Scored:", finalScore)
             genomeResults.append((finalScore, job))
-        env.close()
-        self.results.put(genomeResults)
+        else:
+            env.close()
+            self.results.put(genomeResults)
 
                    
     
