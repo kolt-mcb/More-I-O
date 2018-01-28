@@ -211,7 +211,7 @@ class workerClass(object):
         env.locked_levels = [False] * 32
         while True:
             while self.running.value:
-                while not self.job.Empty():
+                while not self.jobs.Empty():
                     try:
                         job = self.jobs.get()
                     except Empty:
