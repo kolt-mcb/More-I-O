@@ -395,7 +395,7 @@ class gui:
             self.pool.Population = self.population.get()
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=workerClass,args=(self.envNum.get(),self.queue,speciesQueue,self.env))
-                self.queue.put(self.pool.species)
+                self.speciesQueue.put(self.pool.species)
                 self.netProcess.start()
             else:
                 self.speciesQueue.put(self.pool.species)
@@ -415,7 +415,7 @@ class gui:
 
     def checkRunCompleted(self, pausing=True):
         try:
-            msg = self.queue.get_nowait()
+            msg = self.resultQueue.get_nowait()
             if msg is not self.sentinel:
                 jobs = []
                 for resultChunk in msg:
