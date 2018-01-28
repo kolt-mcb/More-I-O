@@ -131,7 +131,7 @@ def singleGame(genome, genomePipe):
                     done = True
             oldDistance = distance
 
-    env.close()
+    env._close()
     genomePipe.send("quit")
     genomePipe.close()
 
