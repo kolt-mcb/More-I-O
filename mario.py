@@ -407,7 +407,7 @@ class gui:
     def checkRunCompleted(self, pausing=True):
         try:
             msg = self.queue.get_nowait()
-            if msg is not sentinel:
+            if msg is not self.sentinel:
                 self.netProcess.join()
                 jobs = []
                 for resultChunk in msg:
