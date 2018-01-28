@@ -120,7 +120,6 @@ class workerClass(object):
         i= 0
         for p in proccesses:
             print(i)
-            p.close()
             p.join()
             i+=1
         after = time.time()
@@ -144,6 +143,7 @@ class workerClass(object):
             try:
                 job = self.jobs.get()
             except Empty:
+                self.jobs.close()
                 pass
             currentSpecies = job[0]
             currentGenome = job[1]
