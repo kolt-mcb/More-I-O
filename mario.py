@@ -183,7 +183,6 @@ class workerClass(object):
 
 
     def createJobs(self):
-        before = time.time()
         s = 0
         for specie in self.species:  # creates a job with species and genome index, env name and number of trials/attemps
             g = 0
@@ -192,9 +191,6 @@ class workerClass(object):
                 g += 1
             s += 1
 
-        after = time.time()
-        print("finished in ", int(after - before))
-        return processedResults
 
     def getResults(self):
         processedResults = []
