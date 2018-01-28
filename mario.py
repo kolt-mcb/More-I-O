@@ -174,10 +174,12 @@ class workerClass(object):
                 )
             self.proccesses.append(p)
             p.start()
+        self.startRun()
+        
         
 
 
-    def startRun(self,specis):
+    def startRun(self):
         species = self.speciesQueue.get()
         self.createJobs(species)
         self.running.value = True
