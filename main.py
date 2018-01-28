@@ -27,8 +27,7 @@ from operator import itemgetter
 sentinel = object()  # tells the main tkinter window if a generattion is in progress
 runQueue = Queue()
 
-def handlePlayBest(self):
-        playBest(pool.getBest(),self.envEntry.get())
+
 #starts a new game with the network display.
 def playBest(genome,game):
         parentPipe, childPipe = multiprocessing.Pipe()
@@ -199,6 +198,7 @@ class workerClass(object):
             try:
                 job = self.jobs.get()
             except Empty:
+                print("test")
                 self.jobs.close()
                 self.results.close()
                 pass
@@ -267,7 +267,7 @@ class gui:
         self.runButton.grid(row=2, column=3)
         # play best button
         self.playBestButton = Button(
-            self.frame, text='play best', command=handlePlayBest)
+            self.frame, text='play best', command=self.handlePlayBest)
         self.playBestButton.grid(row=2, column=4)
         # attemps label
         self.attempsLabel = Label(self.master, text="attemps")
@@ -295,6 +295,9 @@ class gui:
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         
+
+    def handlePlayBest(self):
+        playBest(self.pool.getBest(),self.envEntry.get())
 
     def generateStackPlot(self):
         for specie in self.pool.species:
