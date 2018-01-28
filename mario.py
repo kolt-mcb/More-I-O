@@ -418,7 +418,7 @@ class gui:
                 playBest(self.pool.getBest())
                 print("gen ", self.pool.generation,
                       " best", self.pool.getBest().fitness)
-                self.updateStackPlot(self.generateStackPlot)
+                self.updateStackPlot(self.generateStackPlot())
             if pausing:
                 self.running = False
                 self.master.after(250, lambda: self.checkRunCompleted())
