@@ -429,10 +429,6 @@ class gui:
                 250, lambda: self.checkRunCompleted(queue, pausing))
 
     
-    def onClosing(self):
-        if messagebox.askokcancel("Quit", "do you want to Quit?"):
-            self.master.destroy()
-            self.master.quit()
 
     def saveFile(self):
         if self.pool == None:
