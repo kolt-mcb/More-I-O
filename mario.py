@@ -89,6 +89,7 @@ def singleGame(genome, genomePipe):
     print("playing next")
     env.locked_levels = [False] * 32
     for LVint in range(32):
+        genome.generateNetwork()
         maxDistance = 0
         staleness = 0
         oldDistance = 0
@@ -176,7 +177,7 @@ class workerClass(object):
         proccesses = []
         processedResults = []
         s = 0
-        for specie in self.species:  # generates network for each genome and creates a job with species and genome index, env name and number of trials/attemps
+        for specie in self.species:  # creates a job with species and genome index, env name and number of trials/attemps
             g = 0
             for genome in specie.genomes:
                 self.jobs.put((s, g, genome))
@@ -228,6 +229,7 @@ class workerClass(object):
             done = False
             maxReward = 0
             for LVint in range(32):
+                genome.generateNetwork()
                 maxDistance = 0
                 oldDistance = 0
                 bonus = 0
