@@ -332,6 +332,7 @@ class gui:
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.queue = Queue()
         self.firstRun = True
+        self.workerClass = workerClass(self.envNum.get(),self.pool.species,self.queue,self.env)
 
         
 
@@ -396,7 +397,7 @@ class gui:
         if self.running:
             self.pool.Population = self.population.get()
             if self.firstRun:
-                self.netProcess = multiprocessing.Process(target=workerClass().startRun, args=(
+                self.netProcess = multiprocessing.Process(target=self.workerClass.startRun, args=(
                     self.envNum.get(),self.pool.species,self.queue,self.env))
                 self.netProcess.start()
             self.master.after(
