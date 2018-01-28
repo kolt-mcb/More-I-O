@@ -148,7 +148,7 @@ class workerClass(object):
         for i in range(self.numJobs):
             p = multiprocessing.Process(
                 target=self.jobTrainer,
-                args=([self.attempts])
+                args=([self.env])
                 )
             proccesses.append(p)
             p.start()
@@ -167,7 +167,7 @@ class workerClass(object):
         self.runQueue.put(processedResults)  # sends message to main tkinter process
 
 
-    def jobTrainer(envName):
+    def jobTrainer(self,envName):
     env = gym.make(envName)
     env.lock = self.lock
     env.lock.acquire()
@@ -177,8 +177,10 @@ class workerClass(object):
     env.locked_levels = [False] * 32
     while not jobs.empty():
         try:
-            job = jobs.get()
+            job = self.jobs.get()
         except Empty:
+            self.jobs.close()
+            self.results.close()
             pass
         currentSpecies = job[0]
         currentGenome = job[1]
