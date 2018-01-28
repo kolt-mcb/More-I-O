@@ -25,155 +25,10 @@ import matplotlib.pyplot as plt
 from operator import itemgetter
 
 sentinel = object()  # tells the main tkinter window if a generattion is in progress
-lock = multiprocessing.Lock()  # lock needed for env process
 runQueue = Queue()
 
-
-def obFixer(observation_space, observation):
-        newObservation = []
-        if observation_space.__class__ == gym.spaces.box.Box:
-            for space in range(observation_space.shape[0]):
-                high = observation_space.high[space]
-                low = observation_space.low[space]
-                if high == numpy.finfo(numpy.float32).max or high == float('Inf'):
-                    newObservation.append(math.tanh(observation[space]))
-                else:
-                    dif = high - low
-                    percent = (observation[space] + abs(low)) / dif
-                    newObservation.append(((percent * 2) - 1).tolist())
-        if observation_space.__class__ == gym.spaces.discrete.Discrete:
-            c = 0
-            for neuron in range(observation_space.n):
-                if observation == neuron:
-                    newObservation.append(1)
-                else:
-                    newObservation.append(0)
-        return newObservation
-
-
-def acFixer(action_space, action):  # fixes action ranges, uses hyperbolic tangent for infinite values
-    newAction = []
-    if action_space.__class__ == gym.spaces.box.Box:
-        for space in range(action_space.shape[0]):
-            high = action_space.high[space]
-            low = action_space.low[space]
-            if high != numpy.finfo(numpy.float32).max:
-                dif = high - low
-                percent = (action[space] + 1) / 2
-                newAction.append(((percent * dif) - (dif / 2)).tolist())
-            else:
-                print("if your seeing me this code needs updated")
-                newAction.append(math.tanh(observation[space]))
-        return newAction
-    if action_space.__class__ == gym.spaces.discrete.Discrete:
-        c = 0
-        for _, myAction in enumerate(action):
-            if myAction > 0:
-                newAction.append(_ + 1)
-                c += 1
-            if c > 1:
-                newAction = [0]
-                return int(newAction[0])
-        if c == 0:
-            newAction = [0]
-        return int(newAction[0])
-
-
-class workerClass(object):
-    def __init__(self,numJobs,species,runQueue,env,attempts):
-        manager = multiprocessing.Manager()
-        self.jobs = Queue()
-        self.results = manager.Queue()
-        self.numJobs = numJobs
-        self.species = species
-        self.runQueue = runQueue
-        self.env = env
-        self.attempts = attempts
-        self.trainPool()
-
-
-
-    def trainPool(self):
-        before = time.time()
-        proccesses = []
-        processedResults = []
-
-        s = 0
-        for specie in self.species:  # generates network for each genome and creates a job with species and genome index, env name and number of trials/attemps
-            g = 0
-            for genome in specie.genomes:
-                self.jobs.put((s, g, genome))
-                g += 1
-            s += 1
-        for i in range(self.numJobs):
-            p = multiprocessing.Process(
-                target=self.jobTrainer,
-                args=([self.attempts])
-                )
-            proccesses.append(p)
-            p.start()
-        
-        for i in range(self.numJobs):
-            
-            processedResults.append(self.results.get())
-            print(i)
-        i= 0
-        for p in proccesses:
-            print(i)
-            p.join()
-            i+=1
-        after = time.time()
-        print("finished in ", int(after - before))
-        self.runQueue.put(processedResults)  # sends message to main tkinter process
-
-
-    def jobTrainer(self,attempts):
-        # fixes observation ranges, uses hyperbolic tangent for infinite values
-        env = gym.make(self.env)
-        # env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False) # no recoding on windows due to ffmepg	if
-        if env.env.__class__ == 'gym.envs.atari.atari_env.AtariEnv':
-            atari = True
-        if env.action_space.__class__ == gym.spaces.discrete.Discrete:  # identifies action/observation space
-            discrete = True
-        else:
-            discrete = False
-        genomeResults = []
-        
-        while not self.jobs.empty():  # gets a new player index from queue
-            try:
-                job = self.jobs.get()
-            except Empty:
-                self.jobs.close()
-                pass
-            currentSpecies = job[0]
-            currentGenome = job[1]
-            genome = job[2]
-            scores = 0
-            for run in range(attempts):  # runs for number of attemps
-                genome.generateNetwork()
-                score = 0
-                done = False
-                ob = env.reset()
-                while not done:
-                    ob = obFixer(env.observation_space, ob)
-                    # evalutes brain, getting button presses
-                    o = genome.evaluateNetwork(ob, discrete)
-                    o = acFixer(env.action_space, o)
-                    ob, reward, done, _ = env.step(o)
-                    # env.render() # disabled render
-                    score += reward
-                scores += score
-                finalScore = round(scores / attempts)
-            print("species:", currentSpecies, " genome:",
-                    currentGenome, " Scored:", finalScore)
-            genomeResults.append((finalScore, job))
-        env.close()
-        self.results.put(genomeResults)
-
-                   
-    
-
-
+def handlePlayBest(self):
+        playBest(pool.getBest(),self.envEntry.get())
 #starts a new game with the network display.
 def playBest(genome,game):
         parentPipe, childPipe = multiprocessing.Pipe()
@@ -228,6 +83,154 @@ def kill_proc_tree(pid, including_parent=True):
         parent.kill()
         parent.wait(5)
 
+def obFixer(observation_space, observation):
+        newObservation = []
+        if observation_space.__class__ == gym.spaces.box.Box:
+            for space in range(observation_space.shape[0]):
+                high = observation_space.high[space]
+                low = observation_space.low[space]
+                if high == numpy.finfo(numpy.float32).max or high == float('Inf'):
+                    newObservation.append(math.tanh(observation[space]))
+                else:
+                    dif = high - low
+                    percent = (observation[space] + abs(low)) / dif
+                    newObservation.append(((percent * 2) - 1).tolist())
+        if observation_space.__class__ == gym.spaces.discrete.Discrete:
+            c = 0
+            for neuron in range(observation_space.n):
+                if observation == neuron:
+                    newObservation.append(1)
+                else:
+                    newObservation.append(0)
+        return newObservation
+
+
+def acFixer(action_space, action):  # fixes action ranges, uses hyperbolic tangent for infinite values
+    newAction = []
+    if action_space.__class__ == gym.spaces.box.Box:
+        for space in range(action_space.shape[0]):
+            high = action_space.high[space]
+            low = action_space.low[space]
+            if high != numpy.finfo(numpy.float32).max:
+                dif = high - low
+                percent = (action[space] + 1) / 2
+                newAction.append(((percent * dif) - (dif / 2)).tolist())
+            else:
+                print("if your seeing me this code needs updated")
+                newAction.append(math.tanh(observation[space]))
+        return newAction
+    if action_space.__class__ == gym.spaces.discrete.Discrete:
+        c = 0
+        for _, myAction in enumerate(action):
+            if myAction > 0:
+                newAction.append(_ + 1)
+                c += 1
+            if c > 1:
+                newAction = [0]
+                return int(newAction[0])
+        if c == 0:
+            newAction = [0]
+        return int(newAction[0])
+
+
+class workerClass(object):
+    def __init__(self,numJobs,species,runQueue,env,attempts):
+        manager = multiprocessing.Manager()
+        self.lock = multiprocessing.Lock()
+        self.jobs = Queue()
+        self.results = manager.Queue()
+        self.numJobs = numJobs
+        self.species = species
+        self.runQueue = runQueue
+        self.env = env
+        self.attempts = attempts
+        self.trainPool()
+
+
+
+    def trainPool(self):
+        before = time.time()
+        proccesses = []
+        processedResults = []
+
+        s = 0
+        for specie in self.species:  # generates network for each genome and creates a job with species and genome index, env name and number of trials/attemps
+            g = 0
+            for genome in specie.genomes:
+                self.jobs.put((s, g, genome))
+                g += 1
+            s += 1
+        for i in range(self.numJobs):
+            p = multiprocessing.Process(
+                target=self.jobTrainer,
+                args=([self.attempts])
+                )
+            proccesses.append(p)
+            p.start()
+        
+        for i in range(self.numJobs):
+            
+            processedResults.append(self.results.get())
+            print(i)
+        i= 0
+        for p in proccesses:
+            print(i)
+            p.join()
+            i+=1
+        after = time.time()
+        print("finished in ", int(after - before))
+        self.runQueue.put(processedResults)  # sends message to main tkinter process
+
+
+    def jobTrainer(self,attempts):
+        # fixes observation ranges, uses hyperbolic tangent for infinite values
+        self.lock.acquire()
+        env = gym.make(self.env)
+        self.lock.release()
+        # env = wrappers.Monitor(env,'tmp/'+envName,resume=True,video_callable=False) # no recoding on windows due to ffmepg	if
+        if env.env.__class__ == 'gym.envs.atari.atari_env.AtariEnv':
+            atari = True
+        if env.action_space.__class__ == gym.spaces.discrete.Discrete:  # identifies action/observation space
+            discrete = True
+        else:
+            discrete = False
+        genomeResults = []
+        
+        while not self.jobs.empty():  # gets a new player index from queue
+            try:
+                job = self.jobs.get()
+            except Empty:
+                self.jobs.close()
+                pass
+            currentSpecies = job[0]
+            currentGenome = job[1]
+            genome = job[2]
+            scores = 0
+            for run in range(attempts):  # runs for number of attemps
+                genome.generateNetwork()
+                score = 0
+                done = False
+                ob = env.reset()
+                while not done:
+                    ob = obFixer(env.observation_space, ob)
+                    # evalutes brain, getting button presses
+                    o = genome.evaluateNetwork(ob, discrete)
+                    o = acFixer(env.action_space, o)
+                    ob, reward, done, _ = env.step(o)
+                    # env.render() # disabled render
+                    score += reward
+                scores += score
+                finalScore = round(scores / attempts)
+            print("species:", currentSpecies, " genome:",
+                    currentGenome, " Scored:", finalScore)
+            genomeResults.append((finalScore, job))
+        env.close()
+        self.results.put(genomeResults)
+
+                   
+    
+
+
 
 
 class gui:
@@ -264,7 +267,7 @@ class gui:
         self.runButton.grid(row=2, column=3)
         # play best button
         self.playBestButton = Button(
-            self.frame, text='play best', command=self.handlePlayBest)
+            self.frame, text='play best', command=handlePlayBest)
         self.playBestButton.grid(row=2, column=4)
         # attemps label
         self.attempsLabel = Label(self.master, text="attemps")
@@ -331,8 +334,7 @@ class gui:
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=5, sticky="nesw")
 
 
-    def handlePlayBest(self):
-        playBest(pool.getBest(),self.envEntry.get())
+
 
     def toggleRun(self):
         env = gym.make(self.envEntry.get())
