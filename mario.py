@@ -277,7 +277,7 @@ class workerClass(object):
 
                     print("species:", currentSpecies, "genome:",
                         currentGenome, "Scored:", finalScore)
-            sleep(1)
+            time.sleep(1)
         
             
 
