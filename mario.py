@@ -157,12 +157,11 @@ def killFCEUX():
 
 
 class workerClass(object):
-    def __init__(self,numJobs,species,runQueue,env):
+    def __init__(self,numJobs,runQueue,env):
         self.lock = multiprocessing.Lock()
         self.jobs = Queue()
         self.results = Queue()
         self.numJobs = numJobs
-        self.species = species
         self.runQueue = runQueue
         self.env = env
         self.proccesses = []
@@ -177,14 +176,15 @@ class workerClass(object):
         
 
 
-    def startRun(self):
-        self.createJobs()
+    def startRun(self,specis):
+        species = self.runQueue.get()
+        self.createJobs(species)
         self.running.value = True
 
 
-    def createJobs(self):
+    def createJobs(self,species):
         s = 0
-        for specie in self.species:  # creates a job with species and genome index, env name and number of trials/attemps
+        for specie in species:  # creates a job with species and genome index, env name and number of trials/attemps
             g = 0
             for genome in specie.genomes:
                 self.jobs.put((s, g, genome))
@@ -328,7 +328,6 @@ class gui:
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.queue = Queue()
         self.firstRun = True
-        self.workerClass = None
 
         
 
@@ -393,9 +392,11 @@ class gui:
         if self.running:
             self.pool.Population = self.population.get()
             if self.firstRun:
-                self.workerClass = workerClass(self.envNum.get(),self.pool.species,self.queue,self.env)
-                self.netProcess = multiprocessing.Process(target=self.workerClass.startRun)
+                self.netProcess = multiprocessing.Process(target=workerClass(self.envNum.get(),self.queue,self.env))
+                self.queue.put(self.pool.species)
                 self.netProcess.start()
+            else:
+                self.queue.put(self.pool.species)
             self.master.after(
                 250, lambda: self.checkRunCompleted(pausing=False))
         if not self.running:
