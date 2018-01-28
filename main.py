@@ -135,10 +135,9 @@ def acFixer(action_space, action):  # fixes action ranges, uses hyperbolic tange
 
 class workerClass(object):
     def __init__(self,numJobs,species,runQueue,env,attempts):
-        manager = multiprocessing.Manager()
         self.lock = multiprocessing.Lock()
         self.jobs = Queue()
-        self.results = manager.Queue()
+        self.results = Queue()
         self.numJobs = numJobs
         self.species = species
         self.runQueue = runQueue
@@ -201,6 +200,7 @@ class workerClass(object):
                 job = self.jobs.get()
             except Empty:
                 self.jobs.close()
+                self.results.close()
                 pass
             currentSpecies = job[0]
             currentGenome = job[1]
