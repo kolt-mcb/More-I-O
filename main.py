@@ -116,9 +116,11 @@ class workerClass(object):
         for i in range(self.numJobs):
             print(i)
             processedResults.append(self.results.get())
-
+        i= 0
         for p in proccesses:
+            print(i)
             p.join()
+            p+=1
         after = time.time()
         print("finished in ", int(after - before))
         self.runQueue.put(processedResults)  # sends message to main tkinter process
