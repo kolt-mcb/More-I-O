@@ -130,7 +130,7 @@ def singleGame(genome, genomePipe):
                     done = True
             oldDistance = distance
 
-    env._close()
+    env.close()
     genomePipe.send("quit")
     genomePipe.close()
 
@@ -271,7 +271,7 @@ class workerClass(object):
 
             print("species:", currentSpecies, "genome:",
                 currentGenome, "Scored:", finalScore)
-
+        env.close()
         self.results.put(results)
 
 class gui:
