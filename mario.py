@@ -120,7 +120,7 @@ def killFCEUX():
 
 
 class workerClass(object):
-    def __init__(self,numJobs,species,runQueue,env,attempts):
+    def __init__(self,numJobs,species,runQueue,env):
         self.lock = multiprocessing.Lock()
         self.jobs = Queue()
         self.results = Queue()
