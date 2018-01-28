@@ -137,7 +137,6 @@ class workerClass(object):
         before = time.time()
         proccesses = []
         processedResults = []
-
         s = 0
         for specie in self.species:  # generates network for each genome and creates a job with species and genome index, env name and number of trials/attemps
             g = 0
@@ -152,9 +151,7 @@ class workerClass(object):
                 )
             proccesses.append(p)
             p.start()
-        
         for i in range(self.numJobs):
-            
             processedResults.append(self.results.get())
             print(i)
         i= 0
@@ -353,7 +350,7 @@ class gui:
             queue = multiprocessing.Queue()
             self.pool.Population = self.population.get()
             self.netProcess = multiprocessing.Process(target=workerClass, args=(
-                self.population.get(), self.envNum.get(), self.pool.species, queue, self.env))
+                self.envNum.get(), self.pool.species, queue, self.env))
             self.netProcess.start()
             self.master.after(
                 250, lambda: self.checkRunCompleted(queue, pausing=False))
