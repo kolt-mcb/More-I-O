@@ -272,7 +272,7 @@ class workerClass(object):
             print("species:", currentSpecies, "genome:",
                 currentGenome, "Scored:", finalScore)
 
-        self.results.put(genomeResults)
+        self.results.put(results)
 
 class gui:
     def __init__(self, master):
