@@ -157,12 +157,13 @@ def killFCEUX():
 
 
 class workerClass(object):
-    def __init__(self,numJobs,runQueue,env):
+    def __init__(self,numJobs,runQueue,speciesQueue,env):
         self.lock = multiprocessing.Lock()
         self.jobs = Queue()
         self.results = Queue()
         self.numJobs = numJobs
         self.runQueue = runQueue
+        self.speciesQueue = speciesQueue
         self.env = env
         self.proccesses = []
         self.running = multiprocessing.Value(c_bool,False)
@@ -177,7 +178,7 @@ class workerClass(object):
 
 
     def startRun(self,specis):
-        species = self.runQueue.get()
+        species = self.speciesQueue.get()
         self.createJobs(species)
         self.running.value = True
 
@@ -326,7 +327,8 @@ class gui:
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
-        self.queue = Queue()
+        self.resultQueue = Queue()
+        self.speciesQueue = Queue()
         self.firstRun = True
 
         
@@ -392,11 +394,11 @@ class gui:
         if self.running:
             self.pool.Population = self.population.get()
             if self.firstRun:
-                self.netProcess = multiprocessing.Process(target=workerClass,args=(self.envNum.get(),self.queue,self.env))
+                self.netProcess = multiprocessing.Process(target=workerClass,args=(self.envNum.get(),self.queue,speciesQueue,self.env))
                 self.queue.put(self.pool.species)
                 self.netProcess.start()
             else:
-                self.queue.put(self.pool.species)
+                self.speciesQueue.put(self.pool.species)
             self.master.after(
                 250, lambda: self.checkRunCompleted(pausing=False))
         if not self.running:
