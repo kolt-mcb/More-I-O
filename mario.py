@@ -167,6 +167,7 @@ class workerClass(object):
         self.env = env
         processedResults= self.trainPool()
         runQueue.put(processedResults)  # sends message to main tkinter process
+        killFCEUX()
 
 
 
