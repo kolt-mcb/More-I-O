@@ -176,7 +176,7 @@ class workerClass(object):
             p.start()
         while True:
             if not speciesQueue.empty():
-               startRun()
+               self.startRun()
             time.sleep(1)
         
 
