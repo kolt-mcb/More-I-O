@@ -120,6 +120,7 @@ class workerClass(object):
         i= 0
         for p in proccesses:
             print(i)
+            p.close()
             p.join()
             i+=1
         after = time.time()
