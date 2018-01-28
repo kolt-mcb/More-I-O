@@ -174,8 +174,10 @@ class workerClass(object):
                 )
             self.proccesses.append(p)
             p.start()
-        self.startRun()
-        
+       while True:
+            if not speciesQueue.empty():
+               startRun()
+            time.sleep(1)
         
 
 
