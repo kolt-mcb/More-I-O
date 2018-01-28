@@ -388,7 +388,7 @@ class gui:
         if self.running:
             self.pool.Population = self.population.get()
             self.netProcess = multiprocessing.Process(target=workerClass, args=(
-                self.envNum.get(),self.queue, self.pool.species, self.env))
+                self.envNum.get(),self.pool.species,self.queue,self.env))
             self.netProcess.start()
             self.master.after(
                 250, lambda: self.checkRunCompleted(pausing=False))
