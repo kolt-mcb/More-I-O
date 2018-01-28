@@ -130,8 +130,6 @@ def singleGame(genome, genomePipe):
                 if not done:
                     done = True
             oldDistance = distance
-
-    env.close()
     genomePipe.send("quit")
     genomePipe.close()
 
@@ -418,6 +416,7 @@ class gui:
                         jobs.append(result)
                 self.updateFitness(jobs)
                 self.pool.nextGeneration()
+                killFCEUX()
                 playBest(self.pool.getBest())
                 print("gen ", self.pool.generation,
                       " best", self.pool.getBest().fitness)
