@@ -137,8 +137,10 @@ class workerClass(object):
         genomeResults = []
         
         while not self.jobs.empty():  # gets a new player index from queue
-            job = self.jobs.get()
-
+            try:
+                job = self.jobs.get()
+            except Empty:
+                pass
             currentSpecies = job[0]
             currentGenome = job[1]
             genome = job[2]
