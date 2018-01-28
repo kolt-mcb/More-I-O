@@ -329,9 +329,10 @@ class gui:
         self.ax.stackplot([], [], baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
-        self.workerClass = workerClass
+        self.workerClass = workerClass()
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.queue = Queue()
+        self.firstRun = True
 
         
 
@@ -395,9 +396,10 @@ class gui:
     def checkRunPaused(self):
         if self.running:
             self.pool.Population = self.population.get()
-            self.netProcess = multiprocessing.Process(target=self.workerClass.startRun(), args=(
-                self.envNum.get(),self.pool.species,self.queue,self.env))
-            self.netProcess.start()
+            if self.firstRun:
+                self.netProcess = multiprocessing.Process(target=self.workerClass.startRun, args=(
+                    self.envNum.get(),self.pool.species,self.queue,self.env))
+                self.netProcess.start()
             self.master.after(
                 250, lambda: self.checkRunCompleted(pausing=False))
         if not self.running:
