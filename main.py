@@ -120,7 +120,7 @@ class workerClass(object):
         for p in proccesses:
             print(i)
             p.join()
-            p+=1
+            i+=1
         after = time.time()
         print("finished in ", int(after - before))
         self.runQueue.put(processedResults)  # sends message to main tkinter process
