@@ -1,17 +1,18 @@
 from subprocess import check_output
 import gym
+from gym import wrappers
 import os
 import signal
 import psutil
 from lib import neat
 from lib import networkDisplay
-import numpy as np
+import numpy
 import math
 import time
 import multiprocessing
-import threading
-from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing.pool import ThreadPool
 from multiprocessing import Queue
+from queue import Empty
 from tkinter import *
 from tkinter import filedialog, messagebox
 import pickle
@@ -23,55 +24,88 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-sentinel = object()
+sentinel = object()  # tells the main tkinter window if a generattion is in progress
+runQueue = Queue()
 
 
-def poolInitializer(q, l):
-    global jobs
-    jobs = q
-    global lock
-    lock = l
+#starts a new game with the network display.
+def playBest(genome,game):
+        parentPipe, childPipe = multiprocessing.Pipe()
+        genome.generateNetwork()
+        process = multiprocessing.Process(target=singleGame, args=(genome,childPipe,game))
+        process.start()
+        display = networkDisplay.newNetworkDisplay(genome, parentPipe)
+        display.checkGenomePipe()
+        display.Tk.mainloop()
+        process.join()
+        # creates multiprocessing job for pool and trains pool
 
 
-def playBest(genome):
-    parentPipe, childPipe = multiprocessing.Pipe()
-    genome.generateNetwork()
-    process = multiprocessing.Process(
-        target=singleGame, args=(genome, childPipe))
-    process.start()
-    display = networkDisplay.newNetworkDisplay(genome, parentPipe)
-    display.checkGenomePipe()
-    display.Tk.mainloop()
-    process.join()
 
+def singleGame(genome, genomePipe):
+    env = gym.make('meta-SuperMarioBros-Tiles-v0')
+    env.reset()
+    done = False
+    distance = 0
+    maxDistance = 0
+    staleness = 0
+    print("playing next")
+    env.locked_levels = [False] * 32
+    for LVint in range(32):
+        maxDistance = 0
+        staleness = 0
+        oldDistance = 0
+        done = False
+        bonus = 0
+        bonusOffset = 0
 
-def trainPool(population, envNum, species, queue, env):
-    before = time.time()
-    results = []
-    jobs = Queue()
-    lock = multiprocessing.Lock()
-    s = 0
-    for specie in species:
-        g = 0
-        for genome in specie.genomes:
-            genome.generateNetwork()
-            jobs.put((s, g, genome))
-            g += 1
-        s += 1
+        #env.is_finished = True
 
-    mPool = multiprocessing.Pool(
-        processes=envNum, initializer=poolInitializer, initargs=(jobs, lock,))
-    results = mPool.map(jobTrainer, [env] * envNum)
-    mPool.close()
-    mPool.join()
-    after = time.time()
-    killFCEUX()
+        env.change_level(new_level=LVint)
+        # env._write_to_pipe("changelevel#"+str(LVint))
+        while not done:
+            ob = env.tiles.flatten()
 
-    print("next generation")
+            o = genome.evaluateNetwork(ob.tolist(), discrete=False)
+            o = joystick(o)
+            genomePipe.send(genome)
+            ob, reward, done, _ = env.step(o)
+            if 'ignore' in _:
+                done = False
+                env = gym.make('meta-SuperMarioBros-Tiles-v0')
+                env.reset()
+                env.locked_levels = [False] * 32
+                env.change_level(new_level=LVint)
+            distance = env._get_info()["distance"]
+            if oldDistance - distance < -100:
+                bonus = maxDistance
+                bonusOffset = distance
+            if maxDistance - distance > 50 and distance != 0:
+                maxDistance = distance
+            if distance > maxDistance:
+                maxDistance = distance
+                staleness = 0
+            if maxDistance >= distance:
+                staleness += 1
 
-    queue.put(results)
+            if staleness > 100 or done:
+                if not done:
+                    done = True
+            oldDistance = distance
 
+    env.close()
+    genomePipe.send("quit")
+    genomePipe.close()
 
+def kill_proc_tree(pid, including_parent=True):
+    parent = psutil.Process(pid)
+    children = parent.children(recursive=True)
+    for child in children:
+        child.kill()
+    gone, still_alive = psutil.wait_procs(children, timeout=5)
+    if including_parent:
+        parent.kill()
+        parent.wait(5)
 
 
 def get_pid(name):
@@ -84,9 +118,58 @@ def killFCEUX():
         os.kill(pid, signal.SIGKILL)
 
 
-def jobTrainer(envName):
+
+class workerClass(object):
+    def __init__(self,numJobs,species,runQueue,env,attempts):
+        self.lock = multiprocessing.Lock()
+        self.jobs = Queue()
+        self.results = Queue()
+        self.numJobs = numJobs
+        self.species = species
+        self.runQueue = runQueue
+        self.env = env
+        self.attempts = attempts
+        self.trainPool()
+
+
+
+    def trainPool(self):
+        before = time.time()
+        proccesses = []
+        processedResults = []
+
+        s = 0
+        for specie in self.species:  # generates network for each genome and creates a job with species and genome index, env name and number of trials/attemps
+            g = 0
+            for genome in specie.genomes:
+                self.jobs.put((s, g, genome))
+                g += 1
+            s += 1
+        for i in range(self.numJobs):
+            p = multiprocessing.Process(
+                target=self.jobTrainer,
+                args=([self.attempts])
+                )
+            proccesses.append(p)
+            p.start()
+        
+        for i in range(self.numJobs):
+            
+            processedResults.append(self.results.get())
+            print(i)
+        i= 0
+        for p in proccesses:
+            print(i)
+            p.join()
+            i+=1
+        after = time.time()
+        print("finished in ", int(after - before))
+        self.runQueue.put(processedResults)  # sends message to main tkinter process
+
+
+    def jobTrainer(envName):
     env = gym.make(envName)
-    env.lock = lock
+    env.lock = self.lock
     env.lock.acquire()
     env.reset()
     env.lock.release()
@@ -153,115 +236,7 @@ def jobTrainer(envName):
         print("species:", currentSpecies, "genome:",
               currentGenome, "Scored:", finalScore)
 
-    return (results)
-
-
-def singleGame(genome, genomePipe):
-    env = gym.make('meta-SuperMarioBros-Tiles-v0')
-    env.reset()
-    done = False
-    distance = 0
-    maxDistance = 0
-    staleness = 0
-    print("playing next")
-    env.locked_levels = [False] * 32
-    for LVint in range(32):
-        maxDistance = 0
-        staleness = 0
-        oldDistance = 0
-        done = False
-        bonus = 0
-        bonusOffset = 0
-
-        #env.is_finished = True
-
-        env.change_level(new_level=LVint)
-        # env._write_to_pipe("changelevel#"+str(LVint))
-        while not done:
-            ob = env.tiles.flatten()
-
-            o = genome.evaluateNetwork(ob.tolist(), discrete=False)
-            o = joystick(o)
-            genomePipe.send(genome)
-            ob, reward, done, _ = env.step(o)
-            if 'ignore' in _:
-                done = False
-                env = gym.make('meta-SuperMarioBros-Tiles-v0')
-                env.lock.acquire()
-                env.reset()
-                env.locked_levels = [False] * 32
-                env.change_level(new_level=LVint)
-                env.lock.release()
-            distance = env._get_info()["distance"]
-            if oldDistance - distance < -100:
-                bonus = maxDistance
-                bonusOffset = distance
-            if maxDistance - distance > 50 and distance != 0:
-                maxDistance = distance
-            if distance > maxDistance:
-                maxDistance = distance
-                staleness = 0
-            if maxDistance >= distance:
-                staleness += 1
-
-            if staleness > 100 or done:
-                if not done:
-                    done = True
-            oldDistance = distance
-
-    env.close()
-    genomePipe.send("quit")
-    genomePipe.close()
-
-
-def joystick(four):
-    six = [0] * 6
-    if four[0] > 0.5:
-        six[0] = 0
-        six[2] = 1
-    if four[0] < -0.5:
-        six[0] = 1
-        six[2] = 0
-    if four[0] < 0.5 and four[0] > -0.5:
-        six[0] = 0
-        six[2] = 0
-
-    if four[1] >= 0.5:
-        six[1] = 0
-        six[3] = 1
-    if four[1] <= -0.5:
-        six[1] = 1
-        six[3] = 0
-    if four[1] < 0.5 and four[1] > -0.5:
-        six[1] = 0
-        six[3] = 0
-
-    if four[2] >= 0.5:
-        six[4] = 1
-    if four[2] <= -0.5:
-        six[4] = -1
-    if four[2] < 0.5 and four[2] > -0.5:
-        six[4] = 0
-
-    if four[3] >= 0.5:
-        six[5] = 1
-    if four[3] <= -0.5:
-        six[5] = -1
-    if four[3] < 0.5 and four[3] > -0.5:
-        six[5] = 0
-    return six
-
-
-def kill_proc_tree(pid, including_parent=True):
-    parent = psutil.Process(pid)
-    children = parent.children(recursive=True)
-    for child in children:
-        child.kill()
-    gone, still_alive = psutil.wait_procs(children, timeout=5)
-    if including_parent:
-        parent.kill()
-        parent.wait(5)
-
+    self.results.put(genomeResults)
 
 class gui:
     def __init__(self, master):
@@ -311,24 +286,13 @@ class gui:
         self.ax.stackplot([], [], baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
-		self.jobs = Queue()
-		self.lock = multiprocessing.Lock()
 
+        
 
-	def makeJobs(self,species):
-    
-    s = 0
-    for specie in species:
-        g = 0
-        for genome in specie.genomes:
-            genome.generateNetwork()
-            self.jobs.put((s, g, genome))
-            g += 1
-        s += 1	
+    def handlePlayBest(self):
+        playBest(self.pool.getBest(),self.envEntry.get())
 
-
-    def updateStackPlot(self):
-
+    def generateStackPlot(self):
         for specie in self.pool.species:
             for genome in specie.genomes:
                 foundSpecies = False
@@ -353,14 +317,18 @@ class gui:
         plotList = []
         for plot in sortedPlots:
             plotList.append(self.plotData[plot])
+        return plotList
+
+
+    
+
+    def updateStackPlot(self,plotList):
         self.ax.clear()
         self.ax.stackplot(
             list(range(len(plotList[0]))), *plotList, baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=5, sticky="nesw")
 
-    def handlePlayBest(self):
-        playBest(self.pool.getBest())
 
     def toggleRun(self):
 
@@ -410,18 +378,10 @@ class gui:
                         jobs.append(result)
                 self.updateFitness(jobs)
                 self.pool.nextGeneration()
- 
-
-
                 playBest(self.pool.getBest())
-
                 print("gen ", self.pool.generation,
                       " best", self.pool.getBest().fitness)
-
-                
                 self.updateStackPlot()
-
-
             if pausing:
                 self.running = False
                 self.master.after(250, lambda: self.checkRunCompleted(queue))
@@ -432,15 +392,11 @@ class gui:
             self.master.after(
                 250, lambda: self.checkRunCompleted(queue, pausing))
 
-    def updateFitness(self, jobs):
-        pool = ThreadPool(4)
-        pool.map(self.updateFitnessjob, jobs)
-
-    def updateFitnessjob(self, job):
-        currentSpecies = job[1][0]
-        currentGenome = job[1][1]
-        self.pool.species[currentSpecies].genomes[currentGenome].setFitness(
-            job[0])
+    
+    def onClosing(self):
+        if messagebox.askokcancel("Quit", "do you want to Quit?"):
+            self.master.destroy()
+            self.master.quit()
 
     def saveFile(self):
         if self.pool == None:
@@ -450,12 +406,15 @@ class gui:
         if filename is None or filename == '':
             return
         file = open(filename, "wb")
-        pickle.dump((self.pool.species, self.pool.best,
-                     None,
-                     self.plotDictionary,
-                     self.plotData,
-                     self.genomeDictionary,
-                     self.specieID, self.pool.generations), file)
+
+
+        pickle.dump({"species" : self.pool.species,
+                    "best"     : self.pool.best,
+                    "plotData" : self.plotData,
+                    "specieID" : self.specieID,
+                    "genomeDictionary" : self.genomeDictionary,
+                    "generations" : self.pool.generations}, file)
+
         print("file saved",filename)
 
     def loadFile(self):
@@ -464,11 +423,10 @@ class gui:
             return
         f = open(filename, "rb")
         loadedPool = pickle.load(f)
-        species = loadedPool[0]
-        self.plotDictionary = loadedPool[3]
-        self.plotData = loadedPool[4]
-        self.genomeDictionary = loadedPool[5]
-        self.specieID = loadedPool[6]
+        species = loadedPool["species"]
+        self.plotData = loadedPool["plotData"]
+        self.genomeDictionary = loadedPool["genomeDictionary"]
+        self.specieID = loadedPool["specieID"]
         newInovation = 0
         for specie in species:
             for genome in specie.genomes:
@@ -480,17 +438,26 @@ class gui:
                               species[0].genomes[0].Inputs, species[0].genomes[0].Outputs, recurrent=species[0].genomes[0].recurrent)
         self.pool.newGenome.innovation = newInovation + 1
         self.pool.species = species
-        self.pool.best = loadedPool[1]
+        self.pool.best = loadedPool["best"]
         self.pool.generation = len(self.pool.best)
-        neat.pool.generations = loadedPool[7]
+        neat.pool.generations = loadedPool["generations"]
         self.population.set(self.pool.Population)
         self.poolInitialized = True
         f.close()
-        self.ax.stackplot(
-            list(range(len(self.plotData[0]))), *self.plotData, baseline='wiggle')
-        canvas = FigureCanvasTkAgg(self.fig, self.master)
-        canvas.get_tk_widget().grid(row=5, column=0, rowspan=5, sticky="nesw")
+
         print(filename, "loaded")
+
+
+    def updateFitness(self,jobs):
+        pool = ThreadPool(4)
+        pool.map(self.updateFitnessjob, jobs)
+
+    def updateFitnessjob(self,job):
+        currentSpecies = job[1][0]
+        currentGenome = job[1][1]
+        self.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
+
+
 
 
 if __name__ == '__main__':
