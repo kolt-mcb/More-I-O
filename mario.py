@@ -23,6 +23,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from operator import itemgetter
+from ctypes import c_bool
 
 
 
@@ -164,16 +165,25 @@ class workerClass(object):
         self.species = species
         self.runQueue = runQueue
         self.env = env
-        processedResults= self.trainPool()
-        runQueue.put(processedResults)  # sends message to main tkinter process
+        self.proccesses = []
+        self.running = multiprocessing.Value(c_bool,False)
+        for i in range(self.numJobs):
+            p = multiprocessing.Process(
+                target=self.jobTrainer,
+                args=([self.env])
+                )
+            self.proccesses.append(p)
+            p.start()
+        
 
 
+    def startRun(self):
+        self.createJobs()
+        self.running.value = True
 
 
-    def trainPool(self):
+    def createJobs(self):
         before = time.time()
-        proccesses = []
-        processedResults = []
         s = 0
         for specie in self.species:  # creates a job with species and genome index, env name and number of trials/attemps
             g = 0
@@ -181,24 +191,18 @@ class workerClass(object):
                 self.jobs.put((s, g, genome))
                 g += 1
             s += 1
-        for i in range(self.numJobs):
-            p = multiprocessing.Process(
-                target=self.jobTrainer,
-                args=([self.env])
-                )
-            proccesses.append(p)
-            p.start()
+
+        after = time.time()
+        print("finished in ", int(after - before))
+        return processedResults
+
+    def getResults(self):
+        processedResults = []
         for i in range(self.numJobs):
             processedResults.append(self.results.get())
             print(i)
         i= 0
-        for p in proccesses:
-            print(i)
-            p.join()
-            i+=1
-        after = time.time()
-        print("finished in ", int(after - before))
-        return processedResults
+        runQueue.put(processedResults)  # sends message to main tkinter process
 
 
     def jobTrainer(self,envName):
@@ -209,70 +213,73 @@ class workerClass(object):
         env.lock.release()
         results = []
         env.locked_levels = [False] * 32
-        while not self.jobs.empty():
-            try:
-                job = self.jobs.get()
-            except Empty:
-                self.jobs.close()
-                self.results.close()
-                pass
-            currentSpecies = job[0]
-            currentGenome = job[1]
-            genome = job[2]
-            maxDistance = 0
-            distance = None
-            staleness = 0
-            scores = []
-            finalScore = 0
-            done = False
-            maxReward = 0
-            for LVint in range(32):
-                genome.generateNetwork()
-                maxDistance = 0
-                oldDistance = 0
-                bonus = 0
-                bonusOffset = 0
-                staleness = 0
-                done = False
-                env.change_level(new_level=LVint)
-                while not done:
-                    ob = env.tiles.flatten()
-                    o = genome.evaluateNetwork(ob.tolist(), discrete=False)
-                    o = joystick(o)
-                    ob, reward, done, _ = env.step(o)
-                    if 'ignore' in _:
-                        done = False
-                        env = gym.make('meta-SuperMarioBros-Tiles-v0')
-                        env.lock.acquire()
-                        env.reset()
-                        env.locked_levels = [False] * 32
-                        env.change_level(new_level=LVint)
-                        env.lock.release()
-                    distance = env._get_info()["distance"]
-                    if oldDistance - distance < -100:
-                        bonus = maxDistance
-                        bonusOffset = distance
-                    if maxDistance - distance > 50 and distance != 0:
-                        maxDistance = distance
-                    if distance > maxDistance:
-                        maxDistance = distance
+        while True:
+            while self.running.value:
+                while not self.job.Empty():
+                    try:
+                        job = self.jobs.get()
+                    except Empty:
+                        running = False
+                        pass
+                    currentSpecies = job[0]
+                    currentGenome = job[1]
+                    genome = job[2]
+                    maxDistance = 0
+                    distance = None
+                    staleness = 0
+                    scores = []
+                    finalScore = 0
+                    done = False
+                    maxReward = 0
+                    for LVint in range(32):
+                        genome.generateNetwork()
+                        maxDistance = 0
+                        oldDistance = 0
+                        bonus = 0
+                        bonusOffset = 0
                         staleness = 0
-                    if maxDistance >= distance:
-                        staleness += 1
+                        done = False
+                        env.change_level(new_level=LVint)
+                        while not done:
+                            ob = env.tiles.flatten()
+                            o = genome.evaluateNetwork(ob.tolist(), discrete=False)
+                            o = joystick(o)
+                            ob, reward, done, _ = env.step(o)
+                            if 'ignore' in _:
+                                done = False
+                                env = gym.make('meta-SuperMarioBros-Tiles-v0')
+                                env.lock.acquire()
+                                env.reset()
+                                env.locked_levels = [False] * 32
+                                env.change_level(new_level=LVint)
+                                env.lock.release()
+                            distance = env._get_info()["distance"]
+                            if oldDistance - distance < -100:
+                                bonus = maxDistance
+                                bonusOffset = distance
+                            if maxDistance - distance > 50 and distance != 0:
+                                maxDistance = distance
+                            if distance > maxDistance:
+                                maxDistance = distance
+                                staleness = 0
+                            if maxDistance >= distance:
+                                staleness += 1
 
-                    if staleness > 80 or done:
-                        scores.append(maxDistance - bonusOffset + bonus)
-                        if not done:
-                            done = True
-                    oldDistance = distance
-            for score in scores:
-                finalScore += score
-            finalScore = round(finalScore / 32)
-            results.append((finalScore, job))
+                            if staleness > 80 or done:
+                                scores.append(maxDistance - bonusOffset + bonus)
+                                if not done:
+                                    done = True
+                            oldDistance = distance
+                    for score in scores:
+                        finalScore += score
+                    finalScore = round(finalScore / 32)
+                    results.append((finalScore, job))
 
-            print("species:", currentSpecies, "genome:",
-                currentGenome, "Scored:", finalScore)
-        self.results.put(results)
+                    print("species:", currentSpecies, "genome:",
+                        currentGenome, "Scored:", finalScore)
+            sleep(1)
+        
+            
 
 class gui:
     def __init__(self, master):
@@ -322,6 +329,7 @@ class gui:
         self.ax.stackplot([], [], baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
+        self.workerClass = workerClass
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.queue = Queue()
 
@@ -387,7 +395,7 @@ class gui:
     def checkRunPaused(self):
         if self.running:
             self.pool.Population = self.population.get()
-            self.netProcess = multiprocessing.Process(target=workerClass, args=(
+            self.netProcess = multiprocessing.Process(target=self.workerClass.startRun(), args=(
                 self.envNum.get(),self.pool.species,self.queue,self.env))
             self.netProcess.start()
             self.master.after(
