@@ -128,7 +128,6 @@ class workerClass(object):
         self.species = species
         self.runQueue = runQueue
         self.env = env
-        self.attempts = attempts
         self.trainPool()
 
 
