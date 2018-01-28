@@ -272,7 +272,6 @@ class workerClass(object):
 
             print("species:", currentSpecies, "genome:",
                 currentGenome, "Scored:", finalScore)
-        env.close()
         self.results.put(results)
 
 class gui:
