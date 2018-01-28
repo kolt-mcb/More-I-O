@@ -386,7 +386,6 @@ class gui:
 
     def checkRunPaused(self):
         if self.running:
-            self.queue = multiprocessing.Queue()
             self.pool.Population = self.population.get()
             self.netProcess = multiprocessing.Process(target=workerClass, args=(
                 self.envNum.get(), self.pool.species, self.env))
@@ -428,7 +427,7 @@ class gui:
                 self.master.after(250, self.checkRunPaused)
         except Empty:
             self.master.after(
-                250, lambda: self.checkRunCompleted( pausing))
+                250, lambda: self.checkRunCompleted(pausing))
 
     
 
