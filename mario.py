@@ -67,10 +67,10 @@ def joystick(four):
 
 
 #starts a new game with the network display.
-def playBest(genome,game):
+def playBest(genome):
         parentPipe, childPipe = multiprocessing.Pipe()
         genome.generateNetwork()
-        process = multiprocessing.Process(target=singleGame, args=(genome,childPipe,game))
+        process = multiprocessing.Process(target=singleGame, args=(genome,childPipe))
         process.start()
         display = networkDisplay.newNetworkDisplay(genome, parentPipe)
         display.checkGenomePipe()
