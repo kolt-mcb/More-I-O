@@ -416,14 +416,12 @@ class gui:
         try:
             msg = self.queue.get_nowait()
             if msg is not self.sentinel:
-                self.netProcess.join()
                 jobs = []
                 for resultChunk in msg:
                     for result in resultChunk:
                         jobs.append(result)
                 self.updateFitness(jobs)
                 self.pool.nextGeneration()
-                killFCEUX()
                 playBest(self.pool.getBest())
                 print("gen ", self.pool.generation,
                       " best", self.pool.getBest().fitness)
