@@ -167,7 +167,7 @@ class workerClass(object):
         self.env = env
         processedResults= self.trainPool()
         runQueue.put(processedResults)  # sends message to main tkinter process
-        killFCEUX()
+
 
 
 
@@ -410,6 +410,7 @@ class gui:
             msg = self.queue.get_nowait()
             if msg is not self.sentinel:
                 self.netProcess.join()
+                killFCEUX()
                 jobs = []
                 for resultChunk in msg:
                     for result in resultChunk:
