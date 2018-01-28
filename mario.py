@@ -352,7 +352,7 @@ class gui:
         if self.running:
             queue = multiprocessing.Queue()
             self.pool.Population = self.population.get()
-            self.netProcess = multiprocessing.Process(target=trainPool, args=(
+            self.netProcess = multiprocessing.Process(target=workerClass, args=(
                 self.population.get(), self.envNum.get(), self.pool.species, queue, self.env))
             self.netProcess.start()
             self.master.after(
