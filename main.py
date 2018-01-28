@@ -139,10 +139,12 @@ class workerClass(object):
         self.results = Queue()
         self.numJobs = numJobs
         self.species = species
-        self.runQueue = runQueue
         self.env = env
         self.attempts = attempts
-        self.trainPool()
+        processedResults = self.trainPool()
+        runQueue.put(processedResults)  # sends message to main tkinter process
+        self.jobs.close()
+        self.results.close()
 
 
 
@@ -177,7 +179,7 @@ class workerClass(object):
             i+=1
         after = time.time()
         print("finished in ", int(after - before))
-        self.runQueue.put(processedResults)  # sends message to main tkinter process
+        return processedResults
 
 
     def jobTrainer(self,attempts):
@@ -199,8 +201,6 @@ class workerClass(object):
                 job = self.jobs.get()
             except Empty:
                 print("test")
-                self.jobs.close()
-                self.results.close()
                 pass
             currentSpecies = job[0]
             currentGenome = job[1]

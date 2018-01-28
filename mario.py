@@ -166,7 +166,8 @@ class workerClass(object):
         self.species = species
         self.runQueue = runQueue
         self.env = env
-        self.trainPool()
+        processedResults= self.trainPool()
+        runQueue.put(processedResults)  # sends message to main tkinter process
 
 
 
@@ -198,7 +199,7 @@ class workerClass(object):
             i+=1
         after = time.time()
         print("finished in ", int(after - before))
-        self.runQueue.put(processedResults)  # sends message to main tkinter process
+        return processedResults
 
 
     def jobTrainer(self,envName):
