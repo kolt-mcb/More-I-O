@@ -28,6 +28,44 @@ sentinel = object()  # tells the main tkinter window if a generattion is in prog
 runQueue = Queue()
 
 
+def joystick(four):
+    six = [0] * 6
+    if four[0] > 0.5:
+        six[0] = 0
+        six[2] = 1
+    if four[0] < -0.5:
+        six[0] = 1
+        six[2] = 0
+    if four[0] < 0.5 and four[0] > -0.5:
+        six[0] = 0
+        six[2] = 0
+
+    if four[1] >= 0.5:
+        six[1] = 0
+        six[3] = 1
+    if four[1] <= -0.5:
+        six[1] = 1
+        six[3] = 0
+    if four[1] < 0.5 and four[1] > -0.5:
+        six[1] = 0
+        six[3] = 0
+
+    if four[2] >= 0.5:
+        six[4] = 1
+    if four[2] <= -0.5:
+        six[4] = -1
+    if four[2] < 0.5 and four[2] > -0.5:
+        six[4] = 0
+
+    if four[3] >= 0.5:
+        six[5] = 1
+    if four[3] <= -0.5:
+        six[5] = -1
+    if four[3] < 0.5 and four[3] > -0.5:
+        six[5] = 0
+    return six
+
+
 #starts a new game with the network display.
 def playBest(genome,game):
         parentPipe, childPipe = multiprocessing.Pipe()
