@@ -24,8 +24,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-sentinel = object()  # tells the main tkinter window if a generattion is in progress
-runQueue = Queue()
+
 
 
 def joystick(four):
@@ -323,6 +322,8 @@ class gui:
         self.ax.stackplot([], [], baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
+        self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
+        self.queue = Queue()
 
         
 
@@ -385,13 +386,13 @@ class gui:
 
     def checkRunPaused(self):
         if self.running:
-            queue = multiprocessing.Queue()
+            self.queue = multiprocessing.Queue()
             self.pool.Population = self.population.get()
             self.netProcess = multiprocessing.Process(target=workerClass, args=(
-                self.envNum.get(), self.pool.species, queue, self.env))
+                self.envNum.get(), self.pool.species, self.env))
             self.netProcess.start()
             self.master.after(
-                250, lambda: self.checkRunCompleted(queue, pausing=False))
+                250, lambda: self.checkRunCompleted(pausing=False))
         if not self.running:
             self.runButton.config(text='run')
 
@@ -404,9 +405,9 @@ class gui:
             self.master.destroy()
             self.master.quit()
 
-    def checkRunCompleted(self, queue, pausing=True):
+    def checkRunCompleted(self, pausing=True):
         try:
-            msg = queue.get_nowait()
+            msg = self.queue.get_nowait()
             if msg is not sentinel:
                 self.netProcess.join()
                 jobs = []
@@ -421,13 +422,13 @@ class gui:
                 self.updateStackPlot(self.generateStackPlot)
             if pausing:
                 self.running = False
-                self.master.after(250, lambda: self.checkRunCompleted(queue))
+                self.master.after(250, lambda: self.checkRunCompleted())
                 return
             else:
                 self.master.after(250, self.checkRunPaused)
         except Empty:
             self.master.after(
-                250, lambda: self.checkRunCompleted(queue, pausing))
+                250, lambda: self.checkRunCompleted( pausing))
 
     
 

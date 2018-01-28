@@ -24,8 +24,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-sentinel = object()  # tells the main tkinter window if a generattion is in progress
-runQueue = Queue()
+
 
 
 #starts a new game with the network display.
@@ -294,6 +293,8 @@ class gui:
         self.ax.stackplot([], [], baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
+        self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
+        self.queue = Queue()
         
 
     def handlePlayBest(self):
@@ -367,17 +368,16 @@ class gui:
         if self.running:
             self.pool.Population = self.population.get()
             self.netProcess = multiprocessing.Process(target=workerClass, args=(int(self.jobsEntry.get(
-            )), self.pool.species, runQueue, self.envEntry.get(), int(self.attempsEntry.get())))
+            )), self.pool.species, self.queue, self.envEntry.get(), int(self.attempsEntry.get())))
             self.netProcess.start()
-            self.master.after(250, lambda: self.checkRunCompleted(
-                runQueue, pausing=False))
+            self.master.after(250, lambda: self.checkRunCompleted(pausing=False))
         if not self.running:
             self.runButton.config(text='run')
 
 
-    def checkRunCompleted(self, runQueue, pausing=True):
-        if not runQueue.empty():
-            msg = runQueue.get()
+    def checkRunCompleted(self, pausing=True):
+        if not self.queue.empty():
+            msg = self.queue.get()
             self.netProcess.join()
             jobs = []
             for resultChunk in msg:
@@ -392,13 +392,13 @@ class gui:
             if pausing:
                 running = False
                 self.master.after(
-                    250, lambda: self.checkRunCompleted(runQueue, pausing))
+                    250, lambda: self.checkRunCompleted(pausing))
                 return
             else:
                 self.master.after(250, self.checkRunPaused)
         else:
             self.master.after(
-                250, lambda: self.checkRunCompleted(runQueue, pausing))
+                250, lambda: self.checkRunCompleted(pausing))
 
     
     def onClosing(self):
