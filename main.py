@@ -114,8 +114,9 @@ class workerClass(object):
             p.start()
         
         for i in range(self.numJobs):
-            print(i)
+            
             processedResults.append(self.results.get())
+            print(i)
         i= 0
         for p in proccesses:
             print(i)
