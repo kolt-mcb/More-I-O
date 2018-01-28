@@ -171,7 +171,7 @@ class workerClass(object):
         env.lock.release()
         results = []
         env.locked_levels = [False] * 32
-        while not jobs.empty():
+        while not self.jobs.empty():
             try:
                 job = self.jobs.get()
             except Empty:
