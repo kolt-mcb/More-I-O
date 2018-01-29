@@ -178,7 +178,7 @@ class workerClass(object):
             if not speciesQueue.empty():
                self.startRun()
             time.sleep(1)
-            if jobs
+            
         
 
 
