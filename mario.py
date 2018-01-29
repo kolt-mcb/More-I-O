@@ -176,7 +176,6 @@ class workerClass(object):
             self.proccesses.append(p)
             p.start()
         while True:
-            print(speciesQueue.empty(),"workerclass")
             if not speciesQueue.empty():
                self.startRun()
             time.sleep(1)
@@ -205,10 +204,7 @@ class workerClass(object):
         i=0
         while not self.results.empty():
             processedResults.append(self.results.get())
-            print(i)
             i+=1
-        
-        print(processedResults)
         self.runQueue.put(processedResults)  # sends message to main tkinter process
 
 
@@ -409,7 +405,6 @@ class gui:
                 self.netProcess.start()
                 self.firstRun = False
             else:
-                print("speciesQueue")
                 self.speciesQueue.put(self.pool.species)
             self.master.after(
                 250, lambda: self.checkRunCompleted(pausing=False))
@@ -426,7 +421,6 @@ class gui:
             self.master.quit()
 
     def checkRunCompleted(self, pausing=True):
-        print(self.resultQueue.empty())
         if not self.resultQueue.empty():
             msg = self.resultQueue.get()
             if msg is not self.sentinel:
