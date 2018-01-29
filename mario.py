@@ -222,13 +222,12 @@ class workerClass(object):
             while self.running.value:
                 print(self.counter.value,"job")
                 if self.jobs.empty():
-                    if self.running.value:
-                        print(self.counter.value)
-                        self.counter.value +=1
+                    print(self.counter.value)
+                    self.counter.value +=1
                     if self.counter.value == self.numJobs:
                         self.sendResults()
                         self.running.value = False
-                    pass
+                        pass
                 else:
                     job = self.jobs.get()
                     currentSpecies = job[0]
