@@ -186,7 +186,6 @@ class workerClass(object):
     def startRun(self):
         species = self.speciesQueue.get()
         self.createJobs(species)
-        self.running.value = True
 
 
     def createJobs(self,species):
@@ -225,7 +224,7 @@ class workerClass(object):
                     self.counter.value +=1
                     if self.counter.value == self.numJobs:
                         self.sendResults()
-                        self.running = False
+                        running = False
                         pass
                 else:
                     job = self.jobs.get()
