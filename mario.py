@@ -185,7 +185,6 @@ class workerClass(object):
 
 
     def startRun(self):
-        self.counter.value = 0
         print(self.counter,"counter")
         species = self.speciesQueue.get()
         self.createJobs(species)
@@ -219,6 +218,7 @@ class workerClass(object):
         env.lock.release()
         env.locked_levels = [False] * 32
         while True:
+            self.counter.value = 0
             while self.running.value:
                 print(self.counter.value,"job")
                 if self.jobs.empty():
