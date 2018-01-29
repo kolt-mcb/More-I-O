@@ -219,14 +219,14 @@ class workerClass(object):
             self.counter.value = 0
             while running:
                 print(self.counter.value,"job")
-                if self.jobs.empty() and not self.counter == self.numJobs:
+                if self.jobs.empty():
                     print(self.counter.value)
                     self.counter.value +=1
                     if self.counter.value == self.numJobs:
                         self.sendResults()
                         running = False
                         pass
-                else:
+                elif running:
                     job = self.jobs.get()
                     currentSpecies = job[0]
                     currentGenome = job[1]
