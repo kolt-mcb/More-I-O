@@ -432,7 +432,7 @@ class gui:
             if msg is not self.sentinel:
                 s = 0
                 for specie in self.pool.species:  # creates a job with species and genome index, env name and number of trials/attemps
-                g = 0
+                    g = 0
                     for genome in specie.genomes:
                         print(s,g)
                         g += 1
