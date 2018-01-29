@@ -507,12 +507,12 @@ class gui:
         currentSpecies = job[1][0]
         currentGenome = job[1][1]
         s = 0
-            for specie in self.pool.species:  # creates a job with species and genome index, env name and number of trials/attemps
-                g = 0
-                for genome in specie.genomes:
-                    print(s,g)
-                    g += 1
-                s += 1
+        for specie in self.pool.species:  # creates a job with species and genome index, env name and number of trials/attemps
+            g = 0
+            for genome in specie.genomes:
+                print(s,g)
+                g += 1
+            s += 1
         print(job)
         print(self.pool.species[currentSpecies].genomes)
         self.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
