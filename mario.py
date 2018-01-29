@@ -498,7 +498,7 @@ class gui:
 
 
     def updateFitness(self,jobs):
-        pool = ThreadPool(4)
+        pool = ThreadPool(1)
         pool.map(self.updateFitnessjob, jobs)
 
     def updateFitnessjob(self,job):
