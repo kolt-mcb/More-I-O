@@ -167,6 +167,7 @@ class workerClass(object):
         self.speciesQueue = speciesQueue
         self.env = env
         self.proccesses = []
+        self.running = multiprocessing.Value(c_bool,False)
         self.counter= multiprocessing.Value('i',0)
         for i in range(self.numJobs):
             p = multiprocessing.Process(
@@ -184,8 +185,11 @@ class workerClass(object):
 
 
     def startRun(self):
+        self.counter.value = 0
+        print(self.counter,"counter")
         species = self.speciesQueue.get()
         self.createJobs(species)
+        self.running.value = True
 
 
     def createJobs(self,species):
@@ -200,7 +204,6 @@ class workerClass(object):
 
     def sendResults(self):
         processedResults = []
-        self.runQueue.clear()
         while not self.results.empty():
             processedResults.append(self.results.get())
         print(processedResults)
@@ -214,21 +217,18 @@ class workerClass(object):
         env.reset()
         env.lock.release()
         env.locked_levels = [False] * 32
-        running = True
         while True:
-            self.counter.value = 0
-            while running:
+            while self.running.value:
                 print(self.counter.value,"job")
-                try:
-                    job = self.jobs.get()
-                    
-                except Empty:
+                if self.jobs.empty():
                     print(self.counter.value)
-                    self.counter +=1
+                    self.counter.value +=1
                     if self.counter.value == self.numJobs:
                         self.sendResults()
-                        running = False
-                        pass
+                        self.running.value = False
+                    pass
+                else:
+                     job = self.jobs.get()
                 currentSpecies = job[0]
                 currentGenome = job[1]
                 genome = job[2]
@@ -281,8 +281,11 @@ class workerClass(object):
                 for score in scores:
                     finalScore += score
                 finalScore = round(finalScore / 32)
-                self.results.put((finalScore, job))
-                print("species:", currentSpecies, "genome:", currentGenome, "Scored:", finalScore)
+                if self.running:
+                    self.results.put((finalScore, job))
+
+                print("species:", currentSpecies, "genome:",
+                    currentGenome, "Scored:", finalScore)
             time.sleep(1)
         
             
@@ -427,13 +430,14 @@ class gui:
         if not self.resultQueue.empty():
             msg = self.resultQueue.get()
             if msg is not self.sentinel:
-                for job in msg:
-                    currentSpecies = job[1][0]
-                    currentGenome = job[1][1]
-                    print(job)
-                    print(self.pool.species[currentSpecies].genomes)
-                    self.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
-                #self.updateFitness(msg)
+                s = 0
+                for specie in self.pool.species:  # creates a job with species and genome index, env name and number of trials/attemps
+                    g = 0
+                    for genome in specie.genomes:
+                        print(s,g)
+                        g += 1
+                    s += 1
+                self.updateFitness(msg)
                 self.pool.nextGeneration()
                 playBest(self.pool.getBest())
                 print("gen ", self.pool.generation,
@@ -503,7 +507,7 @@ class gui:
 
     def updateFitness(self,jobs):
         pool = ThreadPool(1)
-        pool.map(self.updateFitnessjob,jobs)
+        pool.map(self.updateFitnessjob, jobs)
 
     def updateFitnessjob(self,job):
         currentSpecies = job[1][0]
