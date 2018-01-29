@@ -273,10 +273,8 @@ class workerClass(object):
                     for score in scores:
                         finalScore += score
                     finalScore = round(finalScore / 32)
-                    if running:
-                        self.results.put((finalScore, job))
-
-                print("species:", currentSpecies, "genome:", currentGenome, "Scored:", finalScore)
+                    self.results.put((finalScore, job))
+                    print("species:", currentSpecies, "genome:", currentGenome, "Scored:", finalScore)
                 except Empty:
                     print(self.counter.value)
                     self.counter +=1
