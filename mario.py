@@ -403,6 +403,7 @@ class gui:
                 self.netProcess = multiprocessing.Process(target=workerClass,args=(self.envNum.get(),self.resultQueue,self.speciesQueue,self.env))
                 self.speciesQueue.put(self.pool.species)
                 self.netProcess.start()
+                self.firstRun = False
             else:
                 print("speciesQueue")
                 self.speciesQueue.put(self.pool.species)
