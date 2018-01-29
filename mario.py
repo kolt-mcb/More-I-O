@@ -432,9 +432,8 @@ class gui:
             if msg is not self.sentinel:
                 jobs = []
                 for resultChunk in msg:
-                    
-                        print(result)
-                        jobs.append(result)
+                    print(result)
+                    jobs.append(result)
                 self.updateFitness(jobs)
                 self.pool.nextGeneration()
                 playBest(self.pool.getBest())
