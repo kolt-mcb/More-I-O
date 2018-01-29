@@ -220,6 +220,7 @@ class workerClass(object):
                 if not self.jobs.empty():
                     job = self.jobs.get()
                 else:
+                    print(self.counter)
                     self.counter +=1
                     if self.counter == self.numJobs:
                         self.sendResults()
