@@ -197,6 +197,7 @@ class workerClass(object):
         for specie in species:  # creates a job with species and genome index, env name and number of trials/attemps
             g = 0
             for genome in specie.genomes:
+                print(s,g)
                 self.jobs.put((s, g, genome))
                 g += 1
             s += 1
