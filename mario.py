@@ -437,9 +437,7 @@ class gui:
                 return
             else:
                 self.master.after(250, self.checkRunPaused)
-        except Empty:
-            self.master.after(
-                250, lambda: self.checkRunCompleted(pausing))
+
 
     
 
