@@ -175,6 +175,7 @@ class workerClass(object):
             self.proccesses.append(p)
             p.start()
         while True:
+            print(speciesQueue,"workerclass")
             if not speciesQueue.empty():
                self.startRun()
             time.sleep(1)
