@@ -223,7 +223,6 @@ class workerClass(object):
                     print(self.counter.value)
                     if self.counter > self.numJobs:
                         self.counter +=1
-                    self.counter.value +=1
                     if self.counter.value == self.numJobs:
                         self.sendResults()
                         running = False
