@@ -439,7 +439,7 @@ class gui:
                 return
             else:
                 self.master.after(250, self.checkRunPaused)
-
+         self.master.after(250, lambda: self.checkRunCompleted())
 
     
 
