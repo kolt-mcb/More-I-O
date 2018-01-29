@@ -404,6 +404,7 @@ class gui:
                 self.speciesQueue.put(self.pool.species)
                 self.netProcess.start()
             else:
+                print("speciesQueue")
                 self.speciesQueue.put(self.pool.species)
             self.master.after(
                 250, lambda: self.checkRunCompleted(pausing=False))
