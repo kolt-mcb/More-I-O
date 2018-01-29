@@ -431,7 +431,7 @@ class gui:
             msg = self.resultQueue.get()
             if msg is not self.sentinel:
                 jobs = []
-                for resultChunk in msg:
+                for result in msg:
                     print(result)
                     jobs.append(result)
                 self.updateFitness(jobs)
