@@ -500,6 +500,7 @@ class gui:
     def updateFitnessjob(self,job):
         currentSpecies = job[1][0]
         currentGenome = job[1][1]
+        print(job)
         self.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
 
 
