@@ -281,7 +281,8 @@ class workerClass(object):
                 for score in scores:
                     finalScore += score
                 finalScore = round(finalScore / 32)
-                self.results.put((finalScore, job))
+                if self.running:
+                    self.results.put((finalScore, job))
 
                 print("species:", currentSpecies, "genome:",
                     currentGenome, "Scored:", finalScore)
