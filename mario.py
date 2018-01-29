@@ -185,7 +185,7 @@ class workerClass(object):
 
 
     def startRun(self):
-        self.counter = 0
+        self.counter.value = 0
         print(self.counter,"counter")
         species = self.speciesQueue.get()
         self.createJobs(species)
@@ -219,13 +219,13 @@ class workerClass(object):
         env.locked_levels = [False] * 32
         while True:
             while self.running.value:
-                print(self.counter,"job")
+                print(self.counter.value,"job")
                 if not self.jobs.empty():
                     job = self.jobs.get()
                 else:
                     print(self.counter)
-                    self.counter +=1
-                    if self.counter == self.numJobs:
+                    self.counter.value +=1
+                    if self.counter.value == self.numJobs:
                         self.sendResults()
                         self.running.value = False
                     pass
