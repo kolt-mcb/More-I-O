@@ -437,11 +437,13 @@ class gui:
                 self.updateStackPlot(self.generateStackPlot())
             if pausing:
                 self.running = False
-                self.master.after(250, lambda: self.checkRunCompleted())
+                self.master.after(250,self.checkRunCompleted)
                 return
             else:
                 self.master.after(250, self.checkRunPaused)
-        self.master.after(250, lambda: self.checkRunCompleted())
+        else:
+            self.master.after(
+                250, lambda: self.checkRunCompleted(pausing))
 
     
 
