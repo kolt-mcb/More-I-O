@@ -168,7 +168,7 @@ class workerClass(object):
         self.env = env
         self.proccesses = []
         self.running = multiprocessing.Value(c_bool,False)
-        self.counter= 0
+        self.counter= multiprocessing.Value(int,0)
         for i in range(self.numJobs):
             p = multiprocessing.Process(
                 target=self.jobTrainer,
