@@ -219,7 +219,7 @@ class workerClass(object):
             self.counter.value = 0
             while running:
                 print(self.counter.value,"job")
-                try self.job.get():
+                try:
                     job = self.jobs.get()
                     currentSpecies = job[0]
                     currentGenome = job[1]
@@ -276,10 +276,8 @@ class workerClass(object):
                     if running:
                         self.results.put((finalScore, job))
 
-                    print("species:", currentSpecies, "genome:",
-                        currentGenome, "Scored:", finalScore)
-            time.sleep(1)
-                    
+                print("species:", currentSpecies, "genome:",
+                    currentGenome, "Scored:", finalScore)
                 except Empty:
                     print(self.counter.value)
                     self.counter +=1
@@ -287,6 +285,7 @@ class workerClass(object):
                         self.sendResults()
                         running = False
                         pass
+            time.sleep(1)
         
             
 
