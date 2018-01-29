@@ -206,6 +206,7 @@ class workerClass(object):
             processedResults.append(self.results.get())
             print(i)
         i= 0
+        print(processedResults)
         self.runQueue.put(processedResults)  # sends message to main tkinter process
 
 
