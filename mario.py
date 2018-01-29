@@ -419,6 +419,7 @@ class gui:
             self.master.quit()
 
     def checkRunCompleted(self, pausing=True):
+        print(self.resultQueue.empty())
         if not self.resultQueue.empty():
             msg = self.resultQueue.get()
             if msg is not self.sentinel:
