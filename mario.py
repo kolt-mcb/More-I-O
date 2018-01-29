@@ -219,6 +219,7 @@ class workerClass(object):
                 if not self.jobs.empty():
                     job = self.jobs.get()
                 else:
+                    print("test")
                     if self.running.value:
                         self.sendResults()
                     self.running.value = False
