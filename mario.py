@@ -232,6 +232,7 @@ class workerClass(object):
                     pass
                 else:
                      job = self.jobs.get()
+                     print(job[0],job[1])
                 print(self.running.value)
                 if self.running.value:
                     currentSpecies = job[0]
