@@ -221,6 +221,7 @@ class workerClass(object):
                     job = self.jobs.get()
                 else:
                     self.counter +=1
+                    print(self.counter)
                     if self.counter == self.numJobs:
                         self.sendResults()
                         self.running = False
