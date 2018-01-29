@@ -204,6 +204,7 @@ class workerClass(object):
 
     def sendResults(self):
         processedResults = []
+        self.runQueue.clear()
         while not self.results.empty():
             processedResults.append(self.results.get())
         print(processedResults)
