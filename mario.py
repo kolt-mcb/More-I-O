@@ -220,11 +220,9 @@ class workerClass(object):
                 if not self.jobs.empty():
                     job = self.jobs.get()
                 else:
-                    if self.running.value:
-                        self.counter +=1
-                    if self.counter = self.numJobs:
+                    self.counter +=1
+                    if self.counter == self.numJobs:
                         self.sendResults()
-                    self.running.value = False
                     pass
                 currentSpecies = job[0]
                 currentGenome = job[1]
