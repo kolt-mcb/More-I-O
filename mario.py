@@ -276,8 +276,7 @@ class workerClass(object):
                     if running:
                         self.results.put((finalScore, job))
 
-                print("species:", currentSpecies, "genome:",
-                    currentGenome, "Scored:", finalScore)
+                print("species:", currentSpecies, "genome:", currentGenome, "Scored:", finalScore)
                 except Empty:
                     print(self.counter.value)
                     self.counter +=1
