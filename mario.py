@@ -431,7 +431,7 @@ class gui:
                 for resultChunk in msg:
                     for result in resultChunk:
                         print(result)
-                        jobs.append(resultChunk)
+                        jobs.append(result)
                 self.updateFitness(jobs)
                 self.pool.nextGeneration()
                 playBest(self.pool.getBest())
