@@ -430,8 +430,13 @@ class gui:
         if not self.resultQueue.empty():
             msg = self.resultQueue.get()
             if msg is not self.sentinel:
-
-                self.updateFitness(msg)
+                for job in msg:
+                    currentSpecies = job[1][0]
+                    currentGenome = job[1][1]
+                    print(job)
+                    print(self.pool.species[currentSpecies].genomes)
+                    self.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
+                #self.updateFitness(msg)
                 self.pool.nextGeneration()
                 playBest(self.pool.getBest())
                 print("gen ", self.pool.generation,
@@ -506,13 +511,6 @@ class gui:
     def updateFitnessjob(self,job):
         currentSpecies = job[1][0]
         currentGenome = job[1][1]
-        s = 0
-        for specie in self.pool.species:  # creates a job with species and genome index, env name and number of trials/attemps
-            g = 0
-            for genome in specie.genomes:
-                print(s,g)
-                g += 1
-            s += 1
         print(job)
         print(self.pool.species[currentSpecies].genomes)
         self.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
