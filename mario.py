@@ -506,8 +506,8 @@ class gui:
 
 
     def updateFitness(self,jobs):
-        pool = ThreadPool(1)
-        pool.map(self.updateFitnessjob, jobs)
+        for job in jobs:
+            self.updateFitnessjob(job)
 
     def updateFitnessjob(self,job):
         currentSpecies = job[1][0]
