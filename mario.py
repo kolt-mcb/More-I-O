@@ -204,7 +204,7 @@ class workerClass(object):
         processedResults = []
         while not self.results.empty():
             processedResults.append(self.results.get())
-
+        print(processedResults)
         self.runQueue.put(processedResults)  # sends message to main tkinter process
 
 
@@ -221,7 +221,6 @@ class workerClass(object):
                     job = self.jobs.get()
                 else:
                     self.counter +=1
-                    print(self.counter)
                     if self.counter == self.numJobs:
                         self.sendResults()
                         self.running.value = False
