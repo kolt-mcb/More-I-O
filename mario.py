@@ -219,7 +219,7 @@ class workerClass(object):
             self.counter.value = 0
             while running:
                 print(self.counter.value,"job")
-                if self.jobs.empty():
+                if self.jobs.empty() and not self.counter == self.numJobs:
                     print(self.counter.value)
                     self.counter.value +=1
                     if self.counter.value == self.numJobs:
