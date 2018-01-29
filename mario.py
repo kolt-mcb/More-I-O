@@ -430,11 +430,7 @@ class gui:
         if not self.resultQueue.empty():
             msg = self.resultQueue.get()
             if msg is not self.sentinel:
-                jobs = []
-                for result in msg:
-                    print(result)
-                    jobs.append(result)
-                self.updateFitness(jobs)
+                self.updateFitness(msg)
                 self.pool.nextGeneration()
                 playBest(self.pool.getBest())
                 print("gen ", self.pool.generation,
