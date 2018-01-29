@@ -216,11 +216,12 @@ class workerClass(object):
         env.locked_levels = [False] * 32
         while True:
             while self.running.value:
-                try:
+                if not self.jobs.empty():
                     job = self.jobs.get()
-                except Empty:
+                else:
+                    if not self.running.value:
+                        self.sendResults()
                     self.running.value = False
-                    self.sendResults()
                     pass
                 currentSpecies = job[0]
                 currentGenome = job[1]
