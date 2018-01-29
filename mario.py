@@ -418,8 +418,8 @@ class gui:
             self.master.quit()
 
     def checkRunCompleted(self, pausing=True):
-        try:
-            msg = self.resultQueue.get_nowait()
+        if not self.resultQueue.empty():
+            msg = self.resultQueue.get()
             if msg is not self.sentinel:
                 jobs = []
                 for resultChunk in msg:
