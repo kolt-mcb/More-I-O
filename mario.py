@@ -168,6 +168,7 @@ class workerClass(object):
         self.env = env
         self.proccesses = []
         self.running = multiprocessing.Value(c_bool,False)
+        self.counter= 0
         for i in range(self.numJobs):
             p = multiprocessing.Process(
                 target=self.jobTrainer,
@@ -220,6 +221,8 @@ class workerClass(object):
                     job = self.jobs.get()
                 else:
                     if self.running.value:
+                        self.counter +=1
+                    if self.counter = self.numJobs:
                         self.sendResults()
                     self.running.value = False
                     pass
