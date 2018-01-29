@@ -223,6 +223,7 @@ class workerClass(object):
                     self.counter +=1
                     if self.counter == self.numJobs:
                         self.sendResults()
+                        self.running = False
                     pass
                 currentSpecies = job[0]
                 currentGenome = job[1]
