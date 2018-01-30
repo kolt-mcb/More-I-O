@@ -226,10 +226,10 @@ class workerClass(object):
                 if self.jobs.empty():
                     self.counter.value += 1
                     if self.counter.value == self.numJobs:
+                        self.sendResults()
                         self.running.value = False
                     while self.running.value:
                         time.sleep(0.5)
-                    self.sendResults()
                     pass
                 else:
                         job = self.jobs.get()
