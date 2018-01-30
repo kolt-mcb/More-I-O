@@ -186,7 +186,6 @@ class workerClass(object):
 
     def startRun(self):
         self.counter.value = 0
-        print(self.counter,"counter")
         species = self.speciesQueue.get()
         self.createJobs(species)
         self.running.value = True
@@ -197,7 +196,6 @@ class workerClass(object):
         for specie in species:  # creates a job with species and genome index, env name and number of trials/attemps
             g = 0
             for genome in specie.genomes:
-                print(s,g)
                 self.jobs.put((s, g, genome))
                 g += 1
             s += 1
@@ -207,9 +205,7 @@ class workerClass(object):
         processedResults = []
         while not self.results.empty():
             result = self.results.get()
-            print(result,result[1][2].ID)
             processedResults.append(result)
-        print(processedResults)
         self.runQueue.put(processedResults)  # sends message to main tkinter process
 
 
@@ -222,7 +218,6 @@ class workerClass(object):
         env.locked_levels = [False] * 32
         while True:
             if self.running.value:
-                print(self.counter.value,"job")
                 if self.jobs.empty():
                     self.counter.value += 1
                     if self.counter.value == self.numJobs:
@@ -234,7 +229,6 @@ class workerClass(object):
                 else:
                         job = self.jobs.get()
                 if job != None:
-                    print("playing",job)
                     currentSpecies = job[0]
                     currentGenome = job[1]
                     genome = job[2]
@@ -434,13 +428,6 @@ class gui:
         if not self.resultQueue.empty():
             msg = self.resultQueue.get()
             if msg is not self.sentinel:
-                s = 0
-                for specie in self.pool.species:  # creates a job with species and genome index, env name and number of trials/attemps
-                    g = 0
-                    for genome in specie.genomes:
-                        print(s,g)
-                        g += 1
-                    s += 1
                 self.updateFitness(msg)
                 self.pool.nextGeneration()
                 playBest(self.pool.getBest())
