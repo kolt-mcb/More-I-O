@@ -227,7 +227,7 @@ class workerClass(object):
                     self.counter.value += 1
                     if self.counter.value == self.numJobs:
                         self.running.value = False
-                    while self.runnning.value:
+                    while self.running.value:
                         time.sleep(0.5)
                     self.sendResults()
                     pass
