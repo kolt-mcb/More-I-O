@@ -188,7 +188,6 @@ class workerClass(object):
         print(self.counter,"counter")
         species = self.speciesQueue.get()
         self.createJobs(species)
-        self.running.value = True
 
 
     def createJobs(self,species):
