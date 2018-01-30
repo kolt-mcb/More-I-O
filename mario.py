@@ -232,6 +232,7 @@ class workerClass(object):
                 else:
                         job = self.jobs.get()
                 if job != None:
+                    print("playing",job)
                     currentSpecies = job[0]
                     currentGenome = job[1]
                     genome = job[2]
