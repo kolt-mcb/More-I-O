@@ -231,7 +231,6 @@ class workerClass(object):
                     pass
                 else:
                         job = self.jobs.get()
-                        print(job[0],job[1])
                 if job != None:
                     currentSpecies = job[0]
                     currentGenome = job[1]
