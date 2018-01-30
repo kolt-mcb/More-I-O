@@ -167,7 +167,7 @@ class workerClass(object):
         self.speciesQueue = speciesQueue
         self.env = env
         self.proccesses = []
-        self.running = multiprocessing.value(c_bool,True)
+        self.running = multiprocessing.Value(c_bool,True)
         self.counter = multiprocessing.Value('i',0)
         for i in range(self.numJobs):
             p = multiprocessing.Process(
