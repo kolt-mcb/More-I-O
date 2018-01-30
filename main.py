@@ -220,6 +220,7 @@ class workerClass(object):
             print("species:", currentSpecies, " genome:",
                     currentGenome, " Scored:", finalScore)
             genomeResults.append((finalScore, job))
+            job = None
         env.close()
         self.results.put(genomeResults)
 
