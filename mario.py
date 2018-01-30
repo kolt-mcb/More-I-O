@@ -228,7 +228,6 @@ class workerClass(object):
             else:
                     job = self.jobs.get()
                     print(job[0],job[1])
-            print(self.running.value)
             if job != None:
                 currentSpecies = job[0]
                 currentGenome = job[1]
