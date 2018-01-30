@@ -167,6 +167,7 @@ class workerClass(object):
         self.speciesQueue = speciesQueue
         self.env = env
         self.proccesses = []
+        self.running = multiprocessing.value(c_bool,True)
         self.counter = multiprocessing.Value('i',0)
         for i in range(self.numJobs):
             p = multiprocessing.Process(
@@ -188,6 +189,7 @@ class workerClass(object):
         print(self.counter,"counter")
         species = self.speciesQueue.get()
         self.createJobs(species)
+        self.running = True
 
 
     def createJobs(self,species):
@@ -219,73 +221,75 @@ class workerClass(object):
         env.lock.release()
         env.locked_levels = [False] * 32
         while True:
-            print(self.counter.value,"job")
-            if self.jobs.empty():
-                self.counter.value += 1
-                if self.counter.value == self.numJobs:
-                    self.sendResults()
-                pass
-            else:
-                    job = self.jobs.get()
-                    print(job[0],job[1])
-            if job != None:
-                currentSpecies = job[0]
-                currentGenome = job[1]
-                genome = job[2]
-                maxDistance = 0
-                distance = None
-                staleness = 0
-                scores = []
-                finalScore = 0
-                done = False
-                maxReward = 0
-                for LVint in range(1):
-                    genome.generateNetwork()
+            if self.running.value:
+                print(self.counter.value,"job")
+                if self.jobs.empty() :
+                    self.counter.value += 1
+                    if self.counter.value == self.numJobs:
+                        self.sendResults()
+                        self.running.value = False
+                    pass
+                else:
+                        job = self.jobs.get()
+                        print(job[0],job[1])
+                if job != None:
+                    currentSpecies = job[0]
+                    currentGenome = job[1]
+                    genome = job[2]
                     maxDistance = 0
-                    oldDistance = 0
-                    bonus = 0
-                    bonusOffset = 0
+                    distance = None
                     staleness = 0
+                    scores = []
+                    finalScore = 0
                     done = False
-                    env.change_level(new_level=LVint)
-                    while not done:
-                        ob = env.tiles.flatten()
-                        o = genome.evaluateNetwork(ob.tolist(), discrete=False)
-                        o = joystick(o)
-                        ob, reward, done, _ = env.step(o)
-                        if 'ignore' in _:
-                            done = False
-                            env = gym.make('meta-SuperMarioBros-Tiles-v0')
-                            env.lock.acquire()
-                            env.reset()
-                            env.locked_levels = [False] * 32
-                            env.change_level(new_level=LVint)
-                            env.lock.release()
-                        distance = env._get_info()["distance"]
-                        if oldDistance - distance < -100:
-                            bonus = maxDistance
-                            bonusOffset = distance
-                        if maxDistance - distance > 50 and distance != 0:
-                            maxDistance = distance
-                        if distance > maxDistance:
-                            maxDistance = distance
-                            staleness = 0
-                        if maxDistance >= distance:
-                            staleness += 1
+                    maxReward = 0
+                    for LVint in range(1):
+                        genome.generateNetwork()
+                        maxDistance = 0
+                        oldDistance = 0
+                        bonus = 0
+                        bonusOffset = 0
+                        staleness = 0
+                        done = False
+                        env.change_level(new_level=LVint)
+                        while not done:
+                            ob = env.tiles.flatten()
+                            o = genome.evaluateNetwork(ob.tolist(), discrete=False)
+                            o = joystick(o)
+                            ob, reward, done, _ = env.step(o)
+                            if 'ignore' in _:
+                                done = False
+                                env = gym.make('meta-SuperMarioBros-Tiles-v0')
+                                env.lock.acquire()
+                                env.reset()
+                                env.locked_levels = [False] * 32
+                                env.change_level(new_level=LVint)
+                                env.lock.release()
+                            distance = env._get_info()["distance"]
+                            if oldDistance - distance < -100:
+                                bonus = maxDistance
+                                bonusOffset = distance
+                            if maxDistance - distance > 50 and distance != 0:
+                                maxDistance = distance
+                            if distance > maxDistance:
+                                maxDistance = distance
+                                staleness = 0
+                            if maxDistance >= distance:
+                                staleness += 1
 
-                        if staleness > 80 or done:
-                            scores.append(maxDistance - bonusOffset + bonus)
-                            if not done:
-                                done = True
-                        oldDistance = distance
-                for score in scores:
-                    finalScore += score
-                finalScore = round(finalScore / 32)
-            self.results.put((finalScore, job))
-            job = None
-            print("species:", currentSpecies, "genome:",
-                currentGenome, "Scored:", finalScore)
-        time.sleep(1)
+                            if staleness > 80 or done:
+                                scores.append(maxDistance - bonusOffset + bonus)
+                                if not done:
+                                    done = True
+                            oldDistance = distance
+                    for score in scores:
+                        finalScore += score
+                    finalScore = round(finalScore / 32)
+                self.results.put((finalScore, job))
+                job = None
+                print("species:", currentSpecies, "genome:",
+                    currentGenome, "Scored:", finalScore)
+            time.sleep(1)
         
             
 
