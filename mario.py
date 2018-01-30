@@ -210,6 +210,7 @@ class workerClass(object):
 
 
     def jobTrainer(self,envName):
+        job =None
         env = gym.make(envName)
         env.lock = self.lock
         env.lock.acquire()
