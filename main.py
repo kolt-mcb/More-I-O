@@ -170,10 +170,8 @@ class workerClass(object):
         for i in range(self.numJobs):
             
             processedResults.append(self.results.get())
-            print(i)
         i= 0
         for p in proccesses:
-            print(i)
             p.join()
             i+=1
         after = time.time()
@@ -199,7 +197,6 @@ class workerClass(object):
             try:
                 job = self.jobs.get()
             except Empty:
-                print("test")
                 pass
             currentSpecies = job[0]
             currentGenome = job[1]
@@ -342,7 +339,6 @@ class gui:
 
     def toggleRun(self):
         env = gym.make(self.envEntry.get())
-        print(self.running)
         if not self.running:
             if not self.poolInitialized:
                 if env.action_space.__class__ == gym.spaces.discrete.Discrete:
