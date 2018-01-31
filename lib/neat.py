@@ -248,7 +248,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
 		self.generation += 1
-		self.cullSpecies(False)  
+		self.cullSpecies()  
 		self.rankGlobally() 
 		self.removeStaleSpecies()
 		# reranks after removeing stales species and  stores best player for later play
@@ -273,13 +273,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 						if len(children)+c < self.Population:
 							children.append(specie.breedChildren(self.InPopulation))
 
-		# leave only the top member of each species.
-		#self.cullSpecies(True) 
+		self.cullSpecies()
 		c = 0
 		for specie in self.species:
 			for genome in specie.genomes:
 				c += 1
-				
+		
 		
 		while (len(children)+c < self.Population):
 			parent = random.choice(self.species)
@@ -288,13 +287,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		# adds all children to there species in the pool
 		self.addToPool(children)
 
-	def cullSpecies(self,cutToOne): #sorts genomes by fitness and removes half of them or cuts to one
+	def cullSpecies(self): #sorts genomes by fitness and removes half of them
 		for specie in self.species:
 			specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
 			genomes = []
 			remaining = math.ceil(len(specie.genomes)/2)
-			if cutToOne:
-				remaining = 2
 			while len(specie.genomes) > remaining:
 				specie.genomes.pop()
 
