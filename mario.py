@@ -187,11 +187,11 @@ class workerClass(object):
     def startRun(self):
         self.counter.value = 0
         species = self.speciesQueue.get()
-        c = 0
-		for specie in species:
-			for genome in specie.genomes:
-				c += 1
-        print(c)
+         c2 = 0
+        for specie in species:
+            for genome in specie.genomes:
+            c2 += 1
+        print(c2)
         self.createJobs(species)
         self.running.value = True
 
