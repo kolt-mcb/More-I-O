@@ -187,7 +187,11 @@ class workerClass(object):
     def startRun(self):
         self.counter.value = 0
         species = self.speciesQueue.get()
-        print(len(species))
+        c = 0
+		for specie in species:
+			for genome in specie.genomes:
+				c += 1
+        print(c)
         self.createJobs(species)
         self.running.value = True
 
@@ -284,9 +288,9 @@ class workerClass(object):
                         for score in scores:
                             finalScore += score
                         finalScore = round(finalScore / 32)
-                    self.results.put((finalScore, job))
-                    job = None
-                    print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
+                self.results.put((finalScore, job))
+                job = None
+                print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
             time.sleep(1)
         
             
