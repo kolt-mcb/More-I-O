@@ -190,7 +190,7 @@ class workerClass(object):
          c2 = 0
         for specie in species:
             for genome in specie.genomes:
-            c2 += 1
+                c2 += 1
         print(c2)
         self.createJobs(species)
         self.running.value = True
