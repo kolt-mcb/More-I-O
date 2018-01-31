@@ -187,7 +187,7 @@ class workerClass(object):
     def startRun(self):
         self.counter.value = 0
         species = self.speciesQueue.get()
-         c2 = 0
+        c2 = 0
         for specie in species:
             for genome in specie.genomes:
                 c2 += 1
