@@ -187,6 +187,7 @@ class workerClass(object):
     def startRun(self):
         self.counter.value = 0
         species = self.speciesQueue.get()
+        print(len(species))
         self.createJobs(species)
         self.running.value = True
 
@@ -206,6 +207,7 @@ class workerClass(object):
         while not self.results.empty():
             result = self.results.get()
             processedResults.append(result)
+        print(len([processedResults]))
         self.runQueue.put(processedResults)  # sends message to main tkinter process
 
 
