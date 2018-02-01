@@ -226,7 +226,9 @@ class workerClass(object):
         running = True
         while True:
             if self.running.value:
-                if self.jobs.empty():
+                try: 
+                    job = self.jobs.get()
+                except Empty: 
                     time.sleep(0.5)
                     self.counter.value += 1
                     print(self.counter.value)
@@ -234,11 +236,12 @@ class workerClass(object):
                         print("sending")
                         self.sendResults()
                         self.running.value = False
+                        job = None
                     while self.running.value:
                         time.sleep(0.5)
                     pass
-                else:
-                        job = self.jobs.get()
+
+                    
                 if job != None:
                     currentSpecies = job[0]
                     currentGenome = job[1]
