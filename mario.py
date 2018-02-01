@@ -416,7 +416,7 @@ class gui:
 
     def checkRunPaused(self):
         if self.running:
-            self.sharedPopulation = multiprocessing.value('i',self.population.get())()
+            self.sharedPopulation.value = self.population.get()
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initalizeProcess)
                 self.netProcess.start()
