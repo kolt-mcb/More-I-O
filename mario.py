@@ -168,6 +168,7 @@ class workerClass(object):
         self.env = env
         self.proccesses = []
         self.counter = multiprocessing.Value('i',0)
+        self.running = multiprocessing.Value(c_bool,True)
         for i in range(self.numJobs):
             p = multiprocessing.Process(
                 target=self.jobTrainer,
@@ -192,7 +193,6 @@ class workerClass(object):
                 c2 += 1
         print(c2)
         self.createJobs(species)
-        self.running.value = True
 
 
     def createJobs(self,species):
@@ -206,6 +206,7 @@ class workerClass(object):
 
 
     def sendResults(self):
+        self.running.value = False
         processedResults = []
         while not self.results.empty():
             result = self.results.get()
@@ -224,8 +225,9 @@ class workerClass(object):
         env.locked_levels = [False] * 32
         running = True
         while True:
-            if running:
+            if self.running.value:
                 if self.jobs.empty():
+                    time.sleep(0.5)
                     self.counter.value += 1
                     print(self.counter.value)
                     if self.counter.value == self.numJobs:
