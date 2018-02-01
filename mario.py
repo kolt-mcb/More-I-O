@@ -167,7 +167,6 @@ class workerClass(object):
         self.speciesQueue = speciesQueue
         self.env = env
         self.proccesses = []
-        self.running = multiprocessing.Value(c_bool,True)
         self.counter = multiprocessing.Value('i',0)
         for i in range(self.numJobs):
             p = multiprocessing.Process(
@@ -223,16 +222,17 @@ class workerClass(object):
         env.reset()
         env.lock.release()
         env.locked_levels = [False] * 32
+        running = True
         while True:
-            if self.running.value:
+            if running:
                 if self.jobs.empty():
                     self.counter.value += 1
                     print(self.counter.value)
                     if self.counter.value == self.numJobs:
                         print("sending")
                         self.sendResults()
-                        self.running.value = False
-                    while self.running.value:
+                        running = False
+                    while running:
                         time.sleep(0.5)
                     pass
                 else:
