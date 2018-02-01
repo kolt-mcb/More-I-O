@@ -438,24 +438,24 @@ class gui:
             self.master.quit()
 
     def checkRunCompleted(self, pausing=True):
-        if not self.resultQueue.empty():
+        try:
             msg = self.resultQueue.get()
-            if msg is not self.sentinel:
-                self.updateFitness(msg)
-                self.pool.nextGeneration()
-                playBest(self.pool.getBest())
-                print("gen ", self.pool.generation,
-                      " best", self.pool.getBest().fitness)
-                self.updateStackPlot(self.generateStackPlot())
-            if pausing:
-                self.running = False
-                self.master.after(250,self.checkRunCompleted)
-                return
-            else:
-                self.master.after(250, self.checkRunPaused)
+        except Empty:
+            self.master.after(250, lambda: self.checkRunCompleted(pausing))
+        if msg is not self.sentinel:
+            self.updateFitness(msg)
+            self.pool.nextGeneration()
+            playBest(self.pool.getBest())
+            print("gen ", self.pool.generation,
+                    " best", self.pool.getBest().fitness)
+            self.updateStackPlot(self.generateStackPlot())
+        if pausing:
+            self.running = False
+            self.master.after(250,self.checkRunCompleted)
+            return
         else:
-            self.master.after(
-                250, lambda: self.checkRunCompleted(pausing))
+            self.master.after(250, self.checkRunPaused)
+
 
     
 
