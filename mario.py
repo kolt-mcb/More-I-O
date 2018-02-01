@@ -227,6 +227,7 @@ class workerClass(object):
         while True:
             if self.running.value:
                 if self.jobs.empty():
+                    time.sleep(0.5)
                     self.counter.value += 1
                     print(self.counter.value)
                     if self.counter.value == self.numJobs:
@@ -291,8 +292,9 @@ class workerClass(object):
                         for score in scores:
                             finalScore += score
                         finalScore = round(finalScore / 32)
+                        job = None
                 self.results.put((finalScore, job))
-                job = None
+                
                 print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
             time.sleep(1)
         
