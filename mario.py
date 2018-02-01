@@ -440,7 +440,7 @@ class gui:
     def checkRunCompleted(self, pausing=True):
         try:
             msg = self.resultQueue.get()
-        except Empty:
+        except Queue.Empty:
             self.master.after(250, lambda: self.checkRunCompleted(pausing))
         if msg is not self.sentinel:
             self.updateFitness(msg)
