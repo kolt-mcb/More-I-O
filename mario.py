@@ -170,7 +170,7 @@ class workerClass(object):
         self.counter = multiprocessing.Value('i',0)
 
             
-    def initalizeProcess():
+    def initializeProcess(self):
         for i in range(self.numJobs):
             p = multiprocessing.Process(
                 target=self.jobTrainer,
@@ -418,7 +418,7 @@ class gui:
         if self.running:
             self.sharedPopulation.value = self.population.get()
             if self.firstRun:
-                self.netProcess = multiprocessing.Process(target=self.workerClass.initalizeProcess)
+                self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
                 self.netProcess.start()
                 self.firstRun = False
             else:
