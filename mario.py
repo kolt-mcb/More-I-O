@@ -227,6 +227,7 @@ class workerClass(object):
             if self.running.value:
                 if self.jobs.empty():
                     self.counter.value += 1
+                    print(self.counter.value)
                     if self.counter.value == self.numJobs:
                         self.sendResults()
                         self.running.value = False
