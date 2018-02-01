@@ -228,7 +228,7 @@ class workerClass(object):
             if self.running.value:
                 try: 
                     job = self.jobs.get()
-                except Queue.Empty: 
+                except queue.Empty: 
                     time.sleep(0.5)
                     self.counter.value += 1
                     print(self.counter.value)
@@ -440,7 +440,7 @@ class gui:
     def checkRunCompleted(self, pausing=True):
         try:
             msg = self.resultQueue.get()
-        except Queue.Empty:
+        except queue.Empty:
             self.master.after(250, lambda: self.checkRunCompleted(pausing))
         if msg is not self.sentinel:
             self.updateFitness(msg)
