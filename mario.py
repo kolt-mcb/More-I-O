@@ -11,13 +11,11 @@ import math
 import time
 import multiprocessing
 from multiprocessing.pool import ThreadPool
-from multiprocessing import Queue
-from queue import Empty
 from tkinter import *
 from tkinter import filedialog, messagebox
 import pickle
-from queue import Empty
 import matplotlib
+import Queue
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -158,10 +156,11 @@ def killFCEUX():
 
 
 class workerClass(object):
-    def __init__(self,numJobs,runQueue,speciesQueue,env):
+    def __init__(self,numJobs,runQueue,speciesQueue,env,population,input,output,recurrnet=False,connectionCost=False):
+        self.pool = self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
         self.lock = multiprocessing.Lock()
-        self.jobs = Queue()
-        self.results = Queue()
+        self.jobs = Queue.Queue()
+        self.results = Queue.Queue()
         self.numJobs = numJobs
         self.runQueue = runQueue
         self.speciesQueue = speciesQueue
@@ -169,6 +168,9 @@ class workerClass(object):
         self.proccesses = []
         self.running = multiprocessing.Value(c_bool,True)
         self.counter = multiprocessing.Value('i',0)
+
+            
+    def initalizeProcess():
         for i in range(self.numJobs):
             p = multiprocessing.Process(
                 target=self.jobTrainer,
@@ -180,8 +182,6 @@ class workerClass(object):
             if not speciesQueue.empty():
                self.startRun()
             time.sleep(1)
-            
-        
 
 
     def startRun(self):
@@ -228,7 +228,7 @@ class workerClass(object):
             if self.running.value:
                 try: 
                     job = self.jobs.get()
-                except Empty: 
+                except Queue.Empty: 
                     time.sleep(0.5)
                     self.counter.value += 1
                     print(self.counter.value)
@@ -352,9 +352,11 @@ class gui:
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
-        self.resultQueue = Queue()
-        self.speciesQueue = Queue()
+        self.resultQueue = Queue.Queue()
+        self.speciesQueue = Queue.Queue()
         self.firstRun = True
+        self.sharedRunning = multiprocessing.Value(c_bool,False)
+        self.sharedPopulation = multiprocessing.value('i',self.population.get())
 
         
 
@@ -403,11 +405,8 @@ class gui:
 
         if not self.running:
             if not self.poolInitialized:
-                self.pool = neat.pool(
-                    self.population.get(), 208, 4, recurrent=False,connectionCost=False)
-                self.poolInitialized = True
-                self.running = True
                 self.runButton.config(text='running')
+                self.workerClass = workerClass(self.envNum.get(),self.resultQueue,self.speciesQueue,self.env,self.population.get(), 208, 4, recurrent=False,connectionCost=False)
             self.running = True
             self.runButton.config(text='running')
             self.master.after(250, self.checkRunPaused)
@@ -417,14 +416,13 @@ class gui:
 
     def checkRunPaused(self):
         if self.running:
-            self.pool.Population = self.population.get()
+            self.sharedPopulation = multiprocessing.value('i',self.population.get())()
             if self.firstRun:
-                self.netProcess = multiprocessing.Process(target=workerClass,args=(self.envNum.get(),self.resultQueue,self.speciesQueue,self.env))
-                self.speciesQueue.put(self.pool.species)
+                self.netProcess = multiprocessing.Process(target=self.workerClass.initalizeProcess)
                 self.netProcess.start()
                 self.firstRun = False
             else:
-                self.speciesQueue.put(self.pool.species)
+                self.sharedRunning.value = True
             self.master.after(
                 250, lambda: self.checkRunCompleted(pausing=False))
         if not self.running:
