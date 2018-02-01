@@ -15,7 +15,7 @@ from tkinter import *
 from tkinter import filedialog, messagebox
 import pickle
 import matplotlib
-import Queue
+import queue
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -159,8 +159,8 @@ class workerClass(object):
     def __init__(self,numJobs,runQueue,speciesQueue,env,population,input,output,recurrnet=False,connectionCost=False):
         self.pool = self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
         self.lock = multiprocessing.Lock()
-        self.jobs = Queue.Queue()
-        self.results = Queue.Queue()
+        self.jobs = queue
+        self.results = queue
         self.numJobs = numJobs
         self.runQueue = runQueue
         self.speciesQueue = speciesQueue
@@ -352,11 +352,11 @@ class gui:
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
-        self.resultQueue = Queue.Queue()
-        self.speciesQueue = Queue.Queue()
+        self.resultQueue = queue
+        self.speciesQueue = queue
         self.firstRun = True
         self.sharedRunning = multiprocessing.Value(c_bool,False)
-        self.sharedPopulation = multiprocessing.value('i',self.population.get())
+        self.sharedPopulation = multiprocessing.Value('i',self.population.get())
 
         
 
