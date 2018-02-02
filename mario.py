@@ -234,7 +234,9 @@ class workerClass(object):
 
 
     def sendResults(self):
-        self.updateFitness(msg)
+        while not resultQueue.Empty():
+            results.append(resultQueue.get())
+        self.updateFitness(results)
         self.pool.nextGeneration()
         playBest(self.pool.getBest())
         print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
@@ -331,7 +333,7 @@ class workerClass(object):
                     print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore,c)
             time.sleep(1)
 
-            
+
     def updateFitness(self,jobs):
         for job in jobs:
             self.updateFitnessjob(job)
@@ -339,7 +341,7 @@ class workerClass(object):
     def updateFitnessjob(self,job):
         currentSpecies = job[1][0]
         currentGenome = job[1][1]
-        self.workerClass.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
+        self.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
 
             
 
