@@ -198,18 +198,20 @@ class workerClass(object):
 
             
     def initializeProcess(self):
-        for i in range(self.numJobs):
-            p = multiprocessing.Process(
-                target=self.jobTrainer,
-                args=([self.env])
-                )
-            self.proccesses.append(p)
-            p.start()
+        if not self.initialized:
+            for i in range(self.numJobs):
+                p = multiprocessing.Process(
+                    target=self.jobTrainer,
+                    args=([self.env])
+                    )
+                self.proccesses.append(p)
+                p.start()
         
-        while self.SharedRunning.value:
-            if not self.initialized:
-                self.initialized = True
-                self.startRun()
+        while True:
+            if self.sharedRunning.value:
+                if not self.initialized:
+                    self.initialized = True
+                    self.startRun()
             time.sleep(1)
 
 
@@ -240,7 +242,6 @@ class workerClass(object):
         playBest(self.pool.getBest())
         print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
         self.initialized = False
-        self.sharedRunning = False
 
 
     def jobTrainer(self,envName):
