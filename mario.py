@@ -259,7 +259,7 @@ class workerClass(object):
             if self.running.value:
                 print("try get job?")
                 try: 
-                    job = self.jobs.get_nowait()
+                    job = self.jobs.get(block=0)
                 except queue.Empty: 
                     time.sleep(0.5)
                     self.counter.value += 1
