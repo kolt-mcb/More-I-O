@@ -212,7 +212,6 @@ class workerClass(object):
         while not self.results.empty():
             result = self.results.get()
             processedResults.append(result)
-        print(len([processedResults]))
         self.runQueue.put(processedResults)  # sends message to main tkinter process
 
 
