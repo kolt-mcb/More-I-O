@@ -439,7 +439,7 @@ class gui:
                 self.netProcess.start()
                 self.firstRun = False
             sharedRunning.value = True
-            self.master.after(250, lambda: self.checkRunCompleted(pausing=False))
+            self.master.after(250, self.checkRunCompleted)
         if not self.running:
             self.runButton.config(text='run')
 
@@ -458,7 +458,7 @@ class gui:
             if pausing:
                 if sharedRunning.value == False:
                     self.running = False
-                self.master.after(250,self.checkRunCompleted(pausing))
+                self.master.after(250,lambda: self.checkRunCompleted(pausing))
                 return
         else:
             self.master.after(250, self.checkRunPaused)
