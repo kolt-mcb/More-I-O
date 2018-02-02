@@ -159,8 +159,8 @@ class workerClass(object):
     def __init__(self,numJobs,runQueue,speciesQueue,env,population,input,output,recurrnet=False,connectionCost=False):
         self.pool = self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
         self.lock = multiprocessing.Lock()
-        self.jobs = queue
-        self.results = queue
+        self.jobs = queue.Queue()
+        self.results = queue.Queue()
         self.numJobs = numJobs
         self.runQueue = runQueue
         self.speciesQueue = speciesQueue
