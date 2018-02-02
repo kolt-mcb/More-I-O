@@ -238,7 +238,7 @@ class workerClass(object):
                         print("sending")
                         self.sendResults()
                         self.running.value = False
-                        job = None
+                    job = None
                     while self.running.value:
                         time.sleep(0.5)
                     pass
