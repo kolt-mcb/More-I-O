@@ -22,7 +22,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from operator import itemgetter
 from ctypes import c_bool
-
+sharedRunning = multiprocessing.Value(c_bool,False)
 
 
 def joystick(four):
@@ -241,6 +241,7 @@ class workerClass(object):
         playBest(self.pool.getBest())
         print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
         self.initialized = False
+        self.sharedRunning = False
 
 
     def jobTrainer(self,envName):
@@ -396,7 +397,7 @@ class gui:
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.workerClass = None
         self.firstRun = True
-        self.sharedRunning = multiprocessing.Value(c_bool,False)
+
         self.sharedPopulation = multiprocessing.Value('i',self.population.get())
 
         
@@ -423,7 +424,7 @@ class gui:
         if not self.running:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
-                self.workerClass = workerClass(self.envNum.get(),self.sharedRunning,self.env,self.population.get(), 208, 4)
+                self.workerClass = workerClass(self.envNum.get(),sharedRunning,self.env,self.population.get(), 208, 4)
             self.running = True
             self.runButton.config(text='running')
             self.master.after(250, self.checkRunPaused)
@@ -438,11 +439,11 @@ class gui:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
                 self.netProcess.start()
                 self.firstRun = False
-            self.sharedRunning.value = True
+            sharedRunning.value = True
             self.master.after(250, lambda: self.checkRunCompleted(pausing=False))
         if not self.running:
             self.runButton.config(text='run')
-            self.sharedRunning.value = False
+
 
     def onClosing(self):
         if messagebox.askokcancel("Quit", "do you want to Quit?"):
@@ -455,7 +456,8 @@ class gui:
 
     def checkRunCompleted(self, pausing=True):
         if pausing:
-            self.running = False
+            if sharedRunning.value == False:
+                self.running = False
             self.master.after(250,self.checkRunCompleted)
             return
         else:
