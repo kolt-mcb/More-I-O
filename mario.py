@@ -240,7 +240,6 @@ class workerClass(object):
         self.pool.nextGeneration()
         print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
         self.initialized = False
-        self.sharedRunning = False
 
 
     def jobTrainer(self,envName):
