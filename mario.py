@@ -256,10 +256,11 @@ class workerClass(object):
         running = True
         c = 0
         while True:
+            print("start all emulators?")
             if self.running.value:
                 print("try get job?")
                 try: 
-                    job = self.jobs.get(block=0)
+                    job = self.jobs.get_nowait()
                 except queue.Empty: 
                     time.sleep(0.5)
                     self.counter.value += 1
