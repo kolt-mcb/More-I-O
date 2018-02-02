@@ -238,7 +238,6 @@ class workerClass(object):
             results.append(self.results.get())
         self.updateFitness(results)
         self.pool.nextGeneration()
-        playBest(self.pool.getBest())
         print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
         self.initialized = False
         self.sharedRunning = False
