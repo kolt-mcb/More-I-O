@@ -411,7 +411,7 @@ class gui:
         if not self.running:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
-                self.workerClass = workerClass(self.envNum.get(),sharedRunning,self.env,self.population.get(), 208, 4)
+                self.workerClass = workerClass(self.envNum.get(),self.sharedRunning,self.env,self.population.get(), 208, 4)
             self.running = True
             self.runButton.config(text='running')
             self.master.after(250, self.checkRunPaused)
