@@ -156,16 +156,16 @@ def killFCEUX():
 
 
 class workerClass(object):
-    def __init__(self,numJobs,runQueue,speciesQueue,env,population,input,output,recurrnet=False,connectionCost=False):
+    def __init__(self,numJobs,runQueue,env,population,input,output,recurrnet=False,connectionCost=False):
         self.pool = self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
         self.results = multiprocessing.Queue()
         self.numJobs = numJobs
         self.runQueue = runQueue
-        self.speciesQueue = speciesQueue
         self.env = env
         self.proccesses = []
+        self.initialized = False
         self.running = multiprocessing.Value(c_bool,True)
         self.counter = multiprocessing.Value('i',0)
 
@@ -178,27 +178,28 @@ class workerClass(object):
                 )
             self.proccesses.append(p)
             p.start()
-        while True:
-            if not self.speciesQueue.empty():
-               self.startRun()
+        
+        while self.running.value:
+            if not self.initialized
+                self.initialized = True
+                self.startRun()
             time.sleep(1)
 
 
     def startRun(self):
         self.counter.value = 0
-        species = self.speciesQueue.get()
         c2 = 0
-        for specie in species:
+        for specie in self.pool.species:
             for genome in specie.genomes:
                 c2 += 1
         print(c2)
-        self.createJobs(species)
-        self.running.value = True
+        self.createJobs()
+        
 
 
-    def createJobs(self,species):
+    def createJobs(self):
         s = 0
-        for specie in species:  # creates a job with species and genome index, env name and number of trials/attemps
+        for specie in self.pool.species:  # creates a job with species and genome index, env name and number of trials/attemps
             g = 0
             for genome in specie.genomes:
                 self.jobs.put((s, g, genome))
@@ -353,7 +354,6 @@ class gui:
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.resultQueue = multiprocessing.Queue()
-        self.speciesQueue = multiprocessing.Queue()
         self.firstRun = True
         self.sharedRunning = multiprocessing.Value(c_bool,False)
         self.sharedPopulation = multiprocessing.Value('i',self.population.get())
@@ -406,7 +406,7 @@ class gui:
         if not self.running:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
-                self.workerClass = workerClass(self.envNum.get(),self.resultQueue,self.speciesQueue,self.env,self.population.get(), 208, 4)
+                self.workerClass = workerClass(self.envNum.get(),self.resultQueue,self.env,self.population.get(), 208, 4)
             self.running = True
             self.runButton.config(text='running')
             self.master.after(250, self.checkRunPaused)
