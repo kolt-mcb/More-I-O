@@ -156,18 +156,44 @@ def killFCEUX():
 
 
 class workerClass(object):
-    def __init__(self,numJobs,runQueue,env,population,input,output,recurrnet=False,connectionCost=False):
+    def __init__(self,numJobs,running,env,population,input,output,recurrnet=False,connectionCost=False):
         self.pool = self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
         self.results = multiprocessing.Queue()
         self.numJobs = numJobs
-        self.runQueue = runQueue
         self.env = env
         self.proccesses = []
         self.initialized = False
-        self.running = multiprocessing.Value(c_bool,True)
+        self.running = running
         self.counter = multiprocessing.Value('i',0)
+    
+    def generateStackPlot(self):
+        for specie in self.pool.species:
+            for genome in specie.genomes:
+                foundSpecies = False
+                for relative in genome.relatives:
+                    if relative in self.genomeDictionary:
+                        relativeGenome = self.pool.generations[relative[0]][relative[1]]
+                        if self.pool.sameSpecies(genome,relativeGenome):
+                            specieID = self.genomeDictionary[relative]
+                            if len(self.plotData[specieID]) != self.pool.generation:
+                                self.plotData[specieID].append(0)
+                            self.plotData[specieID][self.pool.generation-1] +=1
+                            foundSpecies = True
+                if not foundSpecies:
+                    self.genomeDictionary[genome.ID] = self.specieID
+                    self.plotData[self.specieID] = [0] * self.pool.generation
+                    self.plotData[self.specieID][self.pool.generation-1] += 1
+                    self.specieID += 1
+        for k,v in self.plotData.items():
+            if len(v) != self.pool.generation:
+                self.plotData[k].append(0)
+        sortedPlots = sorted(self.plotData.keys())
+        plotList = []
+        for plot in sortedPlots:
+            plotList.append(self.plotData[plot])
+        return plotList
 
             
     def initializeProcess(self):
@@ -208,11 +234,11 @@ class workerClass(object):
 
 
     def sendResults(self):
-        processedResults = []
-        while not self.results.empty():
-            result = self.results.get()
-            processedResults.append(result)
-        self.runQueue.put(processedResults)  # sends message to main tkinter process
+        self.updateFitness(msg)
+        self.pool.nextGeneration()
+        playBest(self.pool.getBest())
+        print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
+        self.initialized = False
 
 
     def jobTrainer(self,envName):
@@ -366,32 +392,7 @@ class gui:
     def handlePlayBest(self):
         playBest(self.pool.getBest(),self.envEntry.get())
 
-    def generateStackPlot(self):
-        for specie in self.pool.species:
-            for genome in specie.genomes:
-                foundSpecies = False
-                for relative in genome.relatives:
-                    if relative in self.genomeDictionary:
-                        relativeGenome = self.pool.generations[relative[0]][relative[1]]
-                        if self.pool.sameSpecies(genome,relativeGenome):
-                            specieID = self.genomeDictionary[relative]
-                            if len(self.plotData[specieID]) != self.pool.generation:
-                                self.plotData[specieID].append(0)
-                            self.plotData[specieID][self.pool.generation-1] +=1
-                            foundSpecies = True
-                if not foundSpecies:
-                    self.genomeDictionary[genome.ID] = self.specieID
-                    self.plotData[self.specieID] = [0] * self.pool.generation
-                    self.plotData[self.specieID][self.pool.generation-1] += 1
-                    self.specieID += 1
-        for k,v in self.plotData.items():
-            if len(v) != self.pool.generation:
-                self.plotData[k].append(0)
-        sortedPlots = sorted(self.plotData.keys())
-        plotList = []
-        for plot in sortedPlots:
-            plotList.append(self.plotData[plot])
-        return plotList
+    
     
 
 
@@ -410,7 +411,7 @@ class gui:
         if not self.running:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
-                self.workerClass = workerClass(self.envNum.get(),resultQueue,self.env,self.population.get(), 208, 4)
+                self.workerClass = workerClass(self.envNum.get(),sharedRunning,self.env,self.population.get(), 208, 4)
             self.running = True
             self.runButton.config(text='running')
             self.master.after(250, self.checkRunPaused)
@@ -425,12 +426,12 @@ class gui:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
                 self.netProcess.start()
                 self.firstRun = False
-            else:
-                self.sharedRunning.value = True
+            self.sharedRunning.value = True
             self.master.after(
                 250, lambda: self.checkRunCompleted(pausing=False))
         if not self.running:
             self.runButton.config(text='run')
+            self.shared
 
     def onClosing(self):
         if messagebox.askokcancel("Quit", "do you want to Quit?"):
@@ -447,12 +448,7 @@ class gui:
         except queue.Empty:
             self.master.after(250, lambda: self.checkRunCompleted(pausing))
         if msg is not self.sentinel:
-            self.updateFitness(msg)
-            self.pool.nextGeneration()
-            playBest(self.pool.getBest())
-            print("gen ", self.pool.generation,
-                    " best", self.pool.getBest().fitness)
-            self.updateStackPlot(self.generateStackPlot())
+            self.updateStackPlot(self.workerClass.generateStackPlot())
         if pausing:
             self.running = False
             self.master.after(250,self.checkRunCompleted)
