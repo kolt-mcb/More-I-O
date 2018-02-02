@@ -221,6 +221,7 @@ class workerClass(object):
 
 
     def createJobs(self):
+        self.counter.value = 0
         s = 0
         for specie in self.pool.species:  # creates a job with species and genome index, env name and number of trials/attemps
             g = 0
