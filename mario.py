@@ -455,11 +455,12 @@ class gui:
             self.master.quit()
 
     def checkRunCompleted(self, pausing=True):
-        if pausing:
-            if sharedRunning.value == False:
-                self.running = False
-            self.master.after(250,self.checkRunCompleted)
-            return
+        if self.running:
+            if pausing:
+                if sharedRunning.value == False:
+                    self.running = False
+                self.master.after(250,self.checkRunCompleted(pausing))
+                return
         else:
             self.master.after(250, self.checkRunPaused)
 
