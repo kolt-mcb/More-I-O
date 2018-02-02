@@ -227,6 +227,7 @@ class workerClass(object):
         running = True
         while True:
             if self.running.value:
+                print("try get job?")
                 try: 
                     job = self.jobs.get()
                 except queue.Empty: 
