@@ -206,7 +206,7 @@ class workerClass(object):
             self.proccesses.append(p)
             p.start()
         
-        while self.running.value:
+        while self.SharedRunning.value:
             if not self.initialized:
                 self.initialized = True
                 self.startRun()
@@ -214,12 +214,6 @@ class workerClass(object):
 
 
     def startRun(self):
-        self.counter.value = 0
-        c2 = 0
-        for specie in self.pool.species:
-            for genome in specie.genomes:
-                c2 += 1
-        print(c2)
         self.createJobs()
         
 
@@ -232,6 +226,8 @@ class workerClass(object):
                 self.jobs.put((s, g, genome))
                 g += 1
             s += 1
+        self.running.value= True
+        
 
 
     def sendResults(self):
