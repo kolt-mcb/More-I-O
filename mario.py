@@ -22,7 +22,6 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from operator import itemgetter
 from ctypes import c_bool
-resultQueue = multiprocessing.Queue()
 
 
 
@@ -234,9 +233,9 @@ class workerClass(object):
 
     def sendResults(self):
         results = []
-        while not self.resultQueue.empty():
+        while not self.results.empty():
             print("test")
-            results.append(resultQueue.get())
+            results.append(results.get())
         self.updateFitness(results)
         self.pool.nextGeneration()
         playBest(self.pool.getBest())
