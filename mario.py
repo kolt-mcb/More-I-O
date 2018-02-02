@@ -300,6 +300,7 @@ class workerClass(object):
                             finalScore += score
                         finalScore = round(finalScore / 32)
                         job = None
+                    print(job)
                     self.results.put((finalScore, job))
                 
                     print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore,c)
