@@ -165,7 +165,8 @@ class workerClass(object):
         self.env = env
         self.proccesses = []
         self.initialized = False
-        self.running = running
+        self.sharedRunning = running
+        self.running = multiprocessing.Value(c_bool,False)
         self.counter = multiprocessing.Value('i',0)
     
     def generateStackPlot(self):
@@ -243,6 +244,7 @@ class workerClass(object):
         playBest(self.pool.getBest())
         print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
         self.initialized = False
+        self.sharedRunning = False
 
 
     def jobTrainer(self,envName):
@@ -457,12 +459,6 @@ class gui:
             self.master.quit()
 
     def checkRunCompleted(self, pausing=True):
-        try:
-            msg = resultQueue.get()
-        except queue.Empty:
-            self.master.after(250, lambda: self.checkRunCompleted(pausing))
-        if msg is not self.sentinel:
-            self.updateStackPlot(self.workerClass.generateStackPlot())
         if pausing:
             self.running = False
             self.master.after(250,self.checkRunCompleted)
