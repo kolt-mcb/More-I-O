@@ -180,7 +180,8 @@ class workerClass(object):
             p.start()
         
         while self.running.value:
-            if not self.initialized
+            print("debugg")
+            if not self.initialized:
                 self.initialized = True
                 self.startRun()
             time.sleep(1)
