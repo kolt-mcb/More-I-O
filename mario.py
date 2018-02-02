@@ -163,7 +163,7 @@ class workerClass(object):
         self.numJobs = numJobs
         self.env = env
         self.proccesses = []
-        self.initialized = False
+        self.initialized = multiprocessing.Value(c_bool,False)
         self.sharedRunning = running
         self.running = multiprocessing.Value(c_bool,False)
         self.counter = multiprocessing.Value('i',0)
@@ -197,7 +197,7 @@ class workerClass(object):
 
             
     def initializeProcess(self):
-        if not self.initialized:
+        if not self.initialized.value:
             for i in range(self.numJobs):
                 p = multiprocessing.Process(
                     target=self.jobTrainer,
@@ -207,10 +207,10 @@ class workerClass(object):
                 p.start()
         
         while True:
-            print("try start?",self.sharedRunning.value,self.initialized)
+            print("try start?",self.sharedRunning.value,self.initialized.value)
             if self.sharedRunning.value:
-                if not self.initialized:
-                    self.initialized = True
+                if not self.initialized.value:
+                    self.initialized.value = True
                     self.startRun()
             time.sleep(1)
 
@@ -240,9 +240,8 @@ class workerClass(object):
         self.updateFitness(results)
         self.pool.nextGeneration()
         print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
-        print(self.initialized)
-        self.initialized = False
-        print(self.initialized)
+        self.initialized.value = False
+
 
 
     def jobTrainer(self,envName):
