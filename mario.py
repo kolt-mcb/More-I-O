@@ -330,7 +330,17 @@ class workerClass(object):
                     job = None
                     print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore,c)
             time.sleep(1)
-        
+
+            
+    def updateFitness(self,jobs):
+        for job in jobs:
+            self.updateFitnessjob(job)
+
+    def updateFitnessjob(self,job):
+        currentSpecies = job[1][0]
+        currentGenome = job[1][1]
+        self.workerClass.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
+
             
 
 class gui:
@@ -509,14 +519,6 @@ class gui:
         print(filename, "loaded")
 
 
-    def updateFitness(self,jobs):
-        for job in jobs:
-            self.updateFitnessjob(job)
-
-    def updateFitnessjob(self,job):
-        currentSpecies = job[1][0]
-        currentGenome = job[1][1]
-        self.workerClass.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
 
 
 
