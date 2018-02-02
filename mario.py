@@ -159,8 +159,8 @@ class workerClass(object):
     def __init__(self,numJobs,runQueue,speciesQueue,env,population,input,output,recurrnet=False,connectionCost=False):
         self.pool = self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
         self.lock = multiprocessing.Lock()
-        self.jobs = queue.Queue()
-        self.results = queue.Queue()
+        self.jobs = multiprocessing.Queue()
+        self.results = multiprocessing.Queue()
         self.numJobs = numJobs
         self.runQueue = runQueue
         self.speciesQueue = speciesQueue
@@ -352,8 +352,8 @@ class gui:
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
-        self.resultQueue = queue.Queue()
-        self.speciesQueue = queue.Queue()
+        self.resultQueue = multiprocessing.Queue()
+        self.speciesQueue = multiprocessing.Queue()
         self.firstRun = True
         self.sharedRunning = multiprocessing.Value(c_bool,False)
         self.sharedPopulation = multiprocessing.Value('i',self.population.get())
