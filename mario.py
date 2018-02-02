@@ -240,7 +240,9 @@ class workerClass(object):
         self.updateFitness(results)
         self.pool.nextGeneration()
         print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
+        print(self.initialized)
         self.initialized = False
+        print(self.initialized)
 
 
     def jobTrainer(self,envName):
