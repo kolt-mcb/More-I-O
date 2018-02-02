@@ -10,12 +10,12 @@ import numpy
 import math
 import time
 import multiprocessing
+import queue
 from multiprocessing.pool import ThreadPool
 from tkinter import *
 from tkinter import filedialog, messagebox
 import pickle
 import matplotlib
-import queue
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -229,7 +229,7 @@ class workerClass(object):
             if self.running.value:
                 print("try get job?")
                 try: 
-                    job = self.jobs.get()
+                    job = self.jobs.get_nowait()
                 except queue.Empty: 
                     time.sleep(0.5)
                     self.counter.value += 1
