@@ -235,7 +235,7 @@ class workerClass(object):
         results = []
         while not self.results.empty():
             print("test")
-            results.append(results.get())
+            results.append(self.results.get())
         self.updateFitness(results)
         self.pool.nextGeneration()
         playBest(self.pool.getBest())
