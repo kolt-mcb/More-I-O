@@ -207,6 +207,7 @@ class workerClass(object):
                 p.start()
         
         while True:
+            print("try start?"self.sharedRunning.value)
             if self.sharedRunning.value:
                 if not self.initialized:
                     self.initialized = True
