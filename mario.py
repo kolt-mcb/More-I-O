@@ -356,7 +356,7 @@ class gui:
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
-
+        self.workerClass = None
         self.firstRun = True
         self.sharedRunning = multiprocessing.Value(c_bool,False)
         self.sharedPopulation = multiprocessing.Value('i',self.population.get())
@@ -392,6 +392,7 @@ class gui:
         for plot in sortedPlots:
             plotList.append(self.plotData[plot])
         return plotList
+    
 
 
     
@@ -519,7 +520,7 @@ class gui:
     def updateFitnessjob(self,job):
         currentSpecies = job[1][0]
         currentGenome = job[1][1]
-        self.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
+        self.workerClass.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
 
 
 
