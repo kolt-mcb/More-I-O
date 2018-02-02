@@ -439,11 +439,10 @@ class gui:
                 self.netProcess.start()
                 self.firstRun = False
             self.sharedRunning.value = True
-            self.master.after(
-                250, lambda: self.checkRunCompleted(pausing=False))
+            self.master.after(250, lambda: self.checkRunCompleted(pausing=False))
         if not self.running:
             self.runButton.config(text='run')
-            self.shared
+            self.sharedRunning.value = False
 
     def onClosing(self):
         if messagebox.askokcancel("Quit", "do you want to Quit?"):
