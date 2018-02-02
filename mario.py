@@ -454,17 +454,14 @@ class gui:
             self.master.quit()
 
     def checkRunCompleted(self, pausing=True):
-        print("check run complete")
+
         if self.running:
-            print("eunning?")
             if pausing:
-                print("pauseing?")
                 if sharedRunning.value == False:
                     self.running = False
                 self.master.after(250,lambda: self.checkRunCompleted(pausing))
             else:
                 sharedRunning.value = True
-            print("running and not pauseing")
             self.master.after(250,self.checkRunCompleted)
         else:
             self.master.after(250, self.checkRunPaused)
