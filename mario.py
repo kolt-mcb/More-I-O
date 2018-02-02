@@ -225,6 +225,7 @@ class workerClass(object):
         env.lock.release()
         env.locked_levels = [False] * 32
         running = True
+        c = 0
         while True:
             if self.running.value:
                 print("try get job?")
@@ -300,7 +301,7 @@ class workerClass(object):
                         job = None
                 self.results.put((finalScore, job))
                 
-                print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
+                print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore,c)
             time.sleep(1)
         
             
