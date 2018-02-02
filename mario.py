@@ -234,7 +234,7 @@ class workerClass(object):
 
 
     def sendResults(self):
-        while not resultQueue.Empty():
+        while not resultQueue.empty():
             results.append(resultQueue.get())
         self.updateFitness(results)
         self.pool.nextGeneration()
