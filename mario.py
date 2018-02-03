@@ -237,7 +237,7 @@ class workerClass(object):
     def sendResults(self):
         results = []
         while self.initialized.value:
-            while len(results) != self.pool.popluation:
+            while len(results) != self.pool.Popluation:
                 print("test")
                 if not self.results.empty():
                     results.append(self.results.get())
