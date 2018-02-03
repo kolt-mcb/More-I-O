@@ -234,15 +234,18 @@ class workerClass(object):
 
     def sendResults(self):
         results = []
-        while not self.results.empty():
-            print("test")
-            results.append(self.results.get())
-        self.updateFitness(results)
-        print(self.pool.generation)
-        self.pool.nextGeneration()
-        print(self.pool.generation)
-        print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
-        self.initialized.value = False
+        while self.initialized.value:
+            if not self.results.empty()
+                while not self.results.empty():
+                    print("test")
+                    results.append(self.results.get())
+                self.updateFitness(results)
+                print(self.pool.generation)
+                self.pool.nextGeneration()
+                print(self.pool.generation)
+                print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
+                self.initialized.value = False
+            time.sleep(0.5)
 
 
 
@@ -267,8 +270,6 @@ class workerClass(object):
                     self.counter.value += 1
                     print(self.counter.value)
                     if self.counter.value == self.numJobs:
-                        print("sending")
-                        self.sendResults()
                         self.running.value = False
                     job = None
                     while self.running.value:
