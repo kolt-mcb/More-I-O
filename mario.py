@@ -166,6 +166,9 @@ class workerClass(object):
         self.initialized = multiprocessing.Value(c_bool,False)
         self.running = multiprocessing.Value(c_bool,False)
         self.counter = multiprocessing.Value('i',0)
+        self.plotData = {}
+        self.genomeDictionary = {}
+        self.specieID = 0
     
     def generateStackPlot(self):
         for specie in self.pool.species:
@@ -192,7 +195,7 @@ class workerClass(object):
         plotList = []
         for plot in sortedPlots:
             plotList.append(self.plotData[plot])
-        return plotList
+        self.plotList = plotList
 
             
     def initializeProcess(self):
@@ -394,9 +397,7 @@ class gui:
         self.poolInitialized = False
         self.pool = None
         self.env = 'meta-SuperMarioBros-Tiles-v0'
-        self.plotData = {}
-        self.genomeDictionary = {}
-        self.specieID = 0
+
         self.fig, self.ax = plt.subplots(figsize=(3.7, 3))
         self.ax.stackplot([], [], baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
