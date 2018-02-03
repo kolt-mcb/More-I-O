@@ -241,6 +241,7 @@ class workerClass(object):
             while len(results) != self.pool.Popluation:
                 if not self.results.empty():
                     results.append(self.results.get())
+            if len(results) == self.pool.Popluation:
                 self.updateFitness(results)
                 print(self.pool.generation)
                 self.pool.nextGeneration()
