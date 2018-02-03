@@ -250,7 +250,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.generation += 1
 		self.cullSpecies()  
 		self.rankGlobally() 
-		self.removeStaleSpecies()
 		# reranks after removeing stales species and  stores best player for later play
 		self.rankGlobally(addBest=True)
 		for specie in self.species:
@@ -303,21 +302,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					return True
 		return False
 		
-	
-	# removes species that have not gotten a high score past a threshold		
-	def removeStaleSpecies(self): 
-		survived = []
-		for specie in self.species:
-			specie.genomes = sorted(specie.genomes, key=attrgetter('fitness'),reverse=True)
-			for genome in specie.genomes:
-				if genome.fitness > specie.topFitness:
-					specie.topFitness = genome.fitness
-					specie.staleness = 0
-				else:
-					specie.staleness = specie.staleness + 1
-			if specie.staleness < self.StaleSpecies or specie.topFitness >= self.maxFitness:
-				survived.append(specie)
-		self.species = survived
 	
 	# removes poor performing species
 	def removeWeakSpecies(self): 
@@ -437,7 +421,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["enable"] = .05
 			self.mutationRates["disable"] = .1
 			self.mutationRates["step"] = 0.1
-			self.mutationRates["DeltaThreshold"] = 1
+			self.mutationRates["DeltaThreshold"] = .5
 			self.mutationRates["DeltaDisjoint"] = 1
 			self.mutationRates["DeltaWeights"] = .4
 			self.mutationRates["ConectionCostRate"] = 1
