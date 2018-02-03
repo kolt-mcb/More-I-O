@@ -237,7 +237,7 @@ class workerClass(object):
     def sendResults(self):
         results = []
         while self.initialized.value:
-            if not self.results.empty()
+            if not self.results.empty():
                 while not self.results.empty():
                     print("test")
                     results.append(self.results.get())
