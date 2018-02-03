@@ -66,8 +66,6 @@ def joystick(four):
 
 
 
-
-
 def singleGame(genome, genomePipe):
     env = gym.make('meta-SuperMarioBros-Tiles-v0')
     env.reset()
@@ -160,6 +158,7 @@ class workerClass(object):
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
+       
 
         
             
@@ -172,7 +171,8 @@ class workerClass(object):
                     )
                 self.proccesses.append(p)
                 p.start()
-        
+            self.parentPipe, self.childPipe = multiprocessing.Pipe()
+
         while True:
 
             if sharedRunning.value:
@@ -182,7 +182,14 @@ class workerClass(object):
                 self.createJobs()
                 self.sendResults()
             time.sleep(0.5)
-        
+
+    def playBest(self,genome):
+        process = multiprocessing.Process(target=singleGame, args=(genome,self.childPipe))
+        process.start()
+        display = networkDisplay.newNetworkDisplay(genomePipe=self.parentPipe)
+        display.checkGenomePipe()
+        display.Tk.mainloop()
+        process.join()
 
     def createJobs(self):
         self.counter.value = 0
@@ -347,17 +354,6 @@ class workerClass(object):
                         print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
             time.sleep(0.5)
 
-    #starts a new game with the network display.
-    def playBest(self,genome):
-            parentPipe, childPipe = multiprocessing.Pipe()
-            genome.generateNetwork()
-            process = multiprocessing.Process(target=singleGame, args=(genome,childPipe))
-            process.start()
-            display = networkDisplay.newNetworkDisplay(genome, parentPipe)
-            display.checkGenomePipe()
-            display.Tk.mainloop()
-            process.join()
-            # creates multiprocessing job for pool and trains pool
 
 
     def updateFitness(self,jobs):
