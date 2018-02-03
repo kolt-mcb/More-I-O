@@ -238,7 +238,7 @@ class workerClass(object):
         results = []
         while self.initialized.value:
             if not self.results.empty():
-                while len(self.results.value) != self.pool.popluation:
+                while len(results) != self.pool.popluation:
                     print("test")
                     results.append(self.results.get())
                 self.updateFitness(results)
