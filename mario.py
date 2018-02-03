@@ -228,6 +228,7 @@ class workerClass(object):
             g = 0
             for genome in specie.genomes:
                 self.jobs.put((s, g, genome))
+                print(s,g)
                 g += 1
             s += 1
         self.running.value= True
