@@ -400,7 +400,7 @@ class gui:
         self.fileLoaderButton.grid(row=2, column=2)
         # play best button
         self.playBestButton = Button(
-            self.frame, text='play best', command= lambda : playBest(self.workerClass.pool.getBest()))
+            self.frame, text='play best', command= lambda : playBest(self.best))
         self.playBestButton.grid(row=2, column=4)
         self.netProccess = None
         self.running = False
@@ -414,6 +414,7 @@ class gui:
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.firstRun = True
         self.workerClass = None
+        self.best = None
         self.sharedPopulation = multiprocessing.Value('i',self.population.get())
 
 
@@ -447,7 +448,8 @@ class gui:
             if not stackplotQueue.empty():
                 self.updateStackPlot(stackplotQueue.get())
             if not bestQueue.empty():
-                playBest(bestQueue.get())
+                self.best = bestQueue.get()
+                playBest(self.best)
             self.sharedPopulation.value = self.population.get()
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
