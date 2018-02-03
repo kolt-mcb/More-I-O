@@ -484,7 +484,13 @@ class gui:
                 for gene in genome.genes:
                     if gene.innovation > newInovation:
                         newInovation = gene.innovation
-        self.workerClass = workerClass(sum([v for v in [len(specie.genomes) for specie in species]],self.env,self.population.get(),species[0].genomes[0].Inputs, species[0].genomes[0].Outputs)
+
+        self.workerClass = workerClass(sum([v for v in [len(specie.genomes) for specie in species]]),
+                                        self.env,
+                                        self.population.get(),
+                                        species[0].genomes[0].Inputs,
+                                        species[0].genomes[0].Outputs)
+
         self.workerClass.pool.newGenome.innovation = newInovation + 1
         self.workerClass.pool.species = species
         self.workerClass.pool.best = loadedPool["best"]
