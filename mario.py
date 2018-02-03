@@ -24,6 +24,8 @@ from operator import itemgetter
 from ctypes import c_bool
 sharedRunning = multiprocessing.Value(c_bool,False)
 stackplotQueue = multiprocessing.Queue()
+bestQueue = multiprocessing.Queue()
+
 
 
 def joystick(four):
@@ -183,13 +185,6 @@ class workerClass(object):
                 self.sendResults()
             time.sleep(0.5)
 
-    def playBest(self,genome):
-        process = multiprocessing.Process(target=singleGame, args=(genome,self.childPipe))
-        process.start()
-        display = networkDisplay.newNetworkDisplay(genome,genomePipe=self.parentPipe)
-        display.checkGenomePipe()
-        display.Tk.mainloop()
-        process.join()
 
     def createJobs(self):
         self.counter.value = 0
@@ -214,7 +209,7 @@ class workerClass(object):
                 self.updateFitness(results)
                 self.pool.nextGeneration()
                 stackplotQueue.put(self.generateStackPlot())
-                self.playBest(self.pool.getBest())
+                bestQueue.put(self.pool.getBest)
                 print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
                 self.initialized.value = False
             time.sleep(0.5)
@@ -444,6 +439,8 @@ class gui:
         if self.running:
             if not stackplotQueue.empty():
                 self.updateStackPlot(stackplotQueue.get())
+            if not bestQueue.empty():
+                playBest(bestQueue.get())
             self.sharedPopulation.value = self.population.get()
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
