@@ -238,7 +238,9 @@ class workerClass(object):
             print("test")
             results.append(self.results.get())
         self.updateFitness(results)
+        print(self.pool.generation)
         self.pool.nextGeneration()
+        print(self.pool.generation)
         print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
         self.initialized.value = False
 
