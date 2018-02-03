@@ -210,8 +210,8 @@ class workerClass(object):
             if sharedRunning.value:
                 if not self.initialized.value:
                     self.initialized.value = True
-                    self.startRun()
             if self.initialized.value:
+                self.startRun()
                 self.sendResults()
             time.sleep(0.5)
 
