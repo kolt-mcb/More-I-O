@@ -26,7 +26,16 @@ sharedRunning = multiprocessing.Value(c_bool,False)
 stackplotQueue = multiprocessing.Queue()
 bestQueue = multiprocessing.Queue()
 
-
+def playBest(genome):
+    parentPipe, childPipe = multiprocessing.Pipe()
+    genome.generateNetwork()
+    process = multiprocessing.Process(
+        target=singleGame, args=(genome, childPipe))
+    process.start()
+    display = networkDisplay.newNetworkDisplay(genome, parentPipe)
+    display.checkGenomePipe()
+    display.Tk.mainloop()
+    process.join()
 
 def joystick(four):
     six = [0] * 6
@@ -173,10 +182,8 @@ class workerClass(object):
                     )
                 self.proccesses.append(p)
                 p.start()
-            self.parentPipe, self.childPipe = multiprocessing.Pipe()
 
         while True:
-
             if sharedRunning.value:
                 if not self.initialized.value:
                     self.initialized.value = True
