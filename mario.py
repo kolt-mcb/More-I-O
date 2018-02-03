@@ -257,6 +257,7 @@ class workerClass(object):
         running = True
         c = 0
         while True:
+            print("im annoying", self.running.value)
             if self.running.value:
                 print("try get job?")
                 try: 
