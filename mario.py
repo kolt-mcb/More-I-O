@@ -465,9 +465,9 @@ class gui:
                 self.master.after(250,lambda: self.checkRunCompleted(pausing))
             else:
                 sharedRunning.value = True
-            self.master.after(250,self.checkRunCompleted)
+            self.master.after(.5,self.checkRunCompleted)
         else:
-            self.master.after(250, self.checkRunPaused)
+            self.master.after(.5, self.checkRunPaused)
 
 
     
