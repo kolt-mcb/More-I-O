@@ -413,7 +413,7 @@ class gui:
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.firstRun = True
-
+        self.workerClass = None
         self.sharedPopulation = multiprocessing.Value('i',self.population.get())
 
 
@@ -433,11 +433,8 @@ class gui:
                 self.workerClass = workerClass(self.envNum.get(),self.env,self.population.get(), 208, 4)
                 # file saver button
                 self.fileSaverButton = Button(
-                self.frame, text="save pool", command=self.workerclass.saveFile)
+                self.frame, text="save pool", command=self.workerClass.saveFile)
                 self.fileSaverButton.grid(row=2, column=1)
-                self.fileLoaderButton = Button(
-                self.frame, text="load pool", command=self.loadFile)
-                self.fileLoaderButton.grid(row=2, column=2)
             self.running = True
             self.runButton.config(text='running')
             self.master.after(250, self.checkRunPaused)
