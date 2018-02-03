@@ -394,6 +394,10 @@ class gui:
         self.runButton = Button(
             self.frame, text="start run", command=self.toggleRun)
         self.runButton.grid(row=2, column=3)
+        #loader button
+        self.fileLoaderButton = Button(
+        self.frame, text="load pool", command=self.loadFile)
+        self.fileLoaderButton.grid(row=2, column=2)
         # play best button
         self.playBestButton = Button(
             self.frame, text='play best', command= lambda : PlayBest(self.workerClass.pool.getBest()))
@@ -496,13 +500,10 @@ class gui:
         self.workerClass.pool.generations = loadedPool["generations"]
         self.population.set(self.pool.Population)
         if not self.poolInitialized:
-                # file saver button
-                self.fileSaverButton = Button(
-                self.frame, text="save pool", command=self.workerclass.saveFile)
-                self.fileSaverButton.grid(row=2, column=1)
-                self.fileLoaderButton = Button(
-                self.frame, text="load pool", command=self.loadFile)
-                self.fileLoaderButton.grid(row=2, column=2)
+            # file saver button
+            self.fileSaverButton = Button(
+            self.frame, text="save pool", command=self.workerclass.saveFile)
+            self.fileSaverButton.grid(row=2, column=1)
         self.poolInitialized = True
         f.close()
 
