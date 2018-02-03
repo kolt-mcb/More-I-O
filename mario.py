@@ -237,17 +237,17 @@ class workerClass(object):
     def sendResults(self):
         results = []
         while self.initialized.value:
-            if not self.results.empty():
-                while len(results) != self.pool.popluation:
-                    print("test")
+            while len(results) != self.pool.popluation:
+                print("test")
+                if not self.results.empty():
                     results.append(self.results.get())
-                self.updateFitness(results)
-                print(self.pool.generation)
-                self.pool.nextGeneration()
-                print(self.pool.generation)
-                print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
-                self.initialized.value = False
-            time.sleep(0.5)
+            self.updateFitness(results)
+            print(self.pool.generation)
+            self.pool.nextGeneration()
+            print(self.pool.generation)
+            print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
+            self.initialized.value = False
+        time.sleep(0.5)
 
 
 
