@@ -211,7 +211,9 @@ class workerClass(object):
                 if not self.initialized.value:
                     self.initialized.value = True
                     self.startRun()
-            time.sleep(1)
+            if self.initialized.value:
+                self.sendResults()
+            time.sleep(0.5)
 
 
     def startRun(self):
@@ -222,7 +224,7 @@ class workerClass(object):
     def createJobs(self):
         self.counter.value = 0
         s = 0
-        for specie in self.pool.species:  # creates a job with species and genome index, env name and number of trials/attemps
+        for specie in self.pool.species:  # creates a job with species and genome pindex, env name and number of trials/attemps
             g = 0
             for genome in specie.genomes:
                 self.jobs.put((s, g, genome))
