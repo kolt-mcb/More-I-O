@@ -500,7 +500,7 @@ class gui:
         self.workerClass.pool.species = species
         self.workerClass.pool.best = loadedPool["best"]
         self.workerClass.pool.generation = len(self.workerClass.pool.best)
-        self.workerClass.pool.generations = loadedPool["generations"]
+        neat.pool.generations = loadedPool["generations"]
         self.population.set(self.workerClass.pool.Population)
         if not self.poolInitialized:
             # file saver button
