@@ -217,7 +217,7 @@ class workerClass(object):
                 self.updateFitness(results)
                 self.pool.nextGeneration()
                 stackplotQueue.put(self.generateStackPlot())
-                playBest(self.pool.getBest())
+                #playBest(self.pool.getBest())
                 print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
                 self.initialized.value = False
             time.sleep(0.5)
