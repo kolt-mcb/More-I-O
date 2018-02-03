@@ -408,6 +408,8 @@ class gui:
         self.pool = None
         self.env = 'meta-SuperMarioBros-Tiles-v0'
         self.fig, self.ax = plt.subplots(figsize=(3.7, 3))
+        self.ax.set_xlabel('generations')
+        self.ax.set_xlabel('number of species in a specie')
         self.ax.stackplot([], [], baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
