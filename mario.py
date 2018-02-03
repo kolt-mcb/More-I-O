@@ -156,7 +156,7 @@ def killFCEUX():
 
 class workerClass(object):
     def __init__(self,numJobs,env,population,input,output,recurrnet=False,connectionCost=False):
-        self.pool = self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
+        self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
         self.results = multiprocessing.Queue()
