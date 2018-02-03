@@ -170,6 +170,80 @@ class workerClass(object):
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
+
+        
+            
+    def initializeProcess(self):
+        if not self.initialized.value:
+            for i in range(self.numJobs):
+                p = multiprocessing.Process(
+                    target=self.jobTrainer,
+                    args=([self.env])
+                    )
+                self.proccesses.append(p)
+                p.start()
+        
+        while True:
+
+            if sharedRunning.value:
+                if not self.initialized.value:
+                    self.initialized.value = True
+            if self.initialized.value:
+                self.createJobs()
+                self.sendResults()
+            time.sleep(0.5)
+        
+
+    def createJobs(self):
+        self.counter.value = 0
+        s = 0
+        for specie in self.pool.species:  # creates a job with species and genome pindex, env name and number of trials/attemps
+            g = 0
+            for genome in specie.genomes:
+                self.jobs.put((s, g, genome))
+                g += 1
+            s += 1
+        self.running.value= True
+        
+
+
+    def sendResults(self):
+        results = []
+        while self.initialized.value:
+            while len(results) != self.pool.Population:
+                if not self.results.empty():
+                    results.append(self.results.get())
+            if len(results) == self.pool.Population:
+                self.updateFitness(results)
+                self.pool.nextGeneration()
+                stackplotQueue.put(self.generateStackPlot())
+                playBest(self.pool.getBest())
+                print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
+                self.initialized.value = False
+            time.sleep(0.5)
+
+
+
+    def saveFile(self):
+        if self.pool == None:
+            return
+
+        filename = filedialog.asksaveasfilename(defaultextension=".pool")
+        if filename is None or filename == '':
+            return
+        file = open(filename, "wb")
+
+
+        pickle.dump({"species" : self.pool.species,
+                    "best"     : self.pool.best,
+                    "plotData" : self.plotData,
+                    "specieID" : self.specieID,
+                    "genomeDictionary" : self.genomeDictionary,
+                    "generations" : self.pool.generations}, file)
+
+        print("file saved",filename)
+
+
     
     def generateStackPlot(self):
         for specie in self.pool.species:
@@ -198,64 +272,6 @@ class workerClass(object):
             plotList.append(self.plotData[plot])
         return plotList
 
-            
-    def initializeProcess(self):
-        if not self.initialized.value:
-            for i in range(self.numJobs):
-                p = multiprocessing.Process(
-                    target=self.jobTrainer,
-                    args=([self.env])
-                    )
-                self.proccesses.append(p)
-                p.start()
-        
-        while True:
-            print("try start?",sharedRunning.value,self.initialized.value)
-            if sharedRunning.value:
-                if not self.initialized.value:
-                    self.initialized.value = True
-            if self.initialized.value:
-                self.startRun()
-                self.sendResults()
-            time.sleep(0.5)
-
-
-    def startRun(self):
-        self.createJobs()
-        
-
-
-    def createJobs(self):
-        self.counter.value = 0
-        s = 0
-        for specie in self.pool.species:  # creates a job with species and genome pindex, env name and number of trials/attemps
-            g = 0
-            for genome in specie.genomes:
-                self.jobs.put((s, g, genome))
-                print(s,g)
-                g += 1
-            s += 1
-        self.running.value= True
-        
-
-
-    def sendResults(self):
-        results = []
-        while self.initialized.value:
-            print("wtf",len(results))
-            while len(results) != self.pool.Population:
-                if not self.results.empty():
-                    results.append(self.results.get())
-            if len(results) == self.pool.Population:
-                self.updateFitness(results)
-                print(self.pool.generation)
-                self.pool.nextGeneration()
-                stackplotQueue.put(self.generateStackPlot())
-                print(self.pool.generation)
-                print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
-                self.initialized.value = False
-            time.sleep(0.5)
-
 
 
     def jobTrainer(self,envName):
@@ -269,23 +285,18 @@ class workerClass(object):
         running = True
         c = 0
         while True:
-            print("im annoying", self.running.value)
             if self.running.value:
-                print("try get job?")
                 try: 
                     job = self.jobs.get_nowait()
                 except queue.Empty: 
                     time.sleep(0.5)
                     self.counter.value += 1
-                    print(self.counter.value)
                     if self.counter.value == self.numJobs:
                         self.running.value = False
                     job = None
                     while self.running.value and self.jobs.empty():
                         time.sleep(0.5)
                     pass
-
-                
                 if job != None:
                     c+=1
                     currentSpecies = job[0]
@@ -381,10 +392,10 @@ class gui:
         self.populationEntry.grid(row=2, column=0, sticky=E)
         # file saver button
         self.fileSaverButton = Button(
-            self.frame, text="save pool", command=self.saveFile)
+            self.frame, text="save pool", command=self.workerclass.saveFile)
         self.fileSaverButton.grid(row=2, column=1)
         self.fileLoaderButton = Button(
-            self.frame, text="load pool", command=self.loadFile)
+            self.frame, text="load pool", command=self.workerclass.loadFile)
         self.fileLoaderButton.grid(row=2, column=2)
         # run button
         self.runButton = Button(
@@ -392,7 +403,7 @@ class gui:
         self.runButton.grid(row=2, column=3)
         # play best button
         self.playBestButton = Button(
-            self.frame, text='play best', command=self.handlePlayBest)
+            self.frame, text='play best', command= lambda : PlayBest(self.workerClass.pool.getBest()))
         self.playBestButton.grid(row=2, column=4)
         self.netProccess = None
         self.running = False
@@ -410,16 +421,6 @@ class gui:
 
         self.sharedPopulation = multiprocessing.Value('i',self.population.get())
 
-        
-
-    def handlePlayBest(self):
-        playBest(self.pool.getBest(),self.envEntry.get())
-
-    
-    
-
-
-    
 
     def updateStackPlot(self,plotList):
         self.ax.clear()
@@ -467,28 +468,6 @@ class gui:
             self.master.destroy()
             self.master.quit()
 
-
-    
-
-    def saveFile(self):
-        if self.pool == None:
-            return
-
-        filename = filedialog.asksaveasfilename(defaultextension=".pool")
-        if filename is None or filename == '':
-            return
-        file = open(filename, "wb")
-
-
-        pickle.dump({"species" : self.pool.species,
-                    "best"     : self.pool.best,
-                    "plotData" : self.plotData,
-                    "specieID" : self.specieID,
-                    "genomeDictionary" : self.genomeDictionary,
-                    "generations" : self.pool.generations}, file)
-
-        print("file saved",filename)
-
     def loadFile(self):
         filename = filedialog.askopenfilename()
         if filename is ():
@@ -505,19 +484,21 @@ class gui:
                 for gene in genome.genes:
                     if gene.innovation > newInovation:
                         newInovation = gene.innovation
-
-        self.pool = neat.pool(sum([v for v in [len(specie.genomes) for specie in species]]),
-                              species[0].genomes[0].Inputs, species[0].genomes[0].Outputs, recurrent=species[0].genomes[0].recurrent)
-        self.pool.newGenome.innovation = newInovation + 1
-        self.pool.species = species
-        self.pool.best = loadedPool["best"]
-        self.pool.generation = len(self.pool.best)
-        neat.pool.generations = loadedPool["generations"]
+        self.workerClass = workerClass(sum([v for v in [len(specie.genomes) for specie in species]],self.env,self.population.get(),species[0].genomes[0].Inputs, species[0].genomes[0].Outputs)
+        self.workerClass.pool.newGenome.innovation = newInovation + 1
+        self.workerClass.pool.species = species
+        self.workerClass.pool.best = loadedPool["best"]
+        self.workerClass.pool.generation = len(self.pool.best)
+        self.workerClass.pool.generations = loadedPool["generations"]
         self.population.set(self.pool.Population)
         self.poolInitialized = True
         f.close()
 
         print(filename, "loaded")
+
+    
+
+
 
 
 
