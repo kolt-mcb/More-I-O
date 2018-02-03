@@ -186,7 +186,7 @@ class workerClass(object):
     def playBest(self,genome):
         process = multiprocessing.Process(target=singleGame, args=(genome,self.childPipe))
         process.start()
-        display = networkDisplay.newNetworkDisplay(genomePipe=self.parentPipe)
+        display = networkDisplay.newNetworkDisplay(genome,genomePipe=self.parentPipe)
         display.checkGenomePipe()
         display.Tk.mainloop()
         process.join()
