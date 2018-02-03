@@ -345,7 +345,7 @@ class workerClass(object):
                         self.results.put((finalScore, job))
                         job = None
                         print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore,c)
-            time.sleep(1)
+            time.sleep(0.5)
 
 
     def updateFitness(self,jobs):
