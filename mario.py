@@ -400,7 +400,7 @@ class gui:
         self.fileLoaderButton.grid(row=2, column=2)
         # play best button
         self.playBestButton = Button(
-            self.frame, text='play best', command= lambda : PlayBest(self.workerClass.pool.getBest()))
+            self.frame, text='play best', command= lambda : playBest(self.workerClass.pool.getBest()))
         self.playBestButton.grid(row=2, column=4)
         self.netProccess = None
         self.running = False
