@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 from operator import itemgetter
 from ctypes import c_bool
 sharedRunning = multiprocessing.Value(c_bool,False)
+stackplotQueue = multiprocessing.Queue()
 
 
 def joystick(four):
@@ -195,7 +196,7 @@ class workerClass(object):
         plotList = []
         for plot in sortedPlots:
             plotList.append(self.plotData[plot])
-        self.plotList = plotList
+        return plotList
 
             
     def initializeProcess(self):
@@ -249,6 +250,7 @@ class workerClass(object):
                 self.updateFitness(results)
                 print(self.pool.generation)
                 self.pool.nextGeneration()
+                stackplotQueue.put(self.generateStackPlot())
                 print(self.pool.generation)
                 print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
                 self.initialized.value = False
@@ -442,6 +444,8 @@ class gui:
 
     def checkRunPaused(self):
         if self.running:
+            if not stackplotQueue.empty():
+                self.updateStackPlot(stackplotQueue.get())
             self.sharedPopulation.value = self.population.get()
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
