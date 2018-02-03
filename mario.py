@@ -488,9 +488,9 @@ class gui:
                     if gene.innovation > newInovation:
                         newInovation = gene.innovation
 
-        self.workerClass = workerClass(sum([v for v in [len(specie.genomes) for specie in species]]),
+        self.workerClass = workerClass(self.envNum.get(),
                                         self.env,
-                                        self.population.get(),
+                                        sum([v for v in [len(specie.genomes) for specie in species]]),
                                         species[0].genomes[0].Inputs,
                                         species[0].genomes[0].Outputs)
 
