@@ -503,7 +503,7 @@ class gui:
         if not self.poolInitialized:
             # file saver button
             self.fileSaverButton = Button(
-            self.frame, text="save pool", command=self.workerclass.saveFile)
+            self.frame, text="save pool", command=self.workerClass.saveFile)
             self.fileSaverButton.grid(row=2, column=1)
         self.poolInitialized = True
         f.close()
