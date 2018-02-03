@@ -444,6 +444,7 @@ class gui:
             sharedRunning.value = True
             self.master.after(250,self.checkRunCompleted)
         if not self.running:
+            sharedRunning.value=False
             self.runButton.config(text='run')
 
 
@@ -455,19 +456,6 @@ class gui:
                 killFCEUX()
             self.master.destroy()
             self.master.quit()
-
-    def checkRunCompleted(self, pausing=True):
-
-        if self.running:
-            if pausing:
-                if sharedRunning.value == False:
-                    self.running = False
-                self.master.after(250,lambda: self.checkRunCompleted(pausing))
-            else:
-                sharedRunning.value = True
-            self.master.after(500,self.checkRunCompleted)
-        else:
-            self.master.after(500, self.checkRunPaused)
 
 
     
