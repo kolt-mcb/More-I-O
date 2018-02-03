@@ -348,7 +348,7 @@ class workerClass(object):
             time.sleep(0.5)
 
     #starts a new game with the network display.
-    def playBest(genome):
+    def playBest(self,genome):
             parentPipe, childPipe = multiprocessing.Pipe()
             genome.generateNetwork()
             process = multiprocessing.Process(target=singleGame, args=(genome,childPipe))
