@@ -464,7 +464,7 @@ class gui:
         if messagebox.askokcancel("Quit", "do you want to Quit?"):
             for child in multiprocessing.active_children():
                 kill_proc_tree(child.pid)
-            if self.running:
+            if self.poolInitialized:
                 killFCEUX()
             self.master.destroy()
             self.master.quit()
