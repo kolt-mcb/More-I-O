@@ -238,10 +238,11 @@ class workerClass(object):
         results = []
         while self.initialized.value:
             print("wtf",len(results))
-            while len(results) != self.pool.Popluation:
+            while len(results) != self.numJobs:
+                print(len)
                 if not self.results.empty():
                     results.append(self.results.get())
-            if len(results) == self.pool.Popluation:
+            if len(results) == self.numJobs:
                 self.updateFitness(results)
                 print(self.pool.generation)
                 self.pool.nextGeneration()
