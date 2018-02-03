@@ -390,13 +390,6 @@ class gui:
         self.populationEntry.insert(END, '300')
         self.population.set('300')
         self.populationEntry.grid(row=2, column=0, sticky=E)
-        # file saver button
-        self.fileSaverButton = Button(
-            self.frame, text="save pool", command=self.workerclass.saveFile)
-        self.fileSaverButton.grid(row=2, column=1)
-        self.fileLoaderButton = Button(
-            self.frame, text="load pool", command=self.workerclass.loadFile)
-        self.fileLoaderButton.grid(row=2, column=2)
         # run button
         self.runButton = Button(
             self.frame, text="start run", command=self.toggleRun)
@@ -410,13 +403,11 @@ class gui:
         self.poolInitialized = False
         self.pool = None
         self.env = 'meta-SuperMarioBros-Tiles-v0'
-
         self.fig, self.ax = plt.subplots(figsize=(3.7, 3))
         self.ax.stackplot([], [], baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
-        self.workerClass = None
         self.firstRun = True
 
         self.sharedPopulation = multiprocessing.Value('i',self.population.get())
@@ -436,6 +427,13 @@ class gui:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
                 self.workerClass = workerClass(self.envNum.get(),self.env,self.population.get(), 208, 4)
+                # file saver button
+                self.fileSaverButton = Button(
+                self.frame, text="save pool", command=self.workerclass.saveFile)
+                self.fileSaverButton.grid(row=2, column=1)
+                self.fileLoaderButton = Button(
+                self.frame, text="load pool", command=self.loadFile)
+                self.fileLoaderButton.grid(row=2, column=2)
             self.running = True
             self.runButton.config(text='running')
             self.master.after(250, self.checkRunPaused)
@@ -497,6 +495,14 @@ class gui:
         self.workerClass.pool.generation = len(self.pool.best)
         self.workerClass.pool.generations = loadedPool["generations"]
         self.population.set(self.pool.Population)
+        if not self.poolInitialized:
+                # file saver button
+                self.fileSaverButton = Button(
+                self.frame, text="save pool", command=self.workerclass.saveFile)
+                self.fileSaverButton.grid(row=2, column=1)
+                self.fileLoaderButton = Button(
+                self.frame, text="load pool", command=self.loadFile)
+                self.fileLoaderButton.grid(row=2, column=2)
         self.poolInitialized = True
         f.close()
 
