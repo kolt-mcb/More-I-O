@@ -64,17 +64,7 @@ def joystick(four):
     return six
 
 
-#starts a new game with the network display.
-def playBest(genome):
-        parentPipe, childPipe = multiprocessing.Pipe()
-        genome.generateNetwork()
-        process = multiprocessing.Process(target=singleGame, args=(genome,childPipe))
-        process.start()
-        display = networkDisplay.newNetworkDisplay(genome, parentPipe)
-        display.checkGenomePipe()
-        display.Tk.mainloop()
-        process.join()
-        # creates multiprocessing job for pool and trains pool
+
 
 
 
@@ -217,7 +207,7 @@ class workerClass(object):
                 self.updateFitness(results)
                 self.pool.nextGeneration()
                 stackplotQueue.put(self.generateStackPlot())
-                #playBest(self.pool.getBest())
+                self.playBest(self.pool.getBest())
                 print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
                 self.initialized.value = False
             time.sleep(0.5)
@@ -354,8 +344,20 @@ class workerClass(object):
                     if job != None:
                         self.results.put((finalScore, job))
                         job = None
-                        print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore,c)
+                        print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
             time.sleep(0.5)
+
+    #starts a new game with the network display.
+    def playBest(genome):
+            parentPipe, childPipe = multiprocessing.Pipe()
+            genome.generateNetwork()
+            process = multiprocessing.Process(target=singleGame, args=(genome,childPipe))
+            process.start()
+            display = networkDisplay.newNetworkDisplay(genome, parentPipe)
+            display.checkGenomePipe()
+            display.Tk.mainloop()
+            process.join()
+            # creates multiprocessing job for pool and trains pool
 
 
     def updateFitness(self,jobs):
