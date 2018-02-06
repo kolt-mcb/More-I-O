@@ -415,7 +415,6 @@ class gui:
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.firstRun = True
-        self.workerClass = None
         self.best = None
         self.sharedPopulation = multiprocessing.Value('i',self.population.get())
 
@@ -433,10 +432,10 @@ class gui:
         if not self.running:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
-                self.workerClass = workerClass(self.envNum.get(),self.env,self.population.get(), 208, 4)
+                globalWorkerClass = workerClass(self.envNum.get(),self.env,self.population.get(), 208, 4)
                 # file saver button
                 self.fileSaverButton = Button(
-                self.frame, text="save pool", command=self.workerClass.saveFile)
+                self.frame, text="save pool", command=globalworkerClass.saveFile)
                 self.fileSaverButton.grid(row=2, column=1)
             self.running = True
             self.runButton.config(text='running')
@@ -454,7 +453,7 @@ class gui:
                 playBest(self.best)
             self.sharedPopulation.value = self.population.get()
             if self.firstRun:
-                self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
+                self.netProcess = multiprocessing.Process(target=globalWorkerClass.initializeProcess)
                 self.netProcess.start()
                 self.firstRun = False
             sharedRunning.value = True
@@ -490,22 +489,22 @@ class gui:
                     if gene.innovation > newInovation:
                         newInovation = gene.innovation
 
-        self.workerClass = workerClass(self.envNum.get(),
+        globalWorkerClass = workerClass(self.envNum.get(),
                                         self.env,
                                         sum([v for v in [len(specie.genomes) for specie in species]]),
                                         species[0].genomes[0].Inputs,
                                         species[0].genomes[0].Outputs)
 
-        self.workerClass.pool.newGenome.innovation = newInovation + 1
-        self.workerClass.pool.species = species
-        self.workerClass.pool.best = loadedPool["best"]
-        self.workerClass.pool.generation = len(self.workerClass.pool.best)
+        globalWorkerClass.pool.newGenome.innovation = newInovation + 1
+        globalWorkerClass.pool.species = species
+        globalWorkerClass.pool.best = loadedPool["best"]
+        globalWorkerClass.pool.generation = len(globalWorkerClass.pool.best)
         neat.pool.generations = loadedPool["generations"]
-        self.population.set(self.workerClass.pool.Population)
+        self.population.set(globalWorkerClass.pool.Population)
         if not self.poolInitialized:
             # file saver button
             self.fileSaverButton = Button(
-            self.frame, text="save pool", command=self.workerClass.saveFile)
+            self.frame, text="save pool", command=globalWorkerClass.saveFile)
             self.fileSaverButton.grid(row=2, column=1)
         self.poolInitialized = True
         f.close()
