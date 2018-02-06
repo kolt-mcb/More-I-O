@@ -156,7 +156,7 @@ def killFCEUX():
 
 
 class workerClass(object):
-    def __init__(self):
+    def __init__(self,numJobs,env,population,input,output,recurrnet=False,connectionCost=False):
         self.pool = None
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
@@ -172,7 +172,7 @@ class workerClass(object):
         self.specieID = 0
         
             
-    def initializeProcess(self,numJobs,env,population,input,output,recurrnet=False,connectionCost=False):
+    def initializeProcess(self):
         self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
         self.numJobs = numJobs
         self.env = env
@@ -399,7 +399,7 @@ class gui:
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.firstRun = True
         self.best = None
-        self.workerClass = workerClass
+        self.workerClass = None
         
 
 
@@ -417,6 +417,7 @@ class gui:
         if not self.running:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
+                self.workerClass = workerClass(self.envNum.get(),self.env,self.population.get(), 208, 4)
                 # file saver button
                 self.fileSaverButton = Button(
                 self.frame, text="save pool", command=self.saveFile)
@@ -438,7 +439,7 @@ class gui:
                 self.pool = poolQueue.get()
                 playBest(self.pool.getBest())
             if self.firstRun:
-                self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess,args=(self.envNum.get(),self.env,self.population.get(), 208, 4,))
+                self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
                 self.netProcess.start()
                 self.firstRun = False
             sharedRunning.value = True
