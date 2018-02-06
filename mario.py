@@ -350,7 +350,6 @@ class workerClass(object):
         currentSpecies = job[1][0]
         currentGenome = job[1][1]
         self.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
-globalWorkerClass = workerClass()
             
 
 class gui:
@@ -419,7 +418,7 @@ class gui:
                 self.runButton.config(text='running')
                 # file saver button
                 self.fileSaverButton = Button(
-                self.frame, text="save pool", command=globalWorkerClass.saveFile)
+                self.frame, text="save pool", command=self.WorkerClass.saveFile)
                 self.fileSaverButton.grid(row=2, column=1)
             self.running = True
             self.runButton.config(text='running')
@@ -438,7 +437,7 @@ class gui:
                 self.pool = poolQueue.get()
                 playBest(self.pool.getBest())
             if self.firstRun:
-                self.netProcess = multiprocessing.Process(target=globalWorkerClass.initializeProcess,args=(self.envNum.get(),self.env,self.population.get(), 208, 4,))
+                self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess,args=(self.envNum.get(),self.env,self.population.get(), 208, 4,))
                 self.netProcess.start()
                 self.firstRun = False
             sharedRunning.value = True
