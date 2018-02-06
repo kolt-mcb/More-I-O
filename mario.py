@@ -399,6 +399,7 @@ class gui:
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.firstRun = True
         self.best = None
+        self.workerClass = workerClass
         
 
 
@@ -418,7 +419,7 @@ class gui:
                 self.runButton.config(text='running')
                 # file saver button
                 self.fileSaverButton = Button(
-                self.frame, text="save pool", command=self.WorkerClass.saveFile)
+                self.frame, text="save pool", command=self.saveFile)
                 self.fileSaverButton.grid(row=2, column=1)
             self.running = True
             self.runButton.config(text='running')
@@ -492,7 +493,7 @@ class gui:
                     if gene.innovation > newInovation:
                         newInovation = gene.innovation
 
-        self = workerClass(self.envNum.get(),
+        self.workerClass = workerClass(self.envNum.get(),
                                         self.env,
                                         sum([v for v in [len(specie.genomes) for specie in species]]),
                                         species[0].genomes[0].Inputs,
