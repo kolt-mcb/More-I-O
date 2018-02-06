@@ -435,7 +435,7 @@ class gui:
                 globalWorkerClass = workerClass(self.envNum.get(),self.env,self.population.get(), 208, 4)
                 # file saver button
                 self.fileSaverButton = Button(
-                self.frame, text="save pool", command=globalworkerClass.saveFile)
+                self.frame, text="save pool", command=globalWorkerClass.saveFile)
                 self.fileSaverButton.grid(row=2, column=1)
             self.running = True
             self.runButton.config(text='running')
