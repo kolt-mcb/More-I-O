@@ -24,7 +24,7 @@ from operator import itemgetter
 from ctypes import c_bool
 sharedRunning = multiprocessing.Value(c_bool,False)
 stackplotQueue = multiprocessing.Queue()
-bestQueue = multiprocessing.Queue()
+poolQueue = multiprocessing.Queue()
 
 
 def playBest(genome):
@@ -218,28 +218,13 @@ class workerClass(object):
                 self.updateFitness(results)
                 self.pool.nextGeneration()
                 stackplotQueue.put(self.generateStackPlot())
-                bestQueue.put(self.pool.getBest())
+                poolQueue.put(self.pool)
                 print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
                 self.initialized.value = False
             time.sleep(0.5)
 
 
 
-    def saveFile(self):
-        if self.pool == None:
-            return
-        filename = filedialog.asksaveasfilename(defaultextension=".pool")
-        if filename is None or filename == '':
-            return
-        file = open(filename, "wb")
-        pickle.dump({"species" : self.pool.species,
-                    "best"     : self.pool.best,
-                    "plotData" : self.plotData,
-                    "specieID" : self.specieID,
-                    "genomeDictionary" : self.genomeDictionary,
-                    "generations" : self.pool.generations}, file)
-
-        print("file saved",filename)
 
 
     
@@ -415,8 +400,7 @@ class gui:
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.firstRun = True
         self.best = None
-        self.sharedPopulation = multiprocessing.Value('i',self.population.get())
-
+        
 
 
     def updateStackPlot(self,plotList):
@@ -450,10 +434,9 @@ class gui:
         if self.running:
             if not stackplotQueue.empty():
                 self.updateStackPlot(stackplotQueue.get())
-            if not bestQueue.empty():
-                self.best = bestQueue.get()
-                playBest(self.best)
-            self.sharedPopulation.value = self.population.get()
+            if not poolQueue.empty():
+                self.pool = poolQueue.get()
+                playBest(self.pool.getBest())
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=globalWorkerClass.initializeProcess,args=(self.envNum.get(),self.env,self.population.get(), 208, 4,))
                 self.netProcess.start()
@@ -477,6 +460,22 @@ class gui:
 
 
 
+    def saveFile(self):
+        if self.pool == None:
+            return
+        filename = filedialog.asksaveasfilename(defaultextension=".pool")
+        if filename is None or filename == '':
+            return
+        file = open(filename, "wb")
+        pickle.dump({"species" : self.pool.species,
+                    "best"     : self.pool.best,
+                    "plotData" : self.plotData,
+                    "specieID" : self.specieID,
+                    "genomeDictionary" : self.genomeDictionary,
+                    "generations" : self.pool.generations}, file)
+
+        print("file saved",filename)
+
     def loadFile(self):
         filename = filedialog.askopenfilename()
         if filename is ():
@@ -494,22 +493,22 @@ class gui:
                     if gene.innovation > newInovation:
                         newInovation = gene.innovation
 
-        globalWorkerClass = workerClass(self.envNum.get(),
+        self = workerClass(self.envNum.get(),
                                         self.env,
                                         sum([v for v in [len(specie.genomes) for specie in species]]),
                                         species[0].genomes[0].Inputs,
                                         species[0].genomes[0].Outputs)
 
-        globalWorkerClass.pool.newGenome.innovation = newInovation + 1
-        globalWorkerClass.pool.species = species
-        globalWorkerClass.pool.best = loadedPool["best"]
-        globalWorkerClass.pool.generation = len(globalWorkerClass.pool.best)
+        self.pool.newGenome.innovation = newInovation + 1
+        self.pool.species = species
+        self.pool.best = loadedPool["best"]
+        self.pool.generation = len(self.pool.best)
         neat.pool.generations = loadedPool["generations"]
-        self.population.set(globalWorkerClass.pool.Population)
+        self.population.set(self.pool.Population)
         if not self.poolInitialized:
             # file saver button
             self.fileSaverButton = Button(
-            self.frame, text="save pool", command=globalWorkerClass.saveFile)
+            self.frame, text="save pool", command=self.saveFile)
             self.fileSaverButton.grid(row=2, column=1)
         self.poolInitialized = True
         f.close()
