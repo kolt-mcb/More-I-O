@@ -170,12 +170,13 @@ class workerClass(object):
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
-        
-            
-    def initializeProcess(self):
         self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
         self.numJobs = numJobs
         self.env = env
+        
+            
+    def initializeProcess(self):
+        
         if not self.initialized.value:
             for i in range(self.numJobs):
                 p = multiprocessing.Process(
