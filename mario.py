@@ -26,6 +26,7 @@ sharedRunning = multiprocessing.Value(c_bool,False)
 stackplotQueue = multiprocessing.Queue()
 bestQueue = multiprocessing.Queue()
 
+
 def playBest(genome):
     parentPipe, childPipe = multiprocessing.Pipe()
     genome.generateNetwork()
@@ -155,25 +156,26 @@ def killFCEUX():
 
 
 class workerClass(object):
-    def __init__(self,numJobs,env,population,input,output,recurrnet=False,connectionCost=False):
-        self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
+    def __init__(self):
+        self.pool = None
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
         self.results = multiprocessing.Queue()
-        self.numJobs = numJobs
-        self.env = env
         self.proccesses = []
+        self.numJobs = None
+        self.env = None
         self.initialized = multiprocessing.Value(c_bool,False)
         self.running = multiprocessing.Value(c_bool,False)
         self.counter = multiprocessing.Value('i',0)
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
-       
-
         
             
-    def initializeProcess(self):
+    def initializeProcess(self,numJobs,env,population,input,output,recurrnet=False,connectionCost=False):
+        self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
+        self.numJobs = numJobs
+        self.env = env
         if not self.initialized.value:
             for i in range(self.numJobs):
                 p = multiprocessing.Process(
@@ -226,13 +228,10 @@ class workerClass(object):
     def saveFile(self):
         if self.pool == None:
             return
-
         filename = filedialog.asksaveasfilename(defaultextension=".pool")
         if filename is None or filename == '':
             return
         file = open(filename, "wb")
-
-
         pickle.dump({"species" : self.pool.species,
                     "best"     : self.pool.best,
                     "plotData" : self.plotData,
@@ -366,7 +365,7 @@ class workerClass(object):
         currentSpecies = job[1][0]
         currentGenome = job[1][1]
         self.pool.species[currentSpecies].genomes[currentGenome].setFitness(job[0])
-
+globalWorkerClass = workerClass()
             
 
 class gui:
@@ -419,6 +418,7 @@ class gui:
         self.sharedPopulation = multiprocessing.Value('i',self.population.get())
 
 
+
     def updateStackPlot(self,plotList):
         self.ax.clear()
         self.ax.stackplot(
@@ -427,12 +427,12 @@ class gui:
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=5, sticky="nesw")
 
 
+
     def toggleRun(self):
 
         if not self.running:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
-                globalWorkerClass = workerClass(self.envNum.get(),self.env,self.population.get(), 208, 4)
                 # file saver button
                 self.fileSaverButton = Button(
                 self.frame, text="save pool", command=globalWorkerClass.saveFile)
@@ -444,6 +444,8 @@ class gui:
             self.running = False
             self.runButton.config(text='pausing')
 
+
+
     def checkRunPaused(self):
         if self.running:
             if not stackplotQueue.empty():
@@ -453,7 +455,7 @@ class gui:
                 playBest(self.best)
             self.sharedPopulation.value = self.population.get()
             if self.firstRun:
-                self.netProcess = multiprocessing.Process(target=globalWorkerClass.initializeProcess)
+                self.netProcess = multiprocessing.Process(target=globalWorkerClass.initializeProcess,args=(self.envNum.get(),self.env,self.population.get(), 208, 4,))
                 self.netProcess.start()
                 self.firstRun = False
             sharedRunning.value = True
@@ -461,6 +463,7 @@ class gui:
         if not self.running:
             sharedRunning.value=False
             self.runButton.config(text='run')
+
 
 
     def onClosing(self):
@@ -471,6 +474,8 @@ class gui:
                 killFCEUX()
             self.master.destroy()
             self.master.quit()
+
+
 
     def loadFile(self):
         filename = filedialog.askopenfilename()
