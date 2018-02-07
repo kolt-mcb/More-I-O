@@ -516,8 +516,7 @@ class gui:
             self.frame, text="save pool", command=self.saveFile)
             self.fileSaverButton.grid(row=2, column=1)
             # play best button
-            self.playBestButton = Button(
-            self.frame, text='play best', command= lambda : playBest(self.best[len(self.best)])
+            self.playBestButton = Button(self.frame, text='play best', command= lambda : playBest(self.best[len(self.best)]))
             self.playBestButton.grid(row=2, column=4)
         self.poolInitialized = True
         f.close()
