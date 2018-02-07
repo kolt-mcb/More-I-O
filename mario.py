@@ -76,7 +76,7 @@ def joystick(four):
 
 
 
-def singleGame(ramdomQueue):
+def singleGame(randomQueue):
     env = gym.make('meta-SuperMarioBros-Tiles-v0')
     env.reset()
     while True:
