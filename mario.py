@@ -546,6 +546,6 @@ if __name__ == '__main__':
     root.resizable(width=False, height=False)
     app = gui(root)
     root.protocol("WM_DELETE_WINDOW", app.onClosing)
-    displayProcess = multiprocessing.Process(startDisplay)
+    displayProcess = multiprocessing.Process(target=startDisplay)
     displayProcess.start()
     root.mainloop()
