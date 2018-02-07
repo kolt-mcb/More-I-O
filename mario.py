@@ -82,7 +82,7 @@ def singleGame(queue):
     while True:
         try:
             genome = queue.get()
-        except empty:
+        except queue.Empty:
             time.sleep(0.5)
             pass
         display.update(genome)
