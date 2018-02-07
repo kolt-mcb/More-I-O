@@ -446,7 +446,7 @@ class gui:
                 self.netProcess.start()
                 self.firstRun = False
             sharedRunning.value = True
-            #self.master.after(250,self.checkRunPaused)
+            self.master.after(250,self.checkRunPaused)
         if not self.running:
             sharedRunning.value=False
             self.runButton.config(text='run')
