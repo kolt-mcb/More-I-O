@@ -32,9 +32,10 @@ parentPipe, childPipe = multiprocessing.Pipe()
 
 
 def startDisplay():
-    display = networkDisplay.newNetworkDisplay(parentPipe)
-    display.checkGenomePipe()
-    display.Tk.mainloop()
+    print("tet")
+    # display = networkDisplay.newNetworkDisplay(parentPipe)
+    # display.checkGenomePipe()
+    # display.Tk.mainloop()
 
 
 def joystick(four):
