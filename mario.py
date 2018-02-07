@@ -220,9 +220,8 @@ class workerClass(object):
         results = []
         while self.initialized.value:
             while len(results) != self.pool.Population:
-                if randomQueue.empty():
-                    randomSpecie
-                    randomQueue.put(self.getRandomGenome())
+                if self.randomQueue.empty():
+                    self.randomQueue.put(self.getRandomGenome())
                 if not self.results.empty():
                     results.append(self.results.get())
             if len(results) == self.pool.Population:
