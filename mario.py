@@ -30,9 +30,10 @@ poolQueue = multiprocessing.Queue()
 
 
 parentPipe, childPipe = multiprocessing.Pipe()
+display = networkDisplay.newNetworkDisplay(parentPipe)
 
 def startDisplay():
-    display = networkDisplay.newNetworkDisplay(parentPipe)
+    
     display.checkGenomePipe()
     display.Tk.mainloop()
 
