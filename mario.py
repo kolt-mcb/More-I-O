@@ -219,7 +219,7 @@ class workerClass(object):
                 self.updateFitness(results)
                 self.pool.nextGeneration()
                 stackplotQueue.put(self.generateStackPlot())
-                poolQueue.put(self.pool)
+                poolQueue.put((self.pool,self.plotData,self.genomeDictionary,self.specieID))
                 print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
                 self.initialized.value = False
             time.sleep(0.5)
@@ -389,7 +389,6 @@ class gui:
         self.netProccess = None
         self.running = False
         self.poolInitialized = False
-        self.pool = None
         self.env = 'meta-SuperMarioBros-Tiles-v0'
         self.fig, self.ax = plt.subplots(figsize=(3.7, 3))
         self.ax.set_xlabel('generations')
@@ -401,6 +400,10 @@ class gui:
         self.firstRun = True
         self.best = None
         self.workerClass = None
+        self.pool = None
+        self.plotData = {}
+        self.genomeDictionary = {}
+        self.specieID = 0
         
 
 
@@ -437,7 +440,7 @@ class gui:
             if not stackplotQueue.empty():
                 self.updateStackPlot(stackplotQueue.get())
             if not poolQueue.empty():
-                self.pool = poolQueue.get()
+                self.pool,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
                 playBest(self.pool.getBest())
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
