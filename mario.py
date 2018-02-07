@@ -504,7 +504,7 @@ class gui:
         self.workerClass.pool.newGenome.innovation = newInovation + 1
         self.workerClass.pool.species = species
         self.workerClass.pool.best = loadedPool["best"]
-        self.pool = loadedPool["best"]
+        self.best = loadedPool["best"]
         self.workerClass.pool.generation = len((self.workerClass.pool.best))
         self.workerClass.plotData = loadedPool["plotData"]
         self.workerClass.genomeDictionary = loadedPool["genomeDictionary"]
