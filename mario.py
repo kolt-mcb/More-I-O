@@ -507,7 +507,7 @@ class gui:
         self.workerClass.pool.newGenome.innovation = newInovation + 1
         self.workerClass.pool.species = species
         self.workerClass.pool.best = loadedPool["best"]
-        self.workerClass.pool.generation = len(self.pool.best)
+        self.workerClass.pool.generation = len((self.workerClass.pool.best)
         neat.pool.generations = loadedPool["generations"]
         self.workerClass.population.set(self.workerClass.pool.Population)
         if not self.poolInitialized:
