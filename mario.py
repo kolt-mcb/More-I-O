@@ -29,9 +29,12 @@ poolQueue = multiprocessing.Queue()
 
 
 parentPipe, childPipe = multiprocessing.Pipe()
-display = networkDisplay.newNetworkDisplay(parentPipe)
-display.checkGenomePipe()
-display.Tk.mainloop()
+
+
+def startDisplay():
+    networkDisplay.newNetworkDisplay(parentPipe)
+    display.checkGenomePipe()
+    display.Tk.mainloop()
 
 
 def joystick(four):
@@ -271,7 +274,7 @@ class workerClass(object):
 
 
     def jobTrainer(self,envName):
-        job =None
+        job = None
         env = gym.make(envName)
         env.lock = self.lock
         env.lock.acquire()
@@ -543,4 +546,6 @@ if __name__ == '__main__':
     root.resizable(width=False, height=False)
     app = gui(root)
     root.protocol("WM_DELETE_WINDOW", app.onClosing)
+    displayProcess = multiprocessing.process(startDisplay)
+    displayProcess.start()
     root.mainloop()
