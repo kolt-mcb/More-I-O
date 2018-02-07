@@ -440,7 +440,7 @@ class gui:
             if not stackplotQueue.empty():
                 self.updateStackPlot(stackplotQueue.get())
             if not poolQueue.empty():
-                self.pool,neat.generations,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
+                self.pool,self.generations,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
                 playBest(self.pool.getBest())
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
