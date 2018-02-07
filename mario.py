@@ -79,60 +79,65 @@ def joystick(four):
 
 
 
-def singleGame(genome, genomePipe):
+def singleGame(queue):
     env = gym.make('meta-SuperMarioBros-Tiles-v0')
     env.reset()
-    done = False
-    distance = 0
-    maxDistance = 0
-    staleness = 0
-    print("playing next")
-    env.locked_levels = [False] * 32
-    for LVint in [1]:
-        genome.generateNetwork()
+    while True:
+        try:
+            genome = queue.get()
+        except empty:
+            time.sleep(0.5)
+            pass
+
+        done = False
+        distance = 0
         maxDistance = 0
         staleness = 0
-        oldDistance = 0
-        done = False
-        bonus = 0
-        bonusOffset = 0
+        print("playing next")
+        env.locked_levels = [False] * 32
+        for LVint in [1]:
+            genome.generateNetwork()
+            maxDistance = 0
+            staleness = 0
+            oldDistance = 0
+            done = False
+            bonus = 0
+            bonusOffset = 0
 
-        #env.is_finished = True
+            #env.is_finished = True
 
-        env.change_level(new_level=LVint)
-        # env._write_to_pipe("changelevel#"+str(LVint))
-        while not done:
-            ob = env.tiles.flatten()
+            env.change_level(new_level=LVint)
+            # env._write_to_pipe("changelevel#"+str(LVint))
+            while not done:
+                ob = env.tiles.flatten()
 
-            o = genome.evaluateNetwork(ob.tolist(), discrete=False)
-            o = joystick(o)
-            genomePipe.send(genome)
-            ob, reward, done, _ = env.step(o)
-            if 'ignore' in _:
-                done = False
-                env = gym.make('meta-SuperMarioBros-Tiles-v0')
-                env.reset()
-                env.locked_levels = [False] * 32
-                env.change_level(new_level=LVint)
-            distance = env._get_info()["distance"]
-            if oldDistance - distance < -100:
-                bonus = maxDistance
-                bonusOffset = distance
-            if maxDistance - distance > 50 and distance != 0:
-                maxDistance = distance
-            if distance > maxDistance:
-                maxDistance = distance
-                staleness = 0
-            if maxDistance >= distance:
-                staleness += 1
+                o = genome.evaluateNetwork(ob.tolist(), discrete=False)
+                o = joystick(o)
+                genomePipe.send(genome)
+                ob, reward, done, _ = env.step(o)
+                if 'ignore' in _:
+                    done = False
+                    env = gym.make('meta-SuperMarioBros-Tiles-v0')
+                    env.reset()
+                    env.locked_levels = [False] * 32
+                    env.change_level(new_level=LVint)
+                distance = env._get_info()["distance"]
+                if oldDistance - distance < -100:
+                    bonus = maxDistance
+                    bonusOffset = distance
+                if maxDistance - distance > 50 and distance != 0:
+                    maxDistance = distance
+                if distance > maxDistance:
+                    maxDistance = distance
+                    staleness = 0
+                if maxDistance >= distance:
+                    staleness += 1
 
-            if staleness > 100 or done:
-                if not done:
-                    done = True
-            oldDistance = distance
-    env.close()
-    genomePipe.send("quit")
-    genomePipe.close()
+                if staleness > 100 or done:
+                    if not done:
+                        done = True
+                oldDistance = distance
+
 
 def kill_proc_tree(pid, including_parent=True):
     parent = psutil.Process(pid)
