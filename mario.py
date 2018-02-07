@@ -519,7 +519,7 @@ class gui:
             self.fileSaverButton.grid(row=2, column=1)
             # play best button
             self.playBestButton = Button(
-            self.frame, text='play best', command= lambda : playBest(self.workerClass.pool.getbest()))
+            self.frame, text='play best', command= lambda : playBest(self.workerClass.pool.getBest()))
             self.playBestButton.grid(row=2, column=4)
         self.poolInitialized = True
         f.close()
