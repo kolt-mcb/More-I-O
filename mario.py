@@ -237,7 +237,7 @@ class workerClass(object):
         randomSpecie = random.randint(1,len(self.pool.species))
         species = self.pool.species[randomSpecie]
         randomGenome = random.randint(1,len(species.genomes))
-        genome = species.genomes[randomGenome]
+        genome = species.genomes[randomGenome-1]
         return genome
 
 
