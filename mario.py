@@ -509,7 +509,7 @@ class gui:
         self.workerClass.pool.best = loadedPool["best"]
         self.workerClass.pool.generation = len(self.pool.best)
         neat.pool.generations = loadedPool["generations"]
-        self.workerClass.population.set(self.pool.Population)
+        self.workerClass.population.set(self.workerClass.pool.Population)
         if not self.poolInitialized:
             # file saver button
             self.fileSaverButton = Button(
