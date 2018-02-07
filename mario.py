@@ -190,7 +190,7 @@ class workerClass(object):
                     )
                 self.proccesses.append(p)
                 p.start()
-            self.singleGame = multiprocessing.Process(target=singleGame, args=(self.randomQueue,childPipe))
+            self.singleGame = multiprocessing.Process(target=singleGame, args=(self.randomQueue))
             self.singleGame.start()
 
         while True:
