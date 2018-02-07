@@ -32,7 +32,7 @@ parentPipe, childPipe = multiprocessing.Pipe()
 
 
 def startDisplay():
-    networkDisplay.newNetworkDisplay(parentPipe)
+    display = networkDisplay.newNetworkDisplay(parentPipe)
     display.checkGenomePipe()
     display.Tk.mainloop()
 
