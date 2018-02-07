@@ -76,12 +76,12 @@ def joystick(four):
 
 
 
-def singleGame(queue):
+def singleGame(ramdomQueue):
     env = gym.make('meta-SuperMarioBros-Tiles-v0')
     env.reset()
     while True:
         try:
-            genome = queue.get()
+            genome = randomQueue.get()
         except queue.Empty:
             time.sleep(0.5)
             pass
