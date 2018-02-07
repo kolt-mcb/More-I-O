@@ -280,7 +280,6 @@ class workerClass(object):
                         time.sleep(0.5)
                     pass
                 if job != None:
-                    c+=1
                     currentSpecies = job[0]
                     currentGenome = job[1]
                     genome = job[2]
