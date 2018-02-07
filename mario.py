@@ -29,13 +29,10 @@ poolQueue = multiprocessing.Queue()
 
 
 parentPipe, childPipe = multiprocessing.Pipe()
-display = networkDisplay.newNetworkDisplay(genome, parentPipe)
+display = networkDisplay.newNetworkDisplay(parentPipe)
 display.checkGenomePipe()
 display.Tk.mainloop()
-def playBest(genome):
 
-    
-    process.join()
 
 def joystick(four):
     six = [0] * 6
@@ -435,9 +432,6 @@ class gui:
                 self.fileSaverButton = Button(
                 self.frame, text="save pool", command=self.saveFile)
                 self.fileSaverButton.grid(row=2, column=1)
-                # play best button
-                self.playBestButton = Button(self.frame, text='play best', command= lambda : playBest(self.pool.getbest()))
-                self.playBestButton.grid(row=2, column=4)
             self.running = True
             self.runButton.config(text='running')
             self.checkRunPaused()
@@ -453,7 +447,6 @@ class gui:
                 self.updateStackPlot(stackplotQueue.get())
             if not poolQueue.empty():
                 self.pool,self.generations,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
-                playBest(self.pool.getBest())
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
                 self.netProcess.start()
@@ -530,9 +523,6 @@ class gui:
             self.fileSaverButton = Button(
             self.frame, text="save pool", command=self.saveFile)
             self.fileSaverButton.grid(row=2, column=1)
-            # play best button
-            self.playBestButton = Button(self.frame, text='play best', command= lambda : playBest(self.best[len(self.best)-1]))
-            self.playBestButton.grid(row=2, column=4)
         self.poolInitialized = True
         f.close()
 
