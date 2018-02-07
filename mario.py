@@ -384,7 +384,7 @@ class gui:
         self.fileLoaderButton.grid(row=2, column=2)
         # play best button
         self.playBestButton = Button(
-            self.frame, text='play best', command= lambda : playBest(self.best))
+            self.frame, text='play best', command= lambda : playBest(self.pool.getbest()))
         self.playBestButton.grid(row=2, column=4)
         self.netProccess = None
         self.running = False
@@ -398,7 +398,6 @@ class gui:
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.firstRun = True
-        self.best = None
         self.workerClass = None
         self.pool = None
         self.plotData = {}
