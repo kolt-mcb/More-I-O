@@ -382,10 +382,7 @@ class gui:
         self.fileLoaderButton = Button(
         self.frame, text="load pool", command=self.loadFile)
         self.fileLoaderButton.grid(row=2, column=2)
-        # play best button
-        self.playBestButton = Button(
-            self.frame, text='play best', command= lambda : playBest(self.pool.getbest()))
-        self.playBestButton.grid(row=2, column=4)
+
         self.netProccess = None
         self.running = False
         self.poolInitialized = False
@@ -425,6 +422,9 @@ class gui:
                 self.fileSaverButton = Button(
                 self.frame, text="save pool", command=self.saveFile)
                 self.fileSaverButton.grid(row=2, column=1)
+                # play best button
+                self.playBestButton = Button(self.frame, text='play best', command= lambda : playBest(self.pool.getbest()))
+                self.playBestButton.grid(row=2, column=4)
             self.running = True
             self.runButton.config(text='running')
             self.master.after(250, self.checkRunPaused)
@@ -516,6 +516,10 @@ class gui:
             self.fileSaverButton = Button(
             self.frame, text="save pool", command=self.saveFile)
             self.fileSaverButton.grid(row=2, column=1)
+            # play best button
+            self.playBestButton = Button(
+            self.frame, text='play best', command= lambda : playBest(self.pool.getbest()))
+            self.playBestButton.grid(row=2, column=4)
         self.poolInitialized = True
         f.close()
 
