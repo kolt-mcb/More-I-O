@@ -219,7 +219,7 @@ class workerClass(object):
                 self.updateFitness(results)
                 self.pool.nextGeneration()
                 stackplotQueue.put(self.generateStackPlot())
-                poolQueue.put((self.pool,self.plotData,self.genomeDictionary,self.specieID))
+                poolQueue.put((self.pool,neat.generations,self.plotData,self.genomeDictionary,self.specieID))
                 print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
                 self.initialized.value = False
             time.sleep(0.5)
@@ -440,7 +440,7 @@ class gui:
             if not stackplotQueue.empty():
                 self.updateStackPlot(stackplotQueue.get())
             if not poolQueue.empty():
-                self.pool,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
+                self.pool,neat.generations,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
                 playBest(self.pool.getBest())
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
@@ -477,7 +477,7 @@ class gui:
                     "plotData" : self.plotData,
                     "specieID" : self.specieID,
                     "genomeDictionary" : self.genomeDictionary,
-                    "generations" : self.pool.generations}, file)
+                    "generations" : self.generations}, file)
 
         print("file saved",filename)
 
