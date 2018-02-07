@@ -219,10 +219,10 @@ class workerClass(object):
     def sendResults(self):
         results = []
         while self.initialized.value:
-            if randomQueue.empty():
-                randomSpecie
-                randomQueue.put(self.getRandomGenome())
             while len(results) != self.pool.Population:
+                if randomQueue.empty():
+                    randomSpecie
+                    randomQueue.put(self.getRandomGenome())
                 if not self.results.empty():
                     results.append(self.results.get())
             if len(results) == self.pool.Population:
