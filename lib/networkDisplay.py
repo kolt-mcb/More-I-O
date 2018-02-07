@@ -11,7 +11,7 @@ height = 480
 
 
 class newNetworkDisplay():
-    def __init__(self,genome,genomePipe=None):
+    def __init__(self,genomePipe=None,genome=None):
        
         
         #Set up the main window frame as a grid
@@ -28,15 +28,16 @@ class newNetworkDisplay():
         self.drawnCells = {}
         self.drawnLines = {}
         self.genomePipe = genomePipe
-        self.placeInputNeurons(genome)
-        self.placeOutputNeurons(genome)
-        self.placeHiddenNeurons(genome)
-        self.mutationRates(genome)
-        self.drawCells() 
-        self.drawLines(genome)
-        self.canvas.focus_set()
-        self.canvas.pack()
-        self.canvas.update()
+        if genome != None:
+            self.placeInputNeurons(genome)
+            self.placeOutputNeurons(genome)
+            self.placeHiddenNeurons(genome)
+            self.mutationRates(genome)
+            self.drawCells() 
+            self.drawLines(genome)
+            self.canvas.focus_set()
+            self.canvas.pack()
+            self.canvas.update()
         
         
     def update(self,genome):
