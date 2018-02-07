@@ -29,8 +29,6 @@ poolQueue = multiprocessing.Queue()
 
 
 parentPipe, childPipe = multiprocessing.Pipe()
-process = multiprocessing.Process(target=singleGame, args=(genome, childPipe))
-
 display = networkDisplay.newNetworkDisplay(genome, parentPipe)
 display.checkGenomePipe()
 display.Tk.mainloop()
@@ -113,7 +111,7 @@ def singleGame(queue):
 
                 o = genome.evaluateNetwork(ob.tolist(), discrete=False)
                 o = joystick(o)
-                genomePipe.send(genome)
+                childPipe.send(genome)
                 ob, reward, done, _ = env.step(o)
                 if 'ignore' in _:
                     done = False
