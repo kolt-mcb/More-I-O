@@ -22,19 +22,21 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from operator import itemgetter
 from ctypes import c_bool
+import random
 sharedRunning = multiprocessing.Value(c_bool,False)
 stackplotQueue = multiprocessing.Queue()
 poolQueue = multiprocessing.Queue()
 
 
+parentPipe, childPipe = multiprocessing.Pipe()
+process = multiprocessing.Process(target=singleGame, args=(genome, childPipe))
+
+display = networkDisplay.newNetworkDisplay(genome, parentPipe)
+display.checkGenomePipe()
+display.Tk.mainloop()
 def playBest(genome):
-    parentPipe, childPipe = multiprocessing.Pipe()
-    genome.generateNetwork()
-    process = multiprocessing.Process(target=singleGame, args=(genome, childPipe))
-    process.start()
-    display = networkDisplay.newNetworkDisplay(genome, parentPipe)
-    display.checkGenomePipe()
-    display.Tk.mainloop()
+
+    
     process.join()
 
 def joystick(four):
@@ -159,6 +161,7 @@ class workerClass(object):
         self.pool = None
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
+        self.randomQueue = multiprocessing.Queue()
         self.results = multiprocessing.Queue()
         self.proccesses = []
         self.numJobs = None
@@ -172,6 +175,7 @@ class workerClass(object):
         self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
         self.numJobs = numJobs
         self.env = env
+        self.singleGame = multiprocessing.Process(target=singleGame, args=(self.randomQueue,childPipe))
         
             
     def initializeProcess(self):
@@ -184,6 +188,7 @@ class workerClass(object):
                     )
                 self.proccesses.append(p)
                 p.start()
+            self.singleGame.start()
 
         while True:
             if sharedRunning.value:
@@ -211,6 +216,9 @@ class workerClass(object):
     def sendResults(self):
         results = []
         while self.initialized.value:
+            if randomQueue.empty():
+                randomSpecie
+                randomQueue.put(self.getRandomGenome())
             while len(results) != self.pool.Population:
                 if not self.results.empty():
                     results.append(self.results.get())
@@ -223,7 +231,12 @@ class workerClass(object):
                 self.initialized.value = False
             time.sleep(0.5)
 
-
+    def getRandomGenome(self):
+        randomSpecie = random.randint(1,len(self.pool.species))
+        species = self.pool.species[randomSpecie]
+        randomGenome = random.randint(1,len(randomSpecie.genomes))
+        genome = species.genomes[randomGenome]
+        return genome
 
 
 
