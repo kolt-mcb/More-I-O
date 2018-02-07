@@ -427,7 +427,6 @@ class gui:
                 self.playBestButton.grid(row=2, column=4)
             self.running = True
             self.runButton.config(text='running')
-            self.master.after(250, self.checkRunPaused)
         else:
             self.running = False
             self.runButton.config(text='pausing')
@@ -446,7 +445,7 @@ class gui:
                 self.netProcess.start()
                 self.firstRun = False
             sharedRunning.value = True
-            self.master.after(250,self.checkRunPaused)
+            #self.master.after(250,self.checkRunPaused)
         if not self.running:
             sharedRunning.value=False
             self.runButton.config(text='run')
