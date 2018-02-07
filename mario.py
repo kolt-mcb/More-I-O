@@ -504,12 +504,12 @@ class gui:
                                         species[0].genomes[0].Inputs,
                                         species[0].genomes[0].Outputs)
 
-        self.pool.newGenome.innovation = newInovation + 1
-        self.pool.species = species
-        self.pool.best = loadedPool["best"]
-        self.pool.generation = len(self.pool.best)
+        self.workerClass.pool.newGenome.innovation = newInovation + 1
+        self.workerClass.pool.species = species
+        self.workerClass.pool.best = loadedPool["best"]
+        self.workerClass.pool.generation = len(self.pool.best)
         neat.pool.generations = loadedPool["generations"]
-        self.population.set(self.pool.Population)
+        self.workerClass.population.set(self.pool.Population)
         if not self.poolInitialized:
             # file saver button
             self.fileSaverButton = Button(
