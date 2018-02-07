@@ -87,7 +87,6 @@ def singleGame(randomQueue):
         except queue.Empty:
             time.sleep(0.5)
             pass
-        display.update(genome)
         done = False
         distance = 0
         maxDistance = 0
