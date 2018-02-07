@@ -427,6 +427,7 @@ class gui:
                 self.playBestButton.grid(row=2, column=4)
             self.running = True
             self.runButton.config(text='running')
+            self.checkRunPaused()
         else:
             self.running = False
             self.runButton.config(text='pausing')
