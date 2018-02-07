@@ -213,6 +213,9 @@ class newNetworkDisplay():
                 self.drawnLines[gene.innovation] = self.canvas.create_line(c1.x-(c1.gridSize//2), c1.y-(c1.gridSize//2), c2.x-(c2.gridSize//2), c2.y-(c2.gridSize//2),fill=color,width=3)
 
     def updateCanvas(self,genome):
+        if self.lastGenome.ID != genome.ID:
+            self.lastGenome= genome
+            self.update(genome)
         self.updateCells(genome)
         self.updateLines(genome)
         self.canvas.focus_set()
