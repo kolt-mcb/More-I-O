@@ -30,8 +30,7 @@ poolQueue = multiprocessing.Queue()
 def playBest(genome):
     parentPipe, childPipe = multiprocessing.Pipe()
     genome.generateNetwork()
-    process = multiprocessing.Process(
-        target=singleGame, args=(genome, childPipe))
+    process = multiprocessing.Process(target=singleGame, args=(genome, childPipe))
     process.start()
     display = networkDisplay.newNetworkDisplay(genome, parentPipe)
     display.checkGenomePipe()
@@ -267,7 +266,6 @@ class workerClass(object):
         env.lock.release()
         env.locked_levels = [False] * 32
         running = True
-        c = 0
         while True:
             if self.running.value:
                 try: 
@@ -276,7 +274,6 @@ class workerClass(object):
                     time.sleep(0.5)
                     self.counter.value += 1
                     if self.counter.value == self.numJobs:
-                        print("gen done")
                         self.running.value = False
                     job = None
                     while self.running.value and self.jobs.empty():
@@ -520,7 +517,7 @@ class gui:
             self.fileSaverButton.grid(row=2, column=1)
             # play best button
             self.playBestButton = Button(
-            self.frame, text='play best', command= lambda : playBest(self.workerClass.pool.getBest()))
+            self.frame, text='play best', command= lambda : playBest(self.best[len(self.best)])
             self.playBestButton.grid(row=2, column=4)
         self.poolInitialized = True
         f.close()
