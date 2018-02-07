@@ -32,7 +32,6 @@ parentPipe, childPipe = multiprocessing.Pipe()
 display = networkDisplay.newNetworkDisplay(parentPipe)
 
 def startDisplay():
-    
     display.checkGenomePipe()
     display.Tk.mainloop()
 
@@ -86,7 +85,7 @@ def singleGame(queue):
         except empty:
             time.sleep(0.5)
             pass
-
+        display.update(genome)
         done = False
         distance = 0
         maxDistance = 0
@@ -160,7 +159,7 @@ def killFCEUX():
 
 
 class workerClass(object):
-    def __init__(self,numJobs,env,population,input,output,recurrnet=False,connectionCost=False):
+    def __init__(self,numJobs,env,population,input,output,recurrnet=False,connectionCost=False,):
         self.pool = None
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
@@ -178,7 +177,7 @@ class workerClass(object):
         self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
         self.numJobs = numJobs
         self.env = env
-        self.singleGame = multiprocessing.Process(target=singleGame, args=(self.randomQueue,childPipe))
+        self.singleGame = None
         
             
     def initializeProcess(self):
@@ -191,6 +190,7 @@ class workerClass(object):
                     )
                 self.proccesses.append(p)
                 p.start()
+            self.singleGame = multiprocessing.Process(target=singleGame, args=(self.randomQueue,childPipe))
             self.singleGame.start()
 
         while True:
