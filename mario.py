@@ -276,6 +276,7 @@ class workerClass(object):
                     time.sleep(0.5)
                     self.counter.value += 1
                     if self.counter.value == self.numJobs:
+                        print("gen done")
                         self.running.value = False
                     job = None
                     while self.running.value and self.jobs.empty():
