@@ -26,7 +26,7 @@ class newNetworkDisplay(Toplevel):
         self.drawnLines = {}
         self.displayQueue = displayQueue
         self.initialized = False
-        if genome != None:
+        if self.lastGenome != None:
             self.placeInputNeurons(genome)
             self.placeOutputNeurons(genome)
             self.placeHiddenNeurons(genome)
