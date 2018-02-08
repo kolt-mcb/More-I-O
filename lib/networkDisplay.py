@@ -15,7 +15,7 @@ class newNetworkDisplay(Toplevel):
         Toplevel.__init__(self)
         #Set up the main window frame as a grid
         #self.grid() 
-        self.Frame = Frame(Tk, width = width, height = height)
+        self.Frame = Frame(self, width = width, height = height)
         self.Frame.grid()
         #Add a canvas to frame1 as self.canvas member 
         self.canvas = Canvas(self.Frame, width = width, height = height,bg ="white")
