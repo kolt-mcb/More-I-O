@@ -26,9 +26,7 @@ import random
 sharedRunning = multiprocessing.Value(c_bool,False)
 stackplotQueue = multiprocessing.Queue()
 poolQueue = multiprocessing.Queue()
-
-
-parentPipe, childPipe = multiprocessing.Pipe()
+displayQueue = multiprocessing.Queue()
 
 
 
@@ -105,7 +103,7 @@ def singleGame(randomQueue):
 
                 o = genome.evaluateNetwork(ob.tolist(), discrete=False)
                 o = joystick(o)
-                childPipe.send(genome)
+                displayQueue.put(genome)
                 ob, reward, done, _ = env.step(o)
                 if 'ignore' in _:
                     done = False
@@ -400,14 +398,13 @@ class gui:
         self.ax.stackplot([], [], baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)
         canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
-        self.sentinel = object()  # tells the main tkinter window if a generattion is in progress
         self.firstRun = True
         self.workerClass = None
         self.pool = None
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
-        self.display = networkDisplay.newNetworkDisplay(self,parentPipe)
+        self.display = networkDisplay.newNetworkDisplay(self,displayQueue)
         
 
 
