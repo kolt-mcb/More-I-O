@@ -407,7 +407,7 @@ class gui:
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
-        self.display = networkDisplay.newNetworkDisplay(self,genomePipe=parentPipe)
+        self.display = networkDisplay.newNetworkDisplay(self,parentPipe)
         
 
 
