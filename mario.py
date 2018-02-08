@@ -12,7 +12,6 @@ import time
 import multiprocessing
 import queue
 from multiprocessing.pool import ThreadPool
-import threading
 from tkinter import *
 from tkinter import filedialog, messagebox
 import pickle
@@ -30,12 +29,7 @@ poolQueue = multiprocessing.Queue()
 
 
 parentPipe, childPipe = multiprocessing.Pipe()
-display = networkDisplay.newNetworkDisplay(parentPipe)
 
-def startDisplay():
-    
-    display.checkGenomePipe()
-    display.Tk.mainloop()
 
 
 def joystick(four):
@@ -413,6 +407,7 @@ class gui:
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
+        self.display = networkDisplay.newNetworkDisplay(self,parentPipe=parentPipe)
         
 
 
@@ -546,6 +541,4 @@ if __name__ == '__main__':
     root.resizable(width=False, height=False)
     app = gui(root)
     root.protocol("WM_DELETE_WINDOW", app.onClosing)
-    displayProcess = threading.Thread(target=startDisplay)
-    displayProcess.start()
     root.mainloop()
