@@ -5,7 +5,7 @@ import os
 import signal
 import psutil
 from lib import neat
-from lib import networkDisplay
+from lib.networkDisplay import newNetworkDisplay
 import numpy
 import math
 import time
@@ -404,7 +404,7 @@ class gui:
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
-        self.display = networkDisplay.newNetworkDisplay(self,displayQueue,None)
+        self.display = newNetworkDisplay(self,displayQueue,None)
         
 
 
