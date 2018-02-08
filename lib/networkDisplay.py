@@ -11,7 +11,7 @@ height = 480
 
 
 class newNetworkDisplay(Toplevel):
-    def __init__(self,displayQueue=None):
+    def __init__(self,displayQueue=None,genome=None):
         Toplevel.__init__(self)
         #Set up the main window frame as a grid
         #self.grid() 
@@ -26,7 +26,7 @@ class newNetworkDisplay(Toplevel):
         self.drawnLines = {}
         self.displayQueue = displayQueue
         self.initialized = False
-        if self.lastGenome != None:
+        if genome != None:
             self.placeInputNeurons(genome)
             self.placeOutputNeurons(genome)
             self.placeHiddenNeurons(genome)
