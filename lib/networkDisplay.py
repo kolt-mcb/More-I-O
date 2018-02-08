@@ -12,7 +12,7 @@ height = 480
 
 class newNetworkDisplay(Toplevel):
     def __init__(self,genomePipe=None,genome=None):
-        #Toplevel.__init__(self)
+        Toplevel.__init__(self)
         #Set up the main window frame as a grid
         #self.grid() 
         self.Frame = Frame(self, width = width, height = height)
