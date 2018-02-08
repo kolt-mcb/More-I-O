@@ -10,7 +10,7 @@ height = 480
 
 
 
-class newNetworkDisplay(tk.Toplevel):
+class newNetworkDisplay(Toplevel):
     def __init__(self,genomePipe=None,genome=None):
         tk.Toplevel.__init__(self)
         #Set up the main window frame as a grid
