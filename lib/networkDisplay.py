@@ -12,7 +12,7 @@ height = 480
 
 class newNetworkDisplay(Toplevel):
     def __init__(self,genomePipe=None,genome=None):
-        Toplevel.__init__(self)
+        #Toplevel.__init__(self)
         #Set up the main window frame as a grid
         #self.grid() 
         self.Frame = Frame(self, width = width, height = height)
@@ -25,6 +25,7 @@ class newNetworkDisplay(Toplevel):
         self.drawnCells = {}
         self.drawnLines = {}
         self.genomePipe = genomePipe
+        self.initialized = False
         if genome != None:
             self.placeInputNeurons(genome)
             self.placeOutputNeurons(genome)
@@ -35,6 +36,7 @@ class newNetworkDisplay(Toplevel):
             self.canvas.focus_set()
             self.canvas.pack()
             self.canvas.update()
+        self.checkGenomePipe()
         
         
     def update(self,genome):
@@ -233,13 +235,14 @@ class newNetworkDisplay(Toplevel):
                     self.canvas.itemconfig(self.drawnLines[gene.innovation],fill=color)
     
     def checkGenomePipe(self):
-        genome = self.genomePipe.recv()
-        if genome == "quit":
-            self.genomePipe.close()
-            self._quit()
-        else:    
-            self.updateCanvas(genome)
-            self.Tk.after(10,self.checkGenomePipe)
+        if self.initialized:
+            genome = self.genomePipe.recv()
+            if genome == "quit":
+                self.genomePipe.close()
+                self._quit()
+            else:    
+                self.updateCanvas(genome)
+                self.Tk.after(10,self.checkGenomePipe)
 
 
 
