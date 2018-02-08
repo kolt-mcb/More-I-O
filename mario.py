@@ -5,7 +5,7 @@ import os
 import signal
 import psutil
 from lib import neat
-from lib import networkDisplay
+from lib import networkDisplay.newNetworkDisplay
 import numpy
 import math
 import time
