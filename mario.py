@@ -404,7 +404,7 @@ class gui:
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
-        self.display = networkDisplay.newNetworkDisplay(self,displayQueue)
+        self.display = newNetworkDisplay(self,displayQueue)
         
 
 
