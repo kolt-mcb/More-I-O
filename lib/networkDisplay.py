@@ -40,6 +40,7 @@ class newNetworkDisplay(Toplevel):
         
         
     def update(self,genome):
+        if genome
         self.canvas.delete("all")
         self.lastGenome = None
         self.cells = {} 
@@ -237,12 +238,13 @@ class newNetworkDisplay(Toplevel):
     def checkGenomePipe(self):
         if self.initialized:
             genome = self.genomePipe.recv()
-            if genome == "quit":
-                self.genomePipe.close()
-                self._quit()
-            else:    
-                self.updateCanvas(genome)
-                self.Tk.after(10,self.checkGenomePipe)
+            if genome != None:
+                if genome == "quit":
+                    self.genomePipe.close()
+                    self._quit()
+                else:    
+                    self.updateCanvas(genome)
+                    self.Tk.after(10,self.checkGenomePipe)
 
 
 
