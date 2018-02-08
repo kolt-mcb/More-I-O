@@ -40,7 +40,6 @@ class newNetworkDisplay(Toplevel):
         
         
     def update(self,genome):
-        if genome
         self.canvas.delete("all")
         self.lastGenome = None
         self.cells = {} 
