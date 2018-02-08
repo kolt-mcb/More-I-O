@@ -36,7 +36,7 @@ class newNetworkDisplay(Toplevel):
             self.canvas.focus_set()
             self.canvas.pack()
             self.canvas.update()
-        self.checkGenomeQueue()
+        self.checkDisplayQueue()
         
         
     def update(self,genome):
@@ -234,7 +234,7 @@ class newNetworkDisplay(Toplevel):
                     color = self.pickLineColor(gene.weight,genome.neurons[gene.into].value)
                     self.canvas.itemconfig(self.drawnLines[gene.innovation],fill=color)
     
-    def checkGenomeQueue(self):
+    def checkDisplayQueue(self):
         if self.initialized:
             genome = self.genomeQueue.get()
             if genome != None:
@@ -242,7 +242,7 @@ class newNetworkDisplay(Toplevel):
                     self._quit()
                 else:    
                     self.updateCanvas(genome)
-                    self.Tk.after(10,self.checkGenomeQueue)
+                    self.Tk.after(10,self.checkDisplayQueue)
 
 
 
