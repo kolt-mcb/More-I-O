@@ -10,14 +10,11 @@ height = 480
 
 
 
-class newNetworkDisplay():
+class newNetworkDisplay(tk.Toplevel):
     def __init__(self,genomePipe=None,genome=None):
-       
-        
+        tk.Toplevel.__init__(self)
         #Set up the main window frame as a grid
         #self.grid() 
-        self.Tk = Tk() 
-        #Set up main frame for game as a grid
         self.Frame = Frame(self.Tk, width = width, height = height)
         self.Frame.grid()
         #Add a canvas to frame1 as self.canvas member 
