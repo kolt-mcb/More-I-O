@@ -281,6 +281,7 @@ class workerClass(object):
                 except queue.Empty: 
                     time.sleep(0.5)
                     self.counter.value += 1
+                    print(self.counter.value)
                     if self.counter.value == self.numJobs:
                         self.running.value = False
                     job = None
