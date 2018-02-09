@@ -11,7 +11,7 @@ height = 480
 
 
 class newNetworkDisplay(Toplevel):
-    def __init__(self,displayQueue,genome):
+    def __init__(self,displayQueue):
         Toplevel.__init__(self)
         #Set up the main window frame as a grid
         #self.grid() 
@@ -24,19 +24,9 @@ class newNetworkDisplay(Toplevel):
         self.lines = {}
         self.drawnCells = {}
         self.drawnLines = {}
-        self.displayQueue = displayQueue
         self.initialized = False
-        if genome != None:
-            self.placeInputNeurons(genome)
-            self.placeOutputNeurons(genome)
-            self.placeHiddenNeurons(genome)
-            self.mutationRates(genome)
-            self.drawCells() 
-            self.drawLines(genome)
-            self.canvas.focus_set()
-            self.canvas.pack()
-            self.canvas.update()
-        self.checkDisplayQueue()
+        self.displayQueue = displayQueue
+
         
         
     def update(self,genome):
@@ -235,14 +225,18 @@ class newNetworkDisplay(Toplevel):
                     self.canvas.itemconfig(self.drawnLines[gene.innovation],fill=color)
     
     def checkDisplayQueue(self):
-        if self.initialized:
-            genome = self.genomeQueue.get()
-            if genome != None:
-                if genome == "quit":
-                    self._quit()
-                else:    
-                    self.updateCanvas(genome)
-                    self.Tk.after(10,self.checkDisplayQueue)
+        try:
+            genome = self.DisplayQueue.get()
+            if not self.initialized:
+                self.update()
+        except queue.Empty:
+            self.Tk.after(10,self.checkDisplayQueue)
+        if genome != None:
+            if genome == "quit":
+                self._quit()
+            else:    
+                self.updateCanvas(genome)
+                self.Tk.after(10,self.checkDisplayQueue)
 
 
 

@@ -26,7 +26,7 @@ import random
 sharedRunning = multiprocessing.Value(c_bool,False)
 stackplotQueue = multiprocessing.Queue()
 poolQueue = multiprocessing.Queue()
-displayQueue = multiprocessing.Queue()
+
 
 
 
@@ -70,7 +70,7 @@ def joystick(four):
 
 
 
-def singleGame(randomQueue):
+def singleGame(randomQueue,displayQueue):
     env = gym.make('meta-SuperMarioBros-Tiles-v0')
     env.reset()
     while True:
@@ -103,7 +103,7 @@ def singleGame(randomQueue):
 
                 o = genome.evaluateNetwork(ob.tolist(), discrete=False)
                 o = joystick(o)
-                displayQueue.put(genome)
+                self.displayQueue.put(genome)
                 ob, reward, done, _ = env.step(o)
                 if 'ignore' in _:
                     done = False
@@ -152,7 +152,7 @@ def killFCEUX():
 
 
 class workerClass(object):
-    def __init__(self,numJobs,env,population,input,output,recurrnet=False,connectionCost=False,):
+    def __init__(self,displayQueue,numJobs,env,population,input,output,recurrnet=False,connectionCost=False,):
         self.pool = None
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
@@ -171,7 +171,7 @@ class workerClass(object):
         self.numJobs = numJobs
         self.env = env
         self.singleGame = None
-        
+        self.displayQueue = displayQueue
             
     def initializeProcess(self):
         
@@ -183,7 +183,7 @@ class workerClass(object):
                     )
                 self.proccesses.append(p)
                 p.start()
-            self.singleGame = multiprocessing.Process(target=singleGame, args=(self.randomQueue,))
+            self.singleGame = multiprocessing.Process(target=singleGame, args=(self.randomQueue,self.displayQueue))
             self.singleGame.start()
 
         while True:
@@ -404,7 +404,8 @@ class gui:
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
-        self.display = newNetworkDisplay(self,displayQueue,None)
+        displayQueue = multiprocessing.Queue()
+        display = newNetworkDisplay(self,)
         
 
 
@@ -422,7 +423,7 @@ class gui:
         if not self.running:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
-                self.workerClass = workerClass(self.envNum.get(),self.env,self.population.get(), 208, 4)
+                self.workerClass = workerClass(self.displayQueue,self.envNum.get(),self.env,self.population.get(), 208, 4)
                 # file saver button
                 self.fileSaverButton = Button(
                 self.frame, text="save pool", command=self.saveFile)
