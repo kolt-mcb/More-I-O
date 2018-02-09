@@ -405,7 +405,7 @@ class gui:
         self.genomeDictionary = {}
         self.specieID = 0
         self.displayQueue = multiprocessing.Queue()
-        self.display = newNetworkDisplay(self,self.displayQueue)
+        self.display = newNetworkDisplay(self.master,self.displayQueue)
         
 
 
