@@ -153,7 +153,7 @@ class newNetworkDisplay(Toplevel):
         for mutation,Rate in genome.mutationRates.items():
             self.canvas.create_text((x,y),text='{} {}'.format(mutation,str(round(Rate,2))))
             x += (.05*width)+25 
-        self.canvas.create_text((x,y),str(genome.rate))
+        self.canvas.create_text((x,y),text=str(genome.rate))
 
 
 
