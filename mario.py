@@ -103,7 +103,7 @@ def singleGame(randomQueue,displayQueue):
 
                 o = genome.evaluateNetwork(ob.tolist(), discrete=False)
                 o = joystick(o)
-                self.displayQueue.put(genome)
+                displayQueue.put(genome)
                 ob, reward, done, _ = env.step(o)
                 if 'ignore' in _:
                     done = False
