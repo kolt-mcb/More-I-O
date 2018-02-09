@@ -227,10 +227,10 @@ class workerClass(object):
             time.sleep(0.5)
 
     def getRandomGenome(self):
-        randomSpecie = random.randint(1,len(self.pool.species))
+        randomSpecie = random.randint(0,len(self.pool.species)-1)
         species = self.pool.species[randomSpecie]
-        randomGenome = random.randint(1,len(species.genomes))
-        genome = species.genomes[randomGenome-1]
+        randomGenome = random.randint(0,len(species.genomes)-1)
+        genome = species.genomes[randomGenome]
         return genome
 
 
