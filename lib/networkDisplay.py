@@ -153,6 +153,9 @@ class newNetworkDisplay(Toplevel):
         for mutation,Rate in genome.mutationRates.items():
             self.canvas.create_text((x,y),text='{} {}'.format(mutation,str(round(Rate,2))))
             x += (.05*width)+25 
+        self.canvas.create_text((x,y),''.join(genome.ID))
+
+
 
 
     def pickCellColor(self,value):
