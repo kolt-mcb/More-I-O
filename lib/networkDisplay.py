@@ -228,7 +228,7 @@ class newNetworkDisplay(Toplevel):
     
     def checkDisplayQueue(self):
         try:
-            genome = self.DisplayQueue.get()
+            genome = self.displayQueue.get()
             if not self.initialized:
                 self.update()
         except queue.Empty:
