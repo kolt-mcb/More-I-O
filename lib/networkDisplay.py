@@ -229,14 +229,12 @@ class newNetworkDisplay(Toplevel):
     def checkDisplayQueue(self):
         try:
             genome = self.displayQueue.get_nowait()
+            self.updateCanvas(genome)
+            self.after(250,self.checkDisplayQueue)
         except queue.Empty:
             self.after(250,self.checkDisplayQueue)
-        if genome != None:
-            if genome == "quit":
-                self._quit()
-            else:    
-                self.updateCanvas(genome)
-                self.after(250,self.checkDisplayQueue)
+
+
 
 
 
