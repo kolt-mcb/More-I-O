@@ -405,7 +405,7 @@ class gui:
         self.genomeDictionary = {}
         self.specieID = 0
         self.displayQueue = multiprocessing.Queue()
-        self.display = newNetworkDisplay(self.displayQueue)
+        self.display = None
         
 
 
@@ -424,6 +424,7 @@ class gui:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
                 self.workerClass = workerClass(self.displayQueue,self.envNum.get(),self.env,self.population.get(), 208, 4)
+                self.display = newNetworkDisplay(self.displayQueue)
                 # file saver button
                 self.fileSaverButton = Button(
                 self.frame, text="save pool", command=self.saveFile)
@@ -514,6 +515,7 @@ class gui:
         print(loadedPool["generations"])
         neat.pool.generations = loadedPool["generations"]
         self.population.set(self.workerClass.pool.Population)
+        self.display = newNetworkDisplay(self.displayQueue)
         if not self.poolInitialized:
             # file saver button
             self.fileSaverButton = Button(
