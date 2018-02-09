@@ -4,6 +4,7 @@
 from tkinter import *
 import math
 import time
+import queue
 
 width = 1530
 height = 480
