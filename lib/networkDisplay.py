@@ -232,13 +232,13 @@ class newNetworkDisplay(Toplevel):
             if not self.initialized:
                 self.update()
         except queue.Empty:
-            self.Tk.after(10,self.checkDisplayQueue)
+            self.Tk.after(250,self.checkDisplayQueue)
         if genome != None:
             if genome == "quit":
                 self._quit()
             else:    
                 self.updateCanvas(genome)
-                self.Tk.after(10,self.checkDisplayQueue)
+                self.Tk.after(250,self.checkDisplayQueue)
 
 
 
