@@ -180,7 +180,7 @@ class workerClass(object):
             for i in range(self.numJobs):
                 p = multiprocessing.Process(
                     target=self.jobTrainer,
-                    args=(self.env,self.running,self.counter)
+                    args=(self.env,self.jobs,self.results,self.running,self.counter)
                     )
                 self.proccesses.append(p)
                 p.start()
@@ -267,7 +267,7 @@ class workerClass(object):
 
 
 
-    def jobTrainer(self,envName,running,counter):
+    def jobTrainer(self,envName,jobs,results,running,counter):
         job = None
         env = gym.make(envName)
         env.lock = self.lock
@@ -278,7 +278,7 @@ class workerClass(object):
         while True:
             if running.value:
                 try: 
-                    job = self.jobs.get_nowait()
+                    job = jobs.get_nowait()
                 except queue.Empty: 
                     time.sleep(0.5)
                     counter.value += 1
@@ -286,7 +286,7 @@ class workerClass(object):
                     if counter.value == self.numJobs:
                         running.value = False
                     job = None
-                    while self.running.value and self.jobs.empty():
+                    while running.value and jobs.empty():
                         time.sleep(0.5)
                     pass
                 if job != None:
@@ -342,7 +342,7 @@ class workerClass(object):
                             finalScore += score
                         finalScore = round(finalScore )
                     if job != None:
-                        self.results.put((finalScore, job))
+                        results.put((finalScore, job))
                         job = None
                         print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
             time.sleep(0.5)
