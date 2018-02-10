@@ -293,7 +293,7 @@ class workerClass(object):
                     if counter.value == self.numJobs:
                         running.value = False
                     job = None
-                    while running.value and jobs.empty():
+                    while running.value:
                         print("sleeping")
                         time.sleep(0.5)
                     pass
