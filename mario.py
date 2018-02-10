@@ -220,6 +220,7 @@ class workerClass(object):
                     self.randomQueue.put(self.getRandomGenome())
                 if not self.results.empty():
                     for result in self.results.get():
+                        print(result)
                         results.append(result)
             if len(results) == self.pool.Population:
                 self.updateFitness(results)
