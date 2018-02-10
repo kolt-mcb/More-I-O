@@ -179,7 +179,7 @@ class workerClass(object):
             for i in range(self.numJobs):
                 p = multiprocessing.Process(
                     target=self.jobTrainer,
-                    args=([self.env],self.running,self.counter)
+                    args=(self.env,self.running,self.counter)
                     )
                 self.proccesses.append(p)
                 p.start()
