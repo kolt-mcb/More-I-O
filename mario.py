@@ -106,7 +106,7 @@ def singleGame(randomQueue,displayQueue):
                     lastPress = o
                     if displayQueue.empty():
                         displayQueue.put_nowait(genome)
-                time.sleep(0.1)
+                time.sleep(0.05)
                 ob, reward, done, _ = env.step(o)
                 if 'ignore' in _:
                     done = False
@@ -199,6 +199,7 @@ class workerClass(object):
 
 
     def createJobs(self):
+        print("start createjobs")
         self.counter.value = 0
         s = 0
         for specie in self.pool.species:  # creates a job with species and genome pindex, env name and number of trials/attemps
@@ -219,7 +220,9 @@ class workerClass(object):
                     self.randomQueue.put(self.getRandomGenome())
                 if not self.results.empty():
                     for result in self.results.get():
+                        print(result)
                         results.append(result)
+            print(len(results))
             if len(results) == self.pool.Population:
                 self.updateFitness(results)
                 self.pool.nextGeneration()
@@ -279,17 +282,20 @@ class workerClass(object):
         resultsList = []
         resultsReady = False
         while True:
+            print(running.value)
             if running.value:
                 try: 
                     job = jobs.get(timeout=1)
                 except queue.Empty: 
                     time.sleep(0.5)
                     counter.value += 1
+                    print(counter.value)
                     resultsReady = True
                     if counter.value == self.numJobs:
                         running.value = False
                     job = None
                     while running.value:
+                        print("sleeping")
                         time.sleep(0.5)
                     pass
                 if job != None:
@@ -349,6 +355,7 @@ class workerClass(object):
                         job = None
                         print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
             if resultsReady == True:
+                print("sent results")
                 results.put(resultsList)
                 resultsList = []
                 resultsReady = False
@@ -370,7 +377,7 @@ class workerClass(object):
 class gui:
     def __init__(self, master):
         self.master = master
-        self.frame = Frame(self.master, height=1200, width=500)
+        self.frame = Frame(self.master, height=1100, width=500)
         self.frame.grid()
         # jobs label
         self.envLabel = Label(self.master, text="Jobs: ").grid(
@@ -401,7 +408,7 @@ class gui:
         self.running = False
         self.poolInitialized = False
         self.env = 'meta-SuperMarioBros-Tiles-v0'
-        self.fig, self.ax = plt.subplots(figsize=(4, 4))
+        self.fig, self.ax = plt.subplots(figsize=(3.7, 3))
         self.ax.set_xlabel('generations')
         self.ax.set_xlabel('number of species in a specie')
         self.ax.stackplot([], [], baseline='wiggle')
@@ -546,7 +553,7 @@ class gui:
 if __name__ == '__main__':
 
     root = Tk()
-    #root.resizable(width=False, height=False)
+    root.resizable(width=False, height=False)
     app = gui(root)
     root.protocol("WM_DELETE_WINDOW", app.onClosing)
     root.mainloop()
