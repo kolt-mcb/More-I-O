@@ -401,7 +401,7 @@ class gui:
         self.running = False
         self.poolInitialized = False
         self.env = 'meta-SuperMarioBros-Tiles-v0'
-        self.fig, self.ax = plt.subplots(figsize=(4, 3.5))
+        self.fig, self.ax = plt.subplots(figsize=(4, 4))
         self.ax.set_xlabel('generations')
         self.ax.set_xlabel('number of species in a specie')
         self.ax.stackplot([], [], baseline='wiggle')
