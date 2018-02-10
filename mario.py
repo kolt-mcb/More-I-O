@@ -155,7 +155,6 @@ def killFCEUX():
 
 class workerClass(object):
     def __init__(self,displayQueue,numJobs,env,population,input,output,recurrnet=False,connectionCost=False,):
-        self.pool = None
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
         self.randomQueue = multiprocessing.Queue(maxsize=1)
@@ -377,7 +376,7 @@ class workerClass(object):
 class gui:
     def __init__(self, master):
         self.master = master
-        self.frame = Frame(self.master, height=1000, width=450)
+        self.frame = Frame(self.master, height=1100, width=500)
         self.frame.grid()
         # jobs label
         self.envLabel = Label(self.master, text="Jobs: ").grid(
@@ -435,7 +434,6 @@ class gui:
 
 
     def toggleRun(self):
-
         if not self.running:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
@@ -462,6 +460,7 @@ class gui:
                 self.pool,self.generations,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
+                self.poolInitialized=True
                 self.netProcess.start()
                 self.firstRun = False
             sharedRunning.value = True
