@@ -85,6 +85,7 @@ def singleGame(randomQueue,displayQueue):
         staleness = 0
         print("playing next")
         env.locked_levels = [False] * 32
+        lastPress = None
         for LVint in [1]:
             genome.generateNetwork()
             maxDistance = 0
@@ -93,9 +94,7 @@ def singleGame(randomQueue,displayQueue):
             done = False
             bonus = 0
             bonusOffset = 0
-
             #env.is_finished = True
-
             env.change_level(new_level=LVint)
             # env._write_to_pipe("changelevel#"+str(LVint))
             while not done:
@@ -103,7 +102,9 @@ def singleGame(randomQueue,displayQueue):
 
                 o = genome.evaluateNetwork(ob.tolist(), discrete=False)
                 o = joystick(o)
-                displayQueue.put(genome)
+                if o != lastPress:
+                    lastPress = o
+                    displayQueue.put(genome)
                 ob, reward, done, _ = env.step(o)
                 if 'ignore' in _:
                     done = False
