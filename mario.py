@@ -370,7 +370,7 @@ class workerClass(object):
 class gui:
     def __init__(self, master):
         self.master = master
-        self.frame = Frame(self.master, height=1200, width=500)
+        self.frame = Frame(self.master, height=1500, width=500)
         self.frame.grid()
         # jobs label
         self.envLabel = Label(self.master, text="Jobs: ").grid(
