@@ -498,7 +498,7 @@ class gui:
                     if gene.innovation > newInovation:
                         newInovation = gene.innovation
 
-        self.workerClass = workerClass(self.envNum.get(),
+        self.workerClass = workerClass(self.displayQueue,self.envNum.get(),
                                         self.env,
                                         sum([v for v in [len(specie.genomes) for specie in species]]),
                                         species[0].genomes[0].Inputs,
