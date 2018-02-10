@@ -198,7 +198,6 @@ class workerClass(object):
 
 
     def createJobs(self):
-        print("start createjobs")
         self.counter.value = 0
         s = 0
         for specie in self.pool.species:  # creates a job with species and genome pindex, env name and number of trials/attemps
@@ -219,9 +218,7 @@ class workerClass(object):
                     self.randomQueue.put(self.getRandomGenome())
                 if not self.results.empty():
                     for result in self.results.get():
-                        print(result)
                         results.append(result)
-            print(len(results))
             if len(results) == self.pool.Population:
                 self.updateFitness(results)
                 self.pool.nextGeneration()
@@ -281,20 +278,17 @@ class workerClass(object):
         resultsList = []
         resultsReady = False
         while True:
-            print(running.value)
             if running.value:
                 try: 
                     job = jobs.get(timeout=1)
                 except queue.Empty: 
                     time.sleep(0.5)
                     counter.value += 1
-                    print(counter.value)
                     resultsReady = True
                     if counter.value == self.numJobs:
                         running.value = False
                     job = None
                     while running.value:
-                        print("sleeping")
                         time.sleep(0.5)
                     pass
                 if job != None:
@@ -354,7 +348,6 @@ class workerClass(object):
                         job = None
                         print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
             if resultsReady == True:
-                print("sent results")
                 results.put(resultsList)
                 resultsList = []
                 resultsReady = False
@@ -527,7 +520,6 @@ class gui:
         self.workerClass.plotData = loadedPool["plotData"]
         self.workerClass.genomeDictionary = loadedPool["genomeDictionary"]
         self.workerClass.specieID = loadedPool["specieID"]
-        print(loadedPool["generations"])
         neat.pool.generations = loadedPool["generations"]
         self.population.set(self.workerClass.pool.Population)
         self.display = newNetworkDisplay(self.displayQueue)
