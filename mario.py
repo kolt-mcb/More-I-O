@@ -357,6 +357,7 @@ class workerClass(object):
             if resultsReady == True:
                 print("sent results")
                 results.put(resultsList)
+                resultsList = []
                 resultsReady = False
             
             time.sleep(0.5)
