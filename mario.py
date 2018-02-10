@@ -279,7 +279,7 @@ class workerClass(object):
             print(running.value)
             if running.value:
                 try: 
-                    job = jobs.get_nowait()
+                    job = jobs.get(timeout=1)
                 except queue.Empty: 
                     time.sleep(0.5)
                     counter.value += 1
