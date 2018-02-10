@@ -276,6 +276,7 @@ class workerClass(object):
         env.lock.release()
         env.locked_levels = [False] * 32
         while True:
+            print(running.value)
             if running.value:
                 try: 
                     job = jobs.get_nowait()
