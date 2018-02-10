@@ -353,6 +353,7 @@ class workerClass(object):
                         job = None
                         print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
             if resultsReady == True:
+                print("sent results")
                 results.put(resultsList)
                 resultsReady = False
             
