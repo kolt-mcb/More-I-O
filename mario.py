@@ -158,7 +158,7 @@ class workerClass(object):
         self.pool = None
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
-        self.randomQueue = multiprocessing.Queue()
+        self.randomQueue = multiprocessing.Queue(maxsize=1)
         self.results = multiprocessing.Queue()
         self.proccesses = []
         self.numJobs = None
