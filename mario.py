@@ -288,6 +288,7 @@ class workerClass(object):
                         running.value = False
                     job = None
                     while running.value and jobs.empty():
+                        print("sleeping")
                         time.sleep(0.5)
                     pass
                 if job != None:
