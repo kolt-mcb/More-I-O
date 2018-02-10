@@ -104,7 +104,7 @@ def singleGame(randomQueue,displayQueue):
                 o = joystick(o)
                 if o != lastPress:
                     lastPress = o
-                    displayQueue.put(genome)
+                    displayQueue.put_nowait(genome)
                 ob, reward, done, _ = env.step(o)
                 if 'ignore' in _:
                     done = False
