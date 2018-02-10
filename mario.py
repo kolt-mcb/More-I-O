@@ -219,7 +219,8 @@ class workerClass(object):
                 if self.randomQueue.empty():
                     self.randomQueue.put(self.getRandomGenome())
                 if not self.results.empty():
-                    results.append(self.results.get())
+                    for result in self.results.get():
+                        results.append(result)
             if len(results) == self.pool.Population:
                 self.updateFitness(results)
                 self.pool.nextGeneration()
@@ -276,6 +277,8 @@ class workerClass(object):
         env.reset()
         env.lock.release()
         env.locked_levels = [False] * 32
+        resultsList = []
+        resultsReady = False
         while True:
             print(running.value)
             if running.value:
@@ -285,6 +288,7 @@ class workerClass(object):
                     time.sleep(0.5)
                     counter.value += 1
                     print(counter.value)
+                    self.resultsReady = True
                     if counter.value == self.numJobs:
                         running.value = False
                     job = None
@@ -345,9 +349,13 @@ class workerClass(object):
                             finalScore += score
                         finalScore = round(finalScore )
                     if job != None:
-                        results.put((finalScore, job))
+                        resultsList.append((finalScore, job))
                         job = None
                         print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
+            if resultsReady == True:
+                results.put(resultsList)
+                resultsReady = False
+            
             time.sleep(0.5)
 
 
