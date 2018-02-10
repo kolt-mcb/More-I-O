@@ -404,7 +404,7 @@ class gui:
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
-        self.displayQueue = multiprocessing.Queue()
+        self.displayQueue = multiprocessing.Queue(maxsize=1)
         self.display = None
         
 
