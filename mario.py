@@ -222,6 +222,7 @@ class workerClass(object):
                     for result in self.results.get():
                         print(result)
                         results.append(result)
+            print(len(results))
             if len(results) == self.pool.Population:
                 self.updateFitness(results)
                 self.pool.nextGeneration()
