@@ -179,7 +179,7 @@ class workerClass(object):
             for i in range(self.numJobs):
                 p = multiprocessing.Process(
                     target=self.jobTrainer,
-                    args=([self.env])
+                    args=([self.env],self.running,self.counter)
                     )
                 self.proccesses.append(p)
                 p.start()
@@ -266,7 +266,7 @@ class workerClass(object):
 
 
 
-    def jobTrainer(self,envName):
+    def jobTrainer(self,envName,running,counter):
         job = None
         env = gym.make(envName)
         env.lock = self.lock
@@ -274,17 +274,16 @@ class workerClass(object):
         env.reset()
         env.lock.release()
         env.locked_levels = [False] * 32
-        running = True
         while True:
-            if self.running.value:
+            if running.value:
                 try: 
                     job = self.jobs.get_nowait()
                 except queue.Empty: 
                     time.sleep(0.5)
-                    self.counter.value += 1
-                    print(self.counter.value)
-                    if self.counter.value == self.numJobs:
-                        self.running.value = False
+                    counter.value += 1
+                    print(counter.value)
+                    if counter.value == self.numJobs:
+                        running.value = False
                     job = None
                     while self.running.value and self.jobs.empty():
                         time.sleep(0.5)
@@ -333,7 +332,6 @@ class workerClass(object):
                                 staleness = 0
                             if maxDistance >= distance:
                                 staleness += 1
-
                             if staleness > 80 or done:
                                 scores.append(maxDistance - bonusOffset + bonus)
                                 if not done:
