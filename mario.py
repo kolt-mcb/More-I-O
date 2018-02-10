@@ -288,7 +288,7 @@ class workerClass(object):
                     time.sleep(0.5)
                     counter.value += 1
                     print(counter.value)
-                    self.resultsReady = True
+                    resultsReady = True
                     if counter.value == self.numJobs:
                         running.value = False
                     job = None
