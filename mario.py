@@ -26,7 +26,7 @@ import random
 
 stackplotQueue = multiprocessing.Queue()
 poolQueue = multiprocessing.Queue()
-
+sharedRunning = multiprocessing.Value(c_bool,False)
 
 
 
@@ -175,7 +175,7 @@ class workerClass(object):
         self.env = env
         self.singleGame = None
         self.displayQueue = displayQueue
-        sharedRunning = multiprocessing.Value(c_bool,False)
+        
             
     def initializeProcess(self):
         
@@ -191,7 +191,7 @@ class workerClass(object):
             self.singleGame.start()
 
         while True:
-            if self.sharedRunning.value:
+            if sharedRunning.value:
                 if not self.initialized.value:
                     self.initialized.value = True
             if self.initialized.value:
@@ -471,10 +471,10 @@ class gui:
                 self.poolInitialized=True
                 self.netProcess.start()
                 self.firstRun = False
-            self.sharedRunning.value = True
+            sharedRunning.value = True
             self.master.after(250,self.checkRunPaused)
         if not self.running:
-            self.sharedRunning.value=False
+            sharedRunning.value=False
             self.runButton.config(text='run')
 
 
