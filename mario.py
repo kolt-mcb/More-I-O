@@ -76,7 +76,6 @@ def singleGame(randomQueue,displayQueue):
     while True:
         try:
             genome = randomQueue.get()
-            randomQueue.task_done()
         except queue.Empty:
             time.sleep(0.5)
             pass
@@ -222,7 +221,6 @@ class workerClass(object):
                     self.randomQueue.put(self.getRandomGenome())
                 if not self.results.empty():
                     for result in self.results.get():
-                        self.results.task_done()
                         print(result)
                         results.append(result)
             print(len(results))
@@ -291,10 +289,10 @@ class workerClass(object):
                 try: 
                     job = jobs.get(timeout=10)
                     jobs.task_done()
-                except queue.Empty: 
+                except queue.Empty as error: 
                     time.sleep(0.5)
                     counter.value += 1
-                    print("counter",counter.value)
+                    print("counter",counter.value,error)
                     resultsReady = True
                     if counter.value == self.numJobs:
                         running.value = False
