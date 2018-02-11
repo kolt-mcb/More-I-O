@@ -200,7 +200,6 @@ class workerClass(object):
 
 
     def createJobs(self):
-        print("start createjobs")
         self.counter.value = 0
         s = 0
         for specie in self.pool.species:  # creates a job with species and genome pindex, env name and number of trials/attemps
@@ -221,9 +220,7 @@ class workerClass(object):
                     self.randomQueue.put(self.getRandomGenome())
                 if not self.results.empty():
                     for result in self.results.get():
-                        print(result)
                         results.append(result)
-            print(len(results))
             if len(results) == self.pool.Population:
                 self.updateFitness(results)
                 self.pool.nextGeneration()
@@ -283,23 +280,18 @@ class workerClass(object):
         resultsList = []
         resultsReady = False
         while True:
-            print("running",running.value)
-            print("q,size",jobs.qsize())
             if running.value:
                 try: 
                     job = jobs.get(timeout=10)
                 except queue.Empty as error:
-                    print(error)
                     if jobs.qsize() == 0: 
                         time.sleep(0.5)
                         counter.value += 1
-                        print("counter",counter.value)
                         resultsReady = True
                         if counter.value == self.numJobs:
                             running.value = False
                         job = None
                         while running.value:
-                            print("sleeping")
                             time.sleep(0.5)
                         pass
                     pass
@@ -360,7 +352,6 @@ class workerClass(object):
                         job = None
                         print("species:", currentSpecies, "genome:",currentGenome, "Scored:", finalScore)
             if resultsReady == True:
-                print("sent results")
                 results.put(resultsList)
                 resultsList = []
                 resultsReady = False
