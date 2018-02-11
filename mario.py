@@ -282,15 +282,15 @@ class workerClass(object):
         resultsList = []
         resultsReady = False
         while True:
-            print(running.value)
-            print(jobs.qsize())
+            print("running",running.value)
+            print("q,size",jobs.qsize())
             if running.value:
                 try: 
                     job = jobs.get(timeout=1)
                 except queue.Empty: 
                     time.sleep(0.5)
                     counter.value += 1
-                    print(counter.value)
+                    print("counter",counter.value)
                     resultsReady = True
                     if counter.value == self.numJobs:
                         running.value = False
