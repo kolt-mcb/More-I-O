@@ -106,7 +106,7 @@ def singleGame(randomQueue,displayQueue):
                     lastPress = o
                     if displayQueue.empty():
                         displayQueue.put_nowait(genome)
-                time.sleep(0.05)
+                time.sleep(0.01)
                 ob, reward, done, _ = env.step(o)
                 if 'ignore' in _:
                     done = False
