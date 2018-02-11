@@ -288,7 +288,6 @@ class workerClass(object):
             if running.value:
                 try: 
                     job = jobs.get(timeout=10)
-                    jobs.task_done()
                 except queue.Empty as error: 
                     time.sleep(0.5)
                     counter.value += 1
@@ -460,10 +459,8 @@ class gui:
         if self.running:
             if not stackplotQueue.empty():
                 self.updateStackPlot(stackplotQueue.get())
-                stackplotQueue.task_done()
             if not poolQueue.empty():
                 self.pool,self.generations,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
-                poolQueue.task_done()
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
                 self.poolInitialized=True
