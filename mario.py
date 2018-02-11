@@ -288,17 +288,19 @@ class workerClass(object):
             if running.value:
                 try: 
                     job = jobs.get(timeout=10)
-                except queue.Empty as error: 
-                    time.sleep(0.5)
-                    counter.value += 1
-                    print("counter",counter.value,error)
-                    resultsReady = True
-                    if counter.value == self.numJobs:
-                        running.value = False
-                    job = None
-                    while running.value:
-                        print("sleeping")
+                except queue.Empty as error:
+                    if jobs.qsize == 0: 
                         time.sleep(0.5)
+                        counter.value += 1
+                        print("counter",counter.value,error)
+                        resultsReady = True
+                        if counter.value == self.numJobs:
+                            running.value = False
+                        job = None
+                        while running.value:
+                            print("sleeping")
+                            time.sleep(0.5)
+                        pass
                     pass
                 if job != None:
                     currentSpecies = job[0]
