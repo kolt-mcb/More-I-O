@@ -76,6 +76,7 @@ def singleGame(randomQueue,displayQueue):
     while True:
         try:
             genome = randomQueue.get()
+            randomQueue.task_done()
         except queue.Empty:
             time.sleep(0.5)
             pass
@@ -221,6 +222,7 @@ class workerClass(object):
                     self.randomQueue.put(self.getRandomGenome())
                 if not self.results.empty():
                     for result in self.results.get():
+                        self.results.task_done()
                         print(result)
                         results.append(result)
             print(len(results))
@@ -288,6 +290,7 @@ class workerClass(object):
             if running.value:
                 try: 
                     job = jobs.get(timeout=10)
+                    jobs.task_done()
                 except queue.Empty: 
                     time.sleep(0.5)
                     counter.value += 1
@@ -459,8 +462,10 @@ class gui:
         if self.running:
             if not stackplotQueue.empty():
                 self.updateStackPlot(stackplotQueue.get())
+                stackplotQueue.task_done()
             if not poolQueue.empty():
                 self.pool,self.generations,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
+                poolQueue.task_done()
             if self.firstRun:
                 self.netProcess = multiprocessing.Process(target=self.workerClass.initializeProcess)
                 self.poolInitialized=True
