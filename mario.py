@@ -283,6 +283,7 @@ class workerClass(object):
         resultsReady = False
         while True:
             print(running.value)
+            print(jobs.qsize())
             if running.value:
                 try: 
                     job = jobs.get(timeout=1)
