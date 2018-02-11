@@ -289,10 +289,11 @@ class workerClass(object):
                 try: 
                     job = jobs.get(timeout=10)
                 except queue.Empty as error:
-                    if jobs.qsize == 0: 
+                    print(error)
+                    if jobs.qsize() == 0: 
                         time.sleep(0.5)
                         counter.value += 1
-                        print("counter",counter.value,error)
+                        print("counter",counter.value)
                         resultsReady = True
                         if counter.value == self.numJobs:
                             running.value = False
