@@ -284,7 +284,8 @@ class workerClass(object):
                     print("DEBUGING",error)
                     if jobs.qsize() == 0: 
                         time.sleep(0.5)
-                        counter.value += 1
+                        with self.lock:
+                            counter.value += 1
                         resultsReady = True
                         if counter.value == self.numJobs:
                             running.value = False
