@@ -101,7 +101,7 @@ def singleGame(randomQueue,displayQueue):
 
                 o = genome.evaluateNetwork(ob.tolist(), discrete=False)
                 o = joystick(o)
-                if displayQueue.empty():
+                if displayQueue.empty() and stackplotQueue.qsize() == 0:
                     displayQueue.put(genome)
                 time.sleep(0.008)
                 ob, reward, done, _ = env.step(o)
