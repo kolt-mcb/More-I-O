@@ -438,7 +438,7 @@ class gui:
             if not self.poolInitialized:
                 self.runButton.config(text='running')
                 self.workerClass = workerClass(self.displayQueue,self.envNum.get(),self.env,self.population.get(), 208, 4)
-                self.display = newNetworkDisplay(self.displayQueue,self.lock)
+                self.display = newNetworkDisplay(self.displayQueue)
                 # file saver button
                 self.fileSaverButton = Button(
                 self.frame, text="save pool", command=self.saveFile)
@@ -454,10 +454,6 @@ class gui:
 
     def checkRunPaused(self):
         if self.running:
-            if not stackplotQueue.empty():
-                self.lock.acquire()
-                self.updateStackPlot(stackplotQueue.get())
-                self.lock.release()
             if not poolQueue.empty():
                 self.pool,self.generations,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
             if self.firstRun:
@@ -531,7 +527,7 @@ class gui:
         self.workerClass.specieID = loadedPool["specieID"]
         neat.pool.generations = loadedPool["generations"]
         self.population.set(self.workerClass.pool.Population)
-        self.display = newNetworkDisplay(self.displayQueue,self.lock)
+        self.display = newNetworkDisplay(self.displayQueue)
         if not self.poolInitialized:
             # file saver button
             self.fileSaverButton = Button(
