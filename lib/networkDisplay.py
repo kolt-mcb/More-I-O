@@ -12,7 +12,7 @@ height = 240
 
 
 class newNetworkDisplay(Toplevel):
-    def __init__(self,displayQueue):
+    def __init__(self,displayQueue,lock):
         Toplevel.__init__(self)
         #Set up the main window frame as a grid
         #self.grid() 
@@ -26,6 +26,7 @@ class newNetworkDisplay(Toplevel):
         self.drawnCells = {}
         self.drawnLines = {}
         self.initialized = False
+        self.lock = lock
         self.displayQueue = displayQueue
         self.checkDisplayQueue()
 
@@ -232,7 +233,8 @@ class newNetworkDisplay(Toplevel):
     def checkDisplayQueue(self):
         try:
             genome = self.displayQueue.get_nowait()
-            self.updateCanvas(genome)
+            with self.lock:
+                self.updateCanvas(genome)
             self.after(250,self.checkDisplayQueue)
         except queue.Empty:
             self.after(250,self.checkDisplayQueue)
