@@ -26,7 +26,6 @@ class newNetworkDisplay(Toplevel):
         self.drawnCells = {}
         self.drawnLines = {}
         self.initialized = False
-        self.lock = lock
         self.displayQueue = displayQueue
         self.checkDisplayQueue()
 
