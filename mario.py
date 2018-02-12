@@ -85,7 +85,6 @@ def singleGame(randomQueue,displayQueue):
         staleness = 0
         print("playing next")
         env.locked_levels = [False] * 32
-        lastPress = None
         for LVint in [1]:
             genome.generateNetwork()
             maxDistance = 0
@@ -102,11 +101,9 @@ def singleGame(randomQueue,displayQueue):
 
                 o = genome.evaluateNetwork(ob.tolist(), discrete=False)
                 o = joystick(o)
-                if o != lastPress:
-                    lastPress = o
-                    if displayQueue.empty():
-                        displayQueue.put_nowait(genome)
-                time.sleep(0.01)
+                if displayQueue.empty():
+                    displayQueue.put(genome)
+                time.sleep(0.008)
                 ob, reward, done, _ = env.step(o)
                 if 'ignore' in _:
                     done = False
@@ -405,7 +402,7 @@ class gui:
         self.running = False
         self.poolInitialized = False
         self.env = 'meta-SuperMarioBros-Tiles-v0'
-        self.fig, self.ax = plt.subplots(figsize=(4, 4))
+        self.fig, self.ax = plt.subplots(figsize=(8.6, 5.1))
         self.ax.set_xlabel('generations')
         self.ax.set_ylabel('number of species in a specie')
         self.ax.stackplot([], [], baseline='wiggle')
@@ -424,6 +421,8 @@ class gui:
 
     def updateStackPlot(self,plotList):
         self.ax.clear()
+        self.ax.set_xlabel('generations')
+        self.ax.set_ylabel('number of species in a specie')
         self.ax.stackplot(
             list(range(len(plotList[0]))), *plotList, baseline='wiggle')
         canvas = FigureCanvasTkAgg(self.fig, self.master)

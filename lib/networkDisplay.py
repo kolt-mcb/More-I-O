@@ -7,7 +7,7 @@ import time
 import queue
 
 width = 1530
-height = 480
+height = 240
 
 
 
@@ -135,7 +135,7 @@ class newNetworkDisplay(Toplevel):
                 cell.gridSize = 5
             else:
                 cell.gridSize = (height//Outputs) 
-            cell.x = width*.9
+            cell.x = width
             cell.y = percent*height
             cell.value=neurons[maxNodes+Output].value
             self.cells[maxNodes+Output] = cell
