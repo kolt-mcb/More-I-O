@@ -30,6 +30,7 @@ sharedRunning = multiprocessing.Value(c_bool,False)
 
 
 
+
 def joystick(four):
     six = [0] * 6
     if four[0] > 0.5:
@@ -85,7 +86,7 @@ def singleGame(randomQueue,displayQueue):
         staleness = 0
         print("playing next")
         env.locked_levels = [False] * 32
-        for LVint in [1]:
+        for LVint in range(32):
             genome.generateNetwork()
             maxDistance = 0
             staleness = 0
@@ -101,7 +102,7 @@ def singleGame(randomQueue,displayQueue):
 
                 o = genome.evaluateNetwork(ob.tolist(), discrete=False)
                 o = joystick(o)
-                if displayQueue.empty() and stackplotQueue.qsize() == 0:
+                if displayQueue.empty():
                     displayQueue.put(genome)
                 time.sleep(0.008)
                 ob, reward, done, _ = env.step(o)
@@ -306,7 +307,7 @@ class workerClass(object):
                     finalScore = 0
                     done = False
                     maxReward = 0
-                    for LVint in [1]:
+                    for LVint in range(32):
                         genome.generateNetwork()
                         maxDistance = 0
                         oldDistance = 0
@@ -346,7 +347,7 @@ class workerClass(object):
                             oldDistance = distance
                         for score in scores:
                             finalScore += score
-                        finalScore = round(finalScore )
+                        finalScore = round(finalScore /32)
                     if job != None:
                         resultsList.append((finalScore, job))
                         job = None
@@ -454,8 +455,9 @@ class gui:
     def checkRunPaused(self):
         if self.running:
             if not stackplotQueue.empty():
-                with self.lock:
-                    self.updateStackPlot(stackplotQueue.get())
+                self.lock.acquire()
+                self.updateStackPlot(stackplotQueue.get())
+                self.lock.release()
             if not poolQueue.empty():
                 self.pool,self.generations,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
             if self.firstRun:
