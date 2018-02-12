@@ -284,6 +284,7 @@ class workerClass(object):
                 try: 
                     job = jobs.get(timeout=10)
                 except queue.Empty as error:
+                    print("DEBUGING",error)
                     if jobs.qsize() == 0: 
                         time.sleep(0.5)
                         counter.value += 1
