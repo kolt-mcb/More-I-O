@@ -264,11 +264,7 @@ class workerClass(object):
         for plot in sortedPlots:
             plotList.append(self.plotData[plot])
 
-        fig, self.ax = plt.subplots(figsize=(8.6, 5.1))
-        ax.set_xlabel('generations')
-        ax.set_ylabel('number of species in a specie')
-        ax.stackplot(list(range(len(plotList[0]))), *plotList, baseline='wiggle')
-        plt.savefig(str(self.pool.generation)+".png")
+
         return plotList
 
 
