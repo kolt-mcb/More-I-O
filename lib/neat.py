@@ -587,6 +587,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			genome2.maxneuron = self.maxneuron
 			genome2.mutationRates = self.mutationRates
 			genome2.parents = (self.ID,None)
+			genome2.rate = self.rate
 			return genome2
 		
 		# generates a network based on genes.
