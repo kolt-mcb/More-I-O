@@ -16,9 +16,7 @@ from tkinter import *
 from tkinter import filedialog, messagebox
 import pickle
 import matplotlib
-matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
+#matplotlib.use('gg')
 import matplotlib.pyplot as plt
 from operator import itemgetter
 from ctypes import c_bool
@@ -27,8 +25,6 @@ import random
 stackplotQueue = multiprocessing.Queue()
 poolQueue = multiprocessing.Queue()
 sharedRunning = multiprocessing.Value(c_bool,False)
-
-
 
 
 def joystick(four):
@@ -69,8 +65,6 @@ def joystick(four):
     return six
 
 
-
-
 def singleGame(randomQueue,displayQueue):
     env = gym.make('meta-SuperMarioBros-Tiles-v0')
     env.reset()
@@ -86,7 +80,7 @@ def singleGame(randomQueue,displayQueue):
         staleness = 0
         print("playing next")
         env.locked_levels = [False] * 32
-        for LVint in range(32):
+        for LVint in range(1):
             genome.generateNetwork()
             maxDistance = 0
             staleness = 0
@@ -172,6 +166,8 @@ class workerClass(object):
         self.env = env
         self.singleGame = None
         self.displayQueue = displayQueue
+
+        
         
             
     def initializeProcess(self):
@@ -263,13 +259,9 @@ class workerClass(object):
         plotList = []
         for plot in sortedPlots:
             plotList.append(self.plotData[plot])
-
-        fig, ax = plt.subplots()
-        ax.set_xlabel('generations')
-        ax.set_ylabel('number of species in a specie')
-        ax.stackplot(list(range(len(plotList[0]))), *plotList, baseline='wiggle')
-        plt.show()
         return plotList
+
+
 
 
 
@@ -286,7 +278,7 @@ class workerClass(object):
         while True:
             if running.value:
                 try: 
-                    job = jobs.get(timeout=10)
+                    job = jobs.get(timeout=1)
                 except queue.Empty as error:
                     print("DEBUGING",error)
                     if jobs.qsize() == 0: 
@@ -313,7 +305,7 @@ class workerClass(object):
                     finalScore = 0
                     done = False
                     maxReward = 0
-                    for LVint in range(32):
+                    for LVint in range(1):
                         genome.generateNetwork()
                         maxDistance = 0
                         oldDistance = 0
@@ -411,12 +403,6 @@ class gui:
         self.running = False
         self.poolInitialized = False
         self.env = 'meta-SuperMarioBros-Tiles-v0'
-        self.fig, self.ax = plt.subplots(figsize=(8.6, 5.1))
-        self.ax.set_xlabel('generations')
-        self.ax.set_ylabel('number of species in a specie')
-        self.ax.stackplot([], [], baseline='wiggle')
-        canvas = FigureCanvasTkAgg(self.fig, self.master)
-        canvas.get_tk_widget().grid(row=5, column=0, rowspan=4, sticky="nesw")
         self.firstRun = True
         self.workerClass = None
         self.pool = None
@@ -425,17 +411,12 @@ class gui:
         self.specieID = 0
         self.displayQueue = multiprocessing.Queue(maxsize=1)
         self.display = None
-        
-
-
-    def updateStackPlot(self,plotList):
-        self.ax.clear()
+        self.plt = plt
+        self.fig, self.ax = self.plt.subplots()
         self.ax.set_xlabel('generations')
         self.ax.set_ylabel('number of species in a specie')
-        self.ax.stackplot(
-            list(range(len(plotList[0]))), *plotList, baseline='wiggle')
-        canvas = FigureCanvasTkAgg(self.fig, self.master)
-        canvas.get_tk_widget().grid(row=5, column=0, rowspan=5, sticky="nesw")
+        self.plt.show(block=False)
+        
 
 
 
@@ -460,6 +441,12 @@ class gui:
 
     def checkRunPaused(self):
         if self.running:
+            if not stackplotQueue.empty():
+                plotList = stackplotQueue.get()
+                self.ax.set_xlabel('generations')
+                self.ax.set_ylabel('number of species in a specie')
+                self.ax.stackplot(list(range(len(plotList[0]))), *plotList, baseline='wiggle')
+                self.plt.show(block=False)
             if not poolQueue.empty():
                 self.pool,self.generations,self.plotData,self.genomeDictionary,self.specieID = poolQueue.get()
             if self.firstRun:
