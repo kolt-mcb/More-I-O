@@ -414,7 +414,7 @@ class gui:
         self.plt = plt
         self.fig, self.ax = self.plt.subplots()
         self.ax.set_xlabel('generations')
-        self.ax.set_ylabel('number of species in a specie')
+        self.ax.set_ylabel('number of genomes in a specie')
         self.plt.show(block=False)
         
 
