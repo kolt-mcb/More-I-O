@@ -443,6 +443,7 @@ class gui:
         if self.running:
             if not stackplotQueue.empty():
                 plotList = stackplotQueue.get()
+                self.ax.clear()
                 self.ax.set_xlabel('generations')
                 self.ax.set_ylabel('number of species in a specie')
                 self.ax.stackplot(list(range(len(plotList[0]))), *plotList, baseline='wiggle')
