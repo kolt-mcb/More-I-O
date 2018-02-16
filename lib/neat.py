@@ -575,7 +575,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					c += 1
 			if len(candidates) == 0:
 				return
-			geneIndex = random.choice(candidates.keys())
+			geneIndex = random.choice(list(candidates.keys()))
 			self.genes[geneIndex].enabled = (not gene.enabled)
 
 		# copies a genome perfectly. 
