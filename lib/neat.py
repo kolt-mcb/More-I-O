@@ -567,15 +567,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		
 		# enables or disables a gene
 		def enableDisableMutate(self, enable):
-			candidates = []
+			candidates = {}
+			c = 0
 			for g in self.genes:
 				if g.enabled == (not enable):
-					candidates.append(g)
+					candidates[c] = g
+					c += 1
 			if len(candidates) == 0:
 				return
-			r = random.randint(0,len(candidates)-1)
-			gene = candidates[r]
-			gene.enabled = (not gene.enabled)
+			geneIndex = random.choice(candidates.keys())
+			self.genes[geneIndex].enabled = (not gene.enabled)
 
 		# copies a genome perfectly. 
 		def copyGenome(self): 
