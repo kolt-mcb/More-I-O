@@ -80,7 +80,7 @@ def singleGame(randomQueue,displayQueue):
         staleness = 0
         print("playing next")
         env.locked_levels = [False] * 32
-        for LVint in range(16):
+        for LVint in range(1):
             genome.generateNetwork()
             maxDistance = 0
             staleness = 0
@@ -157,6 +157,7 @@ class workerClass(object):
         self.env = None
         self.initialized = multiprocessing.Value(c_bool,False)
         self.running = multiprocessing.Value(c_bool,False)
+        self.runningNextGen = multiprocessing.Value(c_bool,False)
         self.counter = multiprocessing.Value('i',0)
         self.plotData = {}
         self.genomeDictionary = {}
@@ -166,6 +167,7 @@ class workerClass(object):
         self.env = env
         self.singleGame = None
         self.displayQueue = displayQueue
+
 
         
         
@@ -217,7 +219,12 @@ class workerClass(object):
                         results.append(result)
             if len(results) == self.pool.Population:
                 self.updateFitness(results)
+                self.runningNextGen.value = True
+                process  = multiprocessing.Process(target=self.randomQueueJob)
+                process.start()
                 self.pool.nextGeneration()
+                self.runningNextGen.value = False
+                process.join()
                 stackplotQueue.put(self.generateStackPlot())
                 poolQueue.put((self.pool,neat.pool.generations,self.plotData,self.genomeDictionary,self.specieID))
                 print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
@@ -231,7 +238,10 @@ class workerClass(object):
         genome = species.genomes[randomGenome]
         return genome
 
-
+    def randomQueueJob(self):
+        while self.runningNextGen.value:
+            if self.randomQueue.empty():
+                self.randomQueue.put(self.getRandomGenome())
 
     
     def generateStackPlot(self):
@@ -305,7 +315,7 @@ class workerClass(object):
                     finalScore = 0
                     done = False
                     maxReward = 0
-                    for LVint in range(16):
+                    for LVint in range(1):
                         genome.generateNetwork()
                         maxDistance = 0
                         oldDistance = 0
@@ -345,7 +355,7 @@ class workerClass(object):
                             oldDistance = distance
                         for score in scores:
                             finalScore += score
-                        finalScore = round(finalScore/16 )
+                        finalScore = round(finalScore )
                     if job != None:
                         resultsList.append((finalScore, job))
                         job = None
