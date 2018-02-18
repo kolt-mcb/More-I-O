@@ -345,7 +345,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 						if gene.enabled:
 							geneEnabledCount += 1
 					geneEnabledCount = 0 - geneEnabledCount
-					sIndex.append((s,g,genome.fitness,genome.mutationRates["ConectionCostRate"]*geneEnabledCount))
+					sIndex.append((s,g,genome.fitness,geneEnabledCount))
 				else:
 					sIndex.append((s,g,genome.fitness))
 				c += 1
@@ -424,7 +424,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["DeltaThreshold"] = .5
 			self.mutationRates["DeltaDisjoint"] = 1
 			self.mutationRates["DeltaWeights"] = .4
-			self.mutationRates["ConectionCostRate"] = 1
 			self.perturbChance = .9
 			self.age = 0
 			self.parents = ()

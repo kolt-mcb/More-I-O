@@ -161,7 +161,7 @@ class workerClass(object):
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
-        self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=False)
+        self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=True)
         self.numJobs = numJobs
         self.env = env
         self.singleGame = None
@@ -345,7 +345,7 @@ class workerClass(object):
                             oldDistance = distance
                         for score in scores:
                             finalScore += score
-                        finalScore = round(finalScore /16)
+                        finalScore = round(finalScore/16 )
                     if job != None:
                         resultsList.append((finalScore, job))
                         job = None
