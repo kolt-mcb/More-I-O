@@ -262,7 +262,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			for genome in specie.genomes:
 				c += 1
-		#defines new children list
+
+		#remove killed mates
+		self.updateMates()
 		children = []
 		while (len(children)+c < self.Population):
 			for specie in self.species:
@@ -270,18 +272,19 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				breed = math.floor(specie.averageFitness / _sum * self.Population)-1
 				for i in range(breed):
 						if len(children)+c < self.Population:
-							children.append(specie.breedChildren(self.InPopulation))
+							children.append(specie.breedChildren())
 
 		self.cullSpecies()
+		#remove killed mates
+		self.updateMates()
+		#count current population
 		c = 0
 		for specie in self.species:
 			for genome in specie.genomes:
 				c += 1
-		
-		
 		while (len(children)+c < self.Population):
 			parent = random.choice(self.species)
-			child = parent.breedChildren(self.InPopulation)
+			child = parent.breedChildren()
 			children.append(child)
 		# adds all children to there species in the pool
 		self.addToPool(children)
@@ -294,13 +297,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			while len(specie.genomes) > remaining:
 				specie.genomes.pop()
 
-	
-	def InPopulation(self,genome):
+	def updateMates(self):
+		survivors = set()
 		for specie in self.species:
-			for populationGenome in specie.genomes:
-				if genome == populationGenome.ID:
-					return True
-		return False
+			for genome in specie.genomes:
+				survivors.add(genome.ID)
+		for specie in self.species:
+			for genome in specie.genomes:
+				genome.mates = genome.mates.intersection(survivors)
+
+
 		
 	
 	# removes poor performing species
@@ -421,9 +427,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["enable"] = .05
 			self.mutationRates["disable"] = .1
 			self.mutationRates["step"] = 0.1
-			self.mutationRates["DeltaThreshold"] = .5
+			self.mutationRates["DeltaThreshold"] = 1
 			self.mutationRates["DeltaDisjoint"] = 1
-			self.mutationRates["DeltaWeights"] = .4
+			self.mutationRates["DeltaWeights"] = 1
 			self.perturbChance = .9
 			self.age = 0
 			self.parents = ()
@@ -740,20 +746,17 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.averageFitness = total / len(self.genomes)
 
 		 # breeds children of a species
-		def breedChildren(self,InPopulation):
+		def breedChildren(self):
 			genome1 = random.choice(self.genomes)
 			child = None
-			while child == None:
-				if random.random() < .75 and len(genome1.mates)>0:
-					mate = random.sample(genome1.mates,1)
-					if InPopulation(mate):
-						generation = mate[0][0]
-						genome = mate[0][1]
-						genome2 = pool.generations[generation][genome]
-						child = self.crossover(genome1,genome2)
-
-				else:
-					child = genome1.copyGenome()
+			if random.random() < .75 and len(genome1.mates)>0:
+				mate = random.sample(genome1.mates,1)
+				generation = mate[0][0]
+				genome = mate[0][1]
+				genome2 = pool.generations[generation][genome]
+				child = self.crossover(genome1,genome2)
+			else:
+				child = genome1.copyGenome()
 			child.mutate()
 			return child
 		
@@ -779,7 +782,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				g2Rate= g2.mutationRates[mutation]
 				child.mutationRates[mutation] = (rate+g2Rate)/2
 			child.parents = (g1.ID,g2.ID)  
-			child.rate = (genome1.rate + genome2.rate)/2
+			child.rate = (g1.rate + g2.rate)/2
 			return child
 
 class newGene:
