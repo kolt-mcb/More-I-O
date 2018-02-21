@@ -199,10 +199,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				if self.sameSpecies(child,parentGenome):
 					if parentGenome.ID != None:
 						relatives.add(parentGenome.ID)
-						if not parentGenome.defining:
-							parentRelatives = self.getRelatives(child,parentGenome)
-							if parentRelatives != None:
-								relatives.update(parentRelatives)
+						parentRelatives = self.getRelatives(child,parentGenome)
+						if parentRelatives != None:
+							relatives.update(parentRelatives)
 
 		return relatives
 				  
@@ -255,6 +254,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			#calculateAverageFitness of a specie
 			specie.calculateAverageFitness()
+			specie.calculateAverageCrossover()
 			
 		self.removeWeakSpecies()
 		_sum = self.totalAverageFitness()
@@ -273,6 +273,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				for i in range(breed):
 						if len(children)+c < self.Population:
 							children.append(specie.breedChildren())
+
+		for specie in self.species:
+			specie.calculateAverageCrossover()
 
 		self.cullSpecies()
 		#remove killed mates
@@ -420,13 +423,14 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates = {}
 			self.globalRank = 0
 			self.maxNodes = 10000
-			self.mutationRates["connections"] = 1
-			self.mutationRates["link"] =  1
+			self.mutationRates["connections"] = 0.5
+			self.mutationRates["link"] =  0.5
 			self.mutationRates["bias"] = .1
-			self.mutationRates["node"] = 1
+			self.mutationRates["node"] = 0.5
 			self.mutationRates["enable"] = .05
 			self.mutationRates["disable"] = .1
 			self.mutationRates["step"] = 0.1
+			self.mutationRates["crossover"] = 1
 			self.mutationRates["DeltaThreshold"] = 1
 			self.mutationRates["DeltaDisjoint"] = 1
 			self.mutationRates["DeltaWeights"] = 1
@@ -738,18 +742,25 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.genomes = []
 			self.averageFitness = 0
 			self.recurrent = recurrent
+			self.averageCrossover = 1
 			
 		def calculateAverageFitness(self): 
 			total = 0
 			for genome in self.genomes:
 				total = total + genome.globalRank
 			self.averageFitness = total / len(self.genomes)
+		
+		def calculateAverageCrossover(self):
+			total = 0 
+			for genome in self.genomes:
+				total += genome.mutationRates['crossover']
+			self.averageCrossover = total / len(self.genomes)
 
 		 # breeds children of a species
 		def breedChildren(self):
 			genome1 = random.choice(self.genomes)
 			child = None
-			if random.random() < .75 and len(genome1.mates)>0:
+			if random.random() < self.averageCrossover and len(genome1.mates)>0:
 				mate = random.sample(genome1.mates,1)
 				generation = mate[0][0]
 				genome = mate[0][1]
