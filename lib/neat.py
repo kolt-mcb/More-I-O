@@ -147,7 +147,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				for specie in range(len(self.species)):
 					for genome in range(len(self.species[specie].genomes)):
 						_genome = self.species[specie].genomes[genome]
-						if not child.relatives.isdisjoint(_genome.relatives):
+						if not child.relatives.isdisjoint(_genome.relatives) and len(child.relatives) != 0:
 							match = self.sameSpecies(child,_genome,rating=True)
 							if match < math.inf:
 								if match < closestMatch:
@@ -190,8 +190,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 				
 				
-	def getRelatives(self,child,parent=None):
-		relatives = set()
+	def getRelatives(self,child,parent=None,relatives=set()):
+		count = 0
 		if parent == None:
 			genomeToCheck = child
 		else:
@@ -199,21 +199,24 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			
 		for parentGenomeTup in genomeToCheck.parents:
 			
-			if parentGenomeTup != None:
+			if parentGenomeTup != None and parentGenomeTup not in relatives:
 				generation = parentGenomeTup[0]
 				genome = parentGenomeTup[1]
 				parentGenome = self.generations[generation][genome]
+				count +=1 
 				if self.sameSpecies(child,parentGenome):
+
 					if parentGenome.ID != None:
 						relatives.add(parentGenome.ID)
-						parentRelatives = self.getRelatives(child,parentGenome)
+						parentRelatives,bonusCount = self.getRelatives(child,parentGenome,relatives)
+						count += bonusCount
 						if parentRelatives != None:
 							relatives.update(parentRelatives)
-		return relatives
+		return relatives,count
 
 	def setRelatives(self,child):
-		child.relatives = self.getRelatives(child)
-		print("traversed tree")
+		child.relatives,count = self.getRelatives(child)
+		print("traversed tree",count)
 		return child
 
 	def sameSpecies(self,genome1,genome2,rating=False):
