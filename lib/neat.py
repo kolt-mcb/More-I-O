@@ -5,6 +5,7 @@ import time
 import random
 import math
 from pymongo import MongoClient
+import multiprocessing
 
 
 
@@ -128,10 +129,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
     # adds a list of children to the pool
 	def addToPool(self,children):
 		pool.generations.append([])
+		mp = multiprocessing.Pool(multiprocessing.cpu_count())
+		results = mp.map(self.setRelatives,children)
+		children = []
+		for result in results:
+			children.append(result)
+		mp.close()
+		mp.join()
+
+
 		for child in children:
-			if child.relatives == set():
-				child.relatives = self.getRelatives(child)
-			child.mates = set()
 			foundSpecies = False
 			foundedSpecie = None
 			closestMatch = math.inf
@@ -202,9 +209,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 						parentRelatives = self.getRelatives(child,parentGenome)
 						if parentRelatives != None:
 							relatives.update(parentRelatives)
-
 		return relatives
-				  
+
+	def setRelatives(self,child):
+		child.relatives = self.getRelatives(child)
+		print("traversed tree")
+		return child
+
 	def sameSpecies(self,genome1,genome2,rating=False):
 		Threshold1 = genome1.mutationRates["DeltaThreshold"]
 		DeltaDisjoint1 = genome1.mutationRates["DeltaDisjoint"]
