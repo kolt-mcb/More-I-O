@@ -129,8 +129,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
     # adds a list of children to the pool
 	def addToPool(self,children):
 		pool.generations.append([])
-		mp = multiprocessing.Pool(multiprocessing.cpu_count())
+		mp = multiprocessing.Pool(1)
 		results = mp.map(self.setRelatives,children)
+		#for child in children:
+		#	child = self.setRelatives(child)
 		children = []
 		for result in results:
 			children.append(result)
@@ -143,11 +145,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			foundedSpecie = None
 			closestMatch = math.inf
 			updatedMates = []
-			if child.relatives != None:
+			if len(child.relatives) != 0:
 				for specie in range(len(self.species)):
 					for genome in range(len(self.species[specie].genomes)):
 						_genome = self.species[specie].genomes[genome]
-						if not child.relatives.isdisjoint(_genome.relatives) and len(child.relatives) != 0:
+						if not child.relatives.isdisjoint(_genome.relatives):
 							match = self.sameSpecies(child,_genome,rating=True)
 							if match < math.inf:
 								if match < closestMatch:
@@ -190,33 +192,33 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 				
 				
-	def getRelatives(self,child,parent=None,relatives=set()):
+	def getRelatives(self,child,relatives=set(),parent=None):
 		count = 0
 		if parent == None:
 			genomeToCheck = child
 		else:
 			genomeToCheck = parent
-			
 		for parentGenomeTup in genomeToCheck.parents:
-			
 			if parentGenomeTup != None and parentGenomeTup not in relatives:
 				generation = parentGenomeTup[0]
 				genome = parentGenomeTup[1]
 				parentGenome = self.generations[generation][genome]
 				count +=1 
 				if self.sameSpecies(child,parentGenome):
-
 					if parentGenome.ID != None:
 						relatives.add(parentGenome.ID)
-						parentRelatives,bonusCount = self.getRelatives(child,parentGenome,relatives)
+						parentRelatives,bonusCount = self.getRelatives(child,relatives,parentGenome)
 						count += bonusCount
 						if parentRelatives != None:
 							relatives.update(parentRelatives)
+
 		return relatives,count
 
 	def setRelatives(self,child):
-		child.relatives,count = self.getRelatives(child)
-		print("traversed tree",count)
+
+		child.relatives,count = self.getRelatives(child,set())
+		if count == 0:
+			print(child.relatives)
 		return child
 
 	def sameSpecies(self,genome1,genome2,rating=False):
