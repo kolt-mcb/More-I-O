@@ -319,7 +319,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			if self.connectionCost:
 				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness','geneEnabledCount'),reverse=True)
-			specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
+			else:
+				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
 			genomes = []
 			remaining = math.ceil(len(specie.genomes)/2)
 			while len(specie.genomes) > remaining:
