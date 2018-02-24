@@ -129,7 +129,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
     # adds a list of children to the pool
 	def addToPool(self,children):
 		pool.generations.append([])
-		mp = multiprocessing.Pool(1)
+		mp = multiprocessing.Pool(multiprocessing.cpu_count())
 		results = mp.map(self.setRelatives,children)
 		#for child in children:
 		#	child = self.setRelatives(child)
@@ -138,7 +138,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			children.append(result)
 		mp.close()
 		mp.join()
-
+		children = self.calculateGeneEnableCount(children)
 
 		for child in children:
 			foundSpecies = False
@@ -190,8 +190,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					self.updateMongoGenome(child,s)
 
 
-				
-				
+	def calculateGeneEnableCount(self,genomes):
+		for genome in genomes:
+			geneEnabledCount = 0
+			for gene in genome.genes:
+				if gene.enabled:
+					geneEnabledCount += 1
+			genome.geneEnabledCount = 0 - geneEnabledCount
+		return genomes
+
 	def getRelatives(self,child,relatives=set(),parent=None):
 		count = 0
 		if parent == None:
@@ -310,6 +317,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 	def cullSpecies(self): #sorts genomes by fitness and removes half of them
 		for specie in self.species:
+			if self.connectionCost:
+				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness','geneEnabledCount'),reverse=True)
 			specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
 			genomes = []
 			remaining = math.ceil(len(specie.genomes)/2)
@@ -365,12 +374,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			g = 0
 			for genome in specie.genomes:
 				if self.connectionCost:
-					geneEnabledCount = 0 
-					for gene in genome.genes:
-						if gene.enabled:
-							geneEnabledCount += 1
-					geneEnabledCount = 0 - geneEnabledCount
-					sIndex.append((s,g,genome.fitness,geneEnabledCount))
+					sIndex.append((s,g,genome.fitness,genome.geneEnabledCount))
 				else:
 					sIndex.append((s,g,genome.fitness))
 				c += 1
@@ -438,6 +442,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.maxneuron = Inputs
 			self.mutationRates = {}
 			self.globalRank = 0
+			self.geneEnabledCount = 0
 			self.maxNodes = 10000
 			self.mutationRates["connections"] = 0.5
 			self.mutationRates["link"] =  0.5
