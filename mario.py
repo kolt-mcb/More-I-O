@@ -81,7 +81,7 @@ def singleGame(randomQueue,displayQueue):
         staleness = 0
         print("playing next")
         env.locked_levels = [False] * 32
-        for LVint in range(2):
+        for LVint in range(4):
             genome.generateNetwork()
             maxDistance = 0
             staleness = 0
@@ -316,7 +316,7 @@ class workerClass(object):
                     finalScore = 0
                     done = False
                     maxReward = 0
-                    for LVint in range(1):
+                    for LVint in range(4):
                         genome.generateNetwork()
                         maxDistance = 0
                         oldDistance = 0
