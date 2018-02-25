@@ -10,7 +10,6 @@ import multiprocessing
 
 
 
-
 class pool: #holds all species data, crossspecies settings and the current gene innovation
 	generations = []
 	client = None
@@ -309,7 +308,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for genome in specie.genomes:
 				c += 1
 		while (len(children)+c < self.Population):
-			parent = random.choice(self.species)
+			randomIndex = random.SystemRandom().randRange(len(self.species))
+			parent = self.species[randomIndex]
 			child = parent.breedChildren()
 			children.append(child)
 		# adds all children to there species in the pool
@@ -482,45 +482,45 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		# runs all mutation types at rate set, while probabilty is over the rate set.
 		def mutate(self): 
-			if random.randint(1,2) == 1:
+			if random.SystemRandom().randrange(2) == 1:
 				self.rate = self.rate*0.99
 			else:
 				self.rate = self.rate*1.01
 			for mutation,rate in self.mutationRates.items():
-				if random.randint(1,2) == 1:
+				if random.SystemRandom().randrange(2) == 1:
 					self.mutationRates[mutation] = (1/self.rate)*rate
 				else:
 					self.mutationRates[mutation] = (self.rate/1)*rate
 			
 			p = self.mutationRates["connections"]
 			while p > 0:
-				if random.random() < p:
+				if random.SystemRandom().random() < p:
 					self.pointMutate()
 				p = p -1	
 			p = self.mutationRates["link"] 
 			while p > 0:
-				if random.random() < p:
+				if random.SystemRandom().random() < p:
 					self.linkMutate(False)
 				p = p -1
 			p = self.mutationRates["bias"] 
 			while p > 0:
-				if random.random() < p:
+				if random.SystemRandom().random() < p:
 					self.linkMutate(True)
 				p = p -1
 			p = self.mutationRates["node"] 
 			while p > 0:
-				if random.random() < p:
+				if random.SystemRandom().random() < p:
 					self.nodeMutate()
 				p = p -1
 			p = self.mutationRates["enable"]
 			while p > 0:
 
-				if random.random() < p:
+				if random.SystemRandom().random() < p:
 					self.enableDisableMutate(True)
 				p = p -1
 			p = self.mutationRates["disable"]
 			while p > 0:
-				if random.random() < p:
+				if random.SystemRandom().random() < p:
 					self.enableDisableMutate(False)
 				p = p -1
 
@@ -529,12 +529,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		def pointMutate(self): 
 			step = self.mutationRates["step"]
 			if len(self.genes) > 1:
-				r = random.randint(0,len(self.genes)-1)
+				r = random.SystemRandom().randrange(len(self.genes))
 				gene = self.genes[r]
-				if random.random() < self.perturbChance:
-					gene.weight = gene.weight + random.random()*step*2-step
+				if random.SystemRandom().random() < self.perturbChance:
+					gene.weight = gene.weight + random.SystemRandom().random()*step*2-step
 				else:
-					gene.weight = 1-random.random()*2
+					gene.weight = 1-random.SystemRandom().random()*2
 	
 		#adds a link to the network, potentialy forced to bias neuron
 		def linkMutate(self,forceBias): 
@@ -562,7 +562,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if self.containsLink(newLink):
 				return	 
 			newLink.innovation = self.newInnovation()
-			newLink.weight = (1-random.random()*2)
+			newLink.weight = (1-random.SystemRandom().random()*2)
 			self.genes.append(newLink)
 			
 		# checks if link already exists between neurons
@@ -575,7 +575,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		def nodeMutate(self):
 			if len(self.genes) == 0:
 				return
-			r = random.randint(0,len(self.genes)-1)
+			r = random.SystemRandom().randrange(len(self.genes))
 			gene = self.genes[r]
 			# index of next neuron to point at as seen 3 lines below, gene1.out = self.maxneuron
 			self.maxneuron += 1 
@@ -589,9 +589,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			gene2 = gene.copyGene()
 			gene2.into = self.maxneuron
 			gene2.weight = gene.weight
-			if random.randint(1,2) == 1:
-				gene1.weight = (1-random.random()*2)
-				gene2.weight = (1-random.random()*2)
+			if random.SystemRandom().randrange(2) == 1:
+				gene1.weight = (1-random.SystemRandom().random()*2)
+				gene2.weight = (1-random.SystemRandom().random()*2)
 			gene2.innovation = self.newInnovation()
 			gene2.enabled = True
 			self.genes.append(gene2)
@@ -606,7 +606,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					c += 1
 			if len(candidates) == 0:
 				return
-			geneIndex = random.choice(list(candidates.keys()))
+			geneIndexList = list(candidates.keys())
+			geneIndex = geneIndexList[random.SystemRandom().randrange(len(geneIndexList))]
+			
 			self.genes[geneIndex].enabled = enable
 
 		# copies a genome perfectly. 
@@ -672,7 +674,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 					neurons[gene.into]  = True
 				if (not nonInput) or gene.out > inputs:
 					neurons[gene.into] = True
-			n = random.randint(1,len(neurons))
+			n = random.SystemRandom().randrange(len(neurons))
 			for k,v in neurons.items():
 				n = n-1
 				if n==0:
@@ -780,9 +782,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		 # breeds children of a species
 		def breedChildren(self):
-			genome1 = random.choice(self.genomes)
+			genome1 = self.genomes[random.SystemRandom().randrange(len(self.genomes))]
 			child = None
-			if random.random() < self.averageCrossover and len(genome1.mates)>0:
+			if random.SystemRandom().random() < self.averageCrossover and len(genome1.mates)>0:
 				mate = random.sample(genome1.mates,1)
 				generation = mate[0][0]
 				genome = mate[0][1]
@@ -806,7 +808,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				innovations2[gene2.innovation] = gene2
 			for gene1 in g1.genes:
 				gene2 = innovations2.get(gene1.innovation)
-				if gene2 != None and  random.randint(1,2) == 1 and gene2.enabled:
+				if gene2 != None and  random.SystemRandom().randrange(2) == 1 and gene2.enabled:
 					child.genes.append(gene2.copyGene())
 				else:
 					child.genes.append(gene1.copyGene())
