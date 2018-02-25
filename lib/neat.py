@@ -308,7 +308,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for genome in specie.genomes:
 				c += 1
 		while (len(children)+c < self.Population):
-			randomIndex = random.SystemRandom().randRange(len(self.species))
+			randomIndex = random.SystemRandom().randrange(len(self.species))
 			parent = self.species[randomIndex]
 			child = parent.breedChildren()
 			children.append(child)
