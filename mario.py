@@ -17,6 +17,7 @@ from tkinter import filedialog, messagebox
 import pickle
 import matplotlib
 #matplotlib.use('gg')
+matplotlib.use('tkAGG')
 import matplotlib.pyplot as plt
 from operator import itemgetter
 from ctypes import c_bool
@@ -80,7 +81,7 @@ def singleGame(randomQueue,displayQueue):
         staleness = 0
         print("playing next")
         env.locked_levels = [False] * 32
-        for LVint in range(2):
+        for LVint in range(4):
             genome.generateNetwork()
             maxDistance = 0
             staleness = 0
@@ -315,7 +316,7 @@ class workerClass(object):
                     finalScore = 0
                     done = False
                     maxReward = 0
-                    for LVint in range(2):
+                    for LVint in range(4):
                         genome.generateNetwork()
                         maxDistance = 0
                         oldDistance = 0
@@ -324,6 +325,7 @@ class workerClass(object):
                         staleness = 0
                         done = False
                         env.change_level(new_level=LVint)
+                        warped = False
                         while not done:
                             ob = env.tiles.flatten()
                             o = genome.evaluateNetwork(ob.tolist(), discrete=False)
@@ -338,9 +340,11 @@ class workerClass(object):
                                 env.change_level(new_level=LVint)
                                 env.lock.release()
                             distance = env._get_info()["distance"]
-                            if oldDistance - distance < -100:
-                                bonus = maxDistance
+                            if oldDistance - distance < -200:
                                 bonusOffset = distance
+                                warped = True
+                            if oldDistance - distance < 200:
+                                warped = False
                             if maxDistance - distance > 50 and distance != 0:
                                 maxDistance = distance
                             if distance > maxDistance:
@@ -349,10 +353,12 @@ class workerClass(object):
                             if maxDistance >= distance:
                                 staleness += 1
                             if staleness > 80 or done:
-                                scores.append(maxDistance - bonusOffset + bonus)
+                                scores.append(maxDistance +bonus-bonusOffset)
                                 if not done:
                                     done = True
                             oldDistance = distance
+                            if warped:
+                                bonus = maxDistance
                         for score in scores:
                             finalScore += score
                         finalScore = round(finalScore /2)
