@@ -277,8 +277,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			#calculateAverageFitness of a specie
 			specie.calculateAverageFitness()
 			specie.calculateAverageCrossover()
-			
-		self.removeWeakSpecies()
+
 		_sum = self.totalAverageFitness()
 		c = 0
 		for specie in self.species:
@@ -338,15 +337,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		
 	
-	# removes poor performing species
-	def removeWeakSpecies(self): 
-		survived = []
-		_sum = self.totalAverageFitness()
-		for specie in self.species:
-			breed = specie.averageFitness / _sum * self.Population
-			if breed >= 1:
-				survived.append(specie)
-		self.species = survived
 
 	#total of all averages of pool
 	def totalAverageFitness(self):
