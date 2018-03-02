@@ -315,15 +315,21 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.addToPool(children)
 
 	def cullSpecies(self): #sorts genomes by fitness and removes half of them
+		speciesSurvivors = []
 		for specie in self.species:
 			if self.connectionCost:
 				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness','geneEnabledCount'),reverse=True)
 			else:
 				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
-			genomes = []
-			remaining = math.ceil(len(specie.genomes)/2)
-			while len(specie.genomes) > remaining:
-				specie.genomes.pop()
+			survivors = []			
+			for genome in specie.genomes:
+				if genome.fitness > self.averageFitness():
+					survivors.append(genome)
+			specie.genomes = survivors	
+			if len(specie.genomes) > 0:
+				speciesSurvivors.append(specie)
+		self.species = speciesSurvivors
+			
 
 	def updateMates(self):
 		survivors = set()
@@ -353,7 +359,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for genome in specie.genomes:
 				count += 1
 				total += genome.fitness
-		total = total/count
+		total = total//count
 		return total
 		
 	# sets globalRank value for all genomes.
