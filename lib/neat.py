@@ -322,7 +322,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			else:
 				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
 			survivors = []	
-					
+
 			for genome in specie.genomes:
 				if genome.fitness > self.averageFitness():
 					survivors.append(genome)
@@ -334,7 +334,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 						survivors.pop()
 				else:
 					removed = len(survivors)//self.Population - 0.5
-					survivors = [random.SystemRandom.randrange(survivors) for i in range(removed)]
+					survivorIndexes = [random.SystemRandom.randrange(survivors) for i in range(removed)]
+					oldSurvivors = survivors
+					survivors = []
+					for survivor in survivorIndexes:
+						survivors.append(oldSurvivors[survivor])
 
 			if len(specie.genomes) > 0:
 				speciesSurvivors.append(specie)
