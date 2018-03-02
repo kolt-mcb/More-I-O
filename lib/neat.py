@@ -321,13 +321,24 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness','geneEnabledCount'),reverse=True)
 			else:
 				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
-			survivors = []			
+			survivors = []	
+					
 			for genome in specie.genomes:
 				if genome.fitness > self.averageFitness():
 					survivors.append(genome)
 			specie.genomes = survivors	
+
+			if len(survivors) > self.Population//2:
+				if self.connectionCost:
+					while len(survivors) > self.Population//2:
+						survivors.pop()
+				else:
+					removed = len(survivors)//self.Population - 0.5
+					survivors = [random.SystemRandom.randrange(survivors) for i in range(removed)]
+
 			if len(specie.genomes) > 0:
 				speciesSurvivors.append(specie)
+			
 		self.species = speciesSurvivors
 			
 
