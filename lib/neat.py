@@ -298,10 +298,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		for specie in self.species:
 			specie.calculateAverageCrossover()
 
-		self.cullSpecies()
-		#remove killed mates
-		self.updateMates()
-		#count current population
+
 		c = 0
 		for specie in self.species:
 			for genome in specie.genomes:
