@@ -335,7 +335,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			
 			for genome in specie.genomes:
 				print("genome fitness",genome.fitness,"avererage over total",(genome.fitness/total)*self.Population//2)
-				if (genome.fitness/total)*self.Population//2 > 1:
+				if (genome.fitness/total)*self.Population//2 >= 1:
 					survivors.append(genome)
 			specie.genomes = survivors	
 
