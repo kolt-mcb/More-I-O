@@ -290,7 +290,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		while (len(children)+c < self.Population):
 			for specie in self.species:
 				 # if a species average fitness is over the pool averagefitness it can breed
-				breed = math.floor(specie.averageFitness / _sum * self.Population)-1
+				breed = math.floor(specie.averageFitness / _sum * self.Population)
 				for i in range(breed):
 						if len(children)+c < self.Population:
 							children.append(specie.breedChildren())
@@ -319,23 +319,19 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			else:
 				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
 			survivors = []	
-
+			avg = self.averageFitness()
 			for genome in specie.genomes:
-				if genome.fitness > self.averageFitness():
+				if genome.fitness > avg:
 					survivors.append(genome)
 			specie.genomes = survivors	
 
-			if len(survivors) > self.Population//2:
+			if len(survivors) == self.Population:
 				if self.connectionCost:
-					while len(survivors) > self.Population//2:
-						survivors.pop()
+					survivors = [survivors[0]]
 				else:
-					removed = len(survivors)//self.Population - 0.5
-					survivorIndexes = [random.SystemRandom.randrange(survivors) for i in range(removed)]
+					survivorIndex = math.floor(random.SystemRandom.random(1)*self.Population+1)
 					oldSurvivors = survivors
-					survivors = []
-					for survivor in survivorIndexes:
-						survivors.append(oldSurvivors[survivor])
+					survivors = [survivors[survivorIndex]]
 
 			if len(specie.genomes) > 0:
 				speciesSurvivors.append(specie)
