@@ -269,11 +269,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
 		self.generation += 1
-		self.rankGlobally() 
-		for specie in self.species:
-			#calculateAverageFitness of a specie
-			specie.calculateAverageFitness()
-		self.cullSpecies()  
+
 		# reranks after removeing stales species and  stores best player for later play
 		self.rankGlobally()
 		for specie in self.species:
@@ -282,22 +278,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			specie.calculateAverageCrossover()
 
 		_sum = self.totalAverageFitness()
-		c = 0
-		for specie in self.species:
-			for genome in specie.genomes:
-				c += 1
-
-		#remove killed mates
-		self.updateMates()
 		children = []
-		while (len(children)+c < self.Population):
-			for specie in self.species:
-				 # if a species average fitness is over the pool averagefitness it can breed
-				breed = math.floor(specie.averageFitness / _sum * self.Population)
-				print(breed)
-				for i in range(breed):
-						if len(children)+c < self.Population:
-							children.append(specie.breedChildren())
+		for specie in self.species:
+				# if a species average fitness is over the pool averagefitness it can breed
+			breed = math.floor(specie.averageFitness / _sum * self.Population)
+			for i in range(breed):
+					if len(children) < self.Population:
+						children.append(specie.breedChildren())
+
+		self.cullSpecies(len(children))
 		self.rankGlobally(addBest=True)
 
 		for specie in self.species:
@@ -314,32 +303,21 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		# adds all children to there species in the pool
 		self.addToPool(children)
 
-	def cullSpecies(self): #sorts genomes by fitness and removes half of them
+	def cullSpecies(self,incoming): #sorts genomes by fitness and removes half of them
 		speciesSurvivors = []
-		avg = self.averageFitness()
-		total = self.totalAverageFitness()
-		print("total",total,"avg",avg)
 		for specie in self.species:
-			if self.connectionCost:
-				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness','geneEnabledCount'),reverse=True)
-			else:
-				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
-			survivors = []	
-			
+			survivors = []
 			for genome in specie.genomes:
-				print("genome fitness",genome.fitness,"avererage over total",(genome.fitness/total)*self.Population//2)
-				if (genome.fitness/total)*self.Population >= 1:
+				if genome.globalRank > incoming:
 					survivors.append(genome)
-			specie.genomes = survivors	
-
+		
 			if len(survivors) == self.Population:
 				if self.connectionCost:
 					survivors = [survivors[0]]
 				else:
 					survivorIndex = math.floor(random.SystemRandom.random(1)*self.Population+1)
-					oldSurvivors = survivors
 					survivors = [survivors[survivorIndex]]
-
+			specie.genomes = survivors
 			if len(specie.genomes) > 0:
 				speciesSurvivors.append(specie)
 			
