@@ -128,7 +128,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
     # adds a list of children to the pool
 	def addToPool(self,children):
 		pool.generations.append([])
-		mp = multiprocessing.Pool(multiprocessing.cpu_count())
+		mp = multiprocessing.Pool(multiprocessing.cpu_count()//2)
 		results = mp.map(self.setRelatives,children)
 		#for child in children:
 		#	child = self.setRelatives(child)
