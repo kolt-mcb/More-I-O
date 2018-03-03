@@ -470,7 +470,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["enable"] = .05
 			self.mutationRates["disable"] = .1
 			self.mutationRates["step"] = 0.1
-			self.mutationRates["crossover"] = 1
+			self.mutationRates["crossover"] = 0.5
 			self.mutationRates["DeltaThreshold"] = 1
 			self.mutationRates["DeltaDisjoint"] = 1
 			self.mutationRates["DeltaWeights"] = 1
