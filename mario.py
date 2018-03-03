@@ -89,8 +89,10 @@ def singleGame(randomQueue,displayQueue):
             done = False
             bonus = 0
             bonusOffset = 0
+            
             #env.is_finished = True
             env.change_level(new_level=LVint)
+            env.first_step = True 
             # env._write_to_pipe("changelevel#"+str(LVint))
             while not done:
                 ob = env.tiles.flatten()
@@ -325,6 +327,7 @@ class workerClass(object):
                         staleness = 0
                         done = False
                         env.change_level(new_level=LVint)
+                        env.first_step = True
                         warped = False
                         while not done:
                             ob = env.tiles.flatten()
