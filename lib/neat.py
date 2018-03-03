@@ -301,14 +301,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.rankGlobally(addBest=True)
 
 		for specie in self.species:
-			specie.calculateAverageFitness()
-			print("specie fitness",specie.averageFitness)
-
-		self.cullSpecies()
-
-		for specie in self.species:
 			specie.calculateAverageCrossover()
-
 		c = 0
 		for specie in self.species:
 			for genome in specie.genomes:
@@ -335,7 +328,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			
 			for genome in specie.genomes:
 				print("genome fitness",genome.fitness,"avererage over total",(genome.fitness/total)*self.Population//2)
-				if (genome.fitness/total)*self.Population//2 >= 1:
+				if (genome.fitness/total)*self.Population >= 1:
 					survivors.append(genome)
 			specie.genomes = survivors	
 
