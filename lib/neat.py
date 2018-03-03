@@ -269,10 +269,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
 		self.generation += 1
-		self.cullSpecies()  
 		self.rankGlobally() 
+		for specie in self.species:
+			#calculateAverageFitness of a specie
+			specie.calculateAverageFitness()
+		self.cullSpecies()  
 		# reranks after removeing stales species and  stores best player for later play
-		self.rankGlobally(addBest=True)
+		self.rankGlobally()
 		for specie in self.species:
 			#calculateAverageFitness of a specie
 			specie.calculateAverageFitness()
@@ -291,13 +294,20 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for specie in self.species:
 				 # if a species average fitness is over the pool averagefitness it can breed
 				breed = math.floor(specie.averageFitness / _sum * self.Population)
+				print(breed)
 				for i in range(breed):
 						if len(children)+c < self.Population:
 							children.append(specie.breedChildren())
+		self.rankGlobally(addBest=True)
+
+		for specie in self.species:
+			specie.calculateAverageFitness()
+			print("specie fitness",specie.averageFitness)
+
+		self.cullSpecies()
 
 		for specie in self.species:
 			specie.calculateAverageCrossover()
-
 
 		c = 0
 		for specie in self.species:
@@ -313,15 +323,19 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 	def cullSpecies(self): #sorts genomes by fitness and removes half of them
 		speciesSurvivors = []
+		avg = self.averageFitness()
+		total = self.totalAverageFitness()
+		print("total",total,"avg",avg)
 		for specie in self.species:
 			if self.connectionCost:
 				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness','geneEnabledCount'),reverse=True)
 			else:
 				specie.genomes = sorted(specie.genomes,key=attrgetter('fitness'),reverse=True)
 			survivors = []	
-			avg = self.averageFitness()
+			
 			for genome in specie.genomes:
-				if genome.fitness > avg:
+				print("genome fitness",genome.fitness,"avererage over total",(genome.fitness/total)*self.Population//2)
+				if (genome.fitness/total)*self.Population//2 > 1:
 					survivors.append(genome)
 			specie.genomes = survivors	
 
