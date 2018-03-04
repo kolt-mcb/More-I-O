@@ -269,7 +269,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
 		self.generation += 1
-
+		self.removeWeakSpecies()
 		# reranks after removeing stales species and  stores best player for later play
 		self.rankGlobally()
 		for specie in self.species:
