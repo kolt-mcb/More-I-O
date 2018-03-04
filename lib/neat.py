@@ -323,6 +323,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			
 		self.species = speciesSurvivors
 			
+	# removes poor performing species
+	def removeWeakSpecies(self): 
+		survived = []
+		_sum = self.totalAverageFitness()
+		for specie in self.species:
+			breed = specie.averageFitness / _sum * self.Population
+			if breed >= 1:
+				survived.append(specie)
+		self.species = survived
 
 	def updateMates(self):
 		survivors = set()
