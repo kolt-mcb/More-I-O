@@ -277,6 +277,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			specie.calculateAverageFitness()
 			specie.calculateAverageCrossover()
 		self.removeWeakSpecies()
+		self.updateMates()
+		for specie in self.species:
+			#calculateAverageFitness of a specie
+			specie.calculateAverageFitness()
 		_sum = self.totalAverageFitness()
 		children = []
 		for specie in self.species:
