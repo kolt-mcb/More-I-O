@@ -291,6 +291,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 						children.append(specie.breedChildren())
 
 		self.cullSpecies(len(children))
+		self.updateMates()
 		self.rankGlobally(addBest=True)
 
 		for specie in self.species:
