@@ -304,13 +304,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			print(self.Population)
 		
 		speciesSurvivors = []
-		randomIndex = random.SystemRandom().randrange(1,self.Population)
+		randomIndex = random.SystemRandom().randrange(1,self.Population-1)
 		for specie in self.species:
 			survivors = []
 			for genome in specie.genomes:
 				
-				if genome.globalRank >= randomIndex:
-					print("saved",genome.fitness,genome.geneEnabledCount,genome.globalRank)
+				if genome.globalRank > randomIndex:
+					print("saved",genome.fitness,genome.geneEnabledCount,genome.globalRank,randomIndex)
 					survivors.append(genome)
 			specie.genomes = survivors
 			if len(specie.genomes) > 0:
@@ -328,7 +328,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				c += 1
 		#defines new children list
 		children = []
+		print(c)
 		while (len(children)+c < self.Population):
+			print(len(children))
 			for specie in self.species:
 				 # if a species average fitness is over the pool averagefitness it can breed
 				breed = math.floor(specie.averageFitness / _sum * self.Population)-1
