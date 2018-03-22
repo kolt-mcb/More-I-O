@@ -297,14 +297,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		if self.generation > 1:
 			deviationDelta = self.deviations[len(self.deviations)-1] - self.deviations[len(self.deviations)-2]
 			print(deviationDelta)
+			change = round(self.Population * .1)
 			if deviationDelta > 0:
-				self.Population += round(self.Population * 0.1)
+				self.Population += change
 			else:
-				self.Population -= round(self.Population * .1)
+				
+				self.Population -= change
 			print(self.Population)
 		
 		speciesSurvivors = []
-		randomIndex = random.SystemRandom().randrange(1,self.Population-1)
+		randomIndex = random.SystemRandom().randrange(change,self.Population-1)
 		for specie in self.species:
 			survivors = []
 			for genome in specie.genomes:
