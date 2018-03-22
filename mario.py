@@ -216,6 +216,7 @@ class workerClass(object):
         while self.initialized.value:
             while len(results) != self.pool.Population:
                 if self.randomQueue.empty():
+                    print(self.pool.Population)
                     self.randomQueue.put(self.getRandomGenome())
                 if not self.results.empty():
                     for result in self.results.get():

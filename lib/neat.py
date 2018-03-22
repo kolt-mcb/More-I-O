@@ -6,6 +6,7 @@ import random
 import math
 from pymongo import MongoClient
 import multiprocessing
+import numpy
 
 
 
@@ -25,13 +26,14 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.StaleSpecies = 10
 		self.Inputs = Inputs
 		self.Outputs = Outputs
-        #  sets the class variable to the current number of inputs
+		#  sets the class variable to the current number of inputs
 		self.newGenome.innovation = Inputs 
 		self.recurrent = recurrent
 		self.connectionCost = connectionCost
 		self.databaseName = database
-        
-        # use saved time stamp
+		self.deviations = []
+		
+		# use saved time stamp
 		if timeStamp != None:
 			pool.timeStamp = timeStamp
 		#children for initial population
@@ -51,11 +53,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			newGenome = self.newGenome(Inputs,Outputs,recurrent)
 			newGenome.mutate()
 			children.append(newGenome)
-    
+	
 		#adds to population
 		self.addToPool(children)
 
-        #generate networks
+		#generate networks
 		for specie in self.species:
 			for genome in specie.genomes:
 				genome.generateNetwork()
@@ -70,7 +72,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		collection = db["Generations"]
 		collection.insert_one(doc)
 	
-    # the main genome doc with genes and lots of things. 
+	# the main genome doc with genes and lots of things. 
 	def updateMongoGenome(self,genome,specie):
 		doc = {
 		"time stamp" : pool.timeStamp,
@@ -95,7 +97,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		collection = db["Genomes"]
 		collection.insert_one(doc)
 	
-    # turns parent tuple into bson
+	# turns parent tuple into bson
 	def getParentsBSON(self,parents):
 		parentsBSON = {}
 		parentsBSON["parent1"] = parents[0]
@@ -109,14 +111,14 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		IDBSON["genome"] = ID[1]
 		return IDBSON
 		
-    # turns gene array into bson
+	# turns gene array into bson
 	def getGenesBSON(self,genes):
 		genesArray = []
 		for gene in genes:
 			genesArray.append(gene.innovation)
 		return genesArray
 	
-    # turns gene weights into bson
+	# turns gene weights into bson
 	def getGeneWeightsBSON(self,genes):
 		genesWeightMapArray = []
 		for gene in genes:
@@ -125,7 +127,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			})
 		return genesWeightMapArray
 	
-    # adds a list of children to the pool
+	# adds a list of children to the pool
 	def addToPool(self,children):
 		pool.generations.append([])
 		mp = multiprocessing.Pool(multiprocessing.cpu_count()//2)
@@ -256,7 +258,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	def initializeRun(self): 
 		species = self.species[self.currentSpecies]
 		genome = species.genomes[self.currentGenome]
-		generateNetwork(genome) 
+		genome.generateNetwork()
 	
 
 				
@@ -269,74 +271,80 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	#cuts poor preforming genomes and performs crossover of remaining genomes.
 	def nextGeneration(self):
 		self.generation += 1
-		
-		# reranks after removeing stales species and  stores best player for later play
 		self.rankGlobally()
-		for specie in self.species:
-			#calculateAverageFitness of a specie
-			specie.calculateAverageFitness()
-			specie.calculateAverageCrossover()
-		self.removeWeakSpecies()
-		self.updateMates()
-		for specie in self.species:
-			#calculateAverageFitness of a specie
-			specie.calculateAverageFitness()
-		_sum = self.totalAverageFitness()
-		children = []
-		for specie in self.species:
-				# if a species average fitness is over the pool averagefitness it can breed
-			breed = math.floor(specie.averageFitness / _sum * self.Population)
-			for i in range(breed):
-					if len(children) < self.Population:
-						children.append(specie.breedChildren())
-
-		self.cullSpecies(len(children))
-		self.updateMates()
+		self.statistics()
+		self.cullSpecies()
 		self.rankGlobally(addBest=True)
-
 		for specie in self.species:
+			specie.calculateAverageRank()
+			specie.calculateAverageFitness()
 			specie.calculateAverageCrossover()
+
+		children = self.breedPool()
+		self.updateMates()
+		self.addToPool(children)
+		
+
+	def statistics(self):
+		fitnessList = []
+		for specie in self.species:
+			for genome in specie.genomes:
+				fitnessList.append(genome.fitness)
+		fitnessArray = numpy.array(fitnessList)
+		self.deviations.append(fitnessArray.std())
+
+	def cullSpecies(self):
+		if self.generation > 1:
+			deviationDelta = self.deviations[len(self.deviations)-1] - self.deviations[len(self.deviations)-2]
+			print(deviationDelta)
+			if deviationDelta > 0:
+				self.Population += round(self.Population * 0.1)
+			else:
+				self.Population -= round(self.Population * .1)
+			print(self.Population)
+		
+		speciesSurvivors = []
+		randomIndex = random.SystemRandom().randrange(1,self.Population)
+		for specie in self.species:
+			survivors = []
+			for genome in specie.genomes:
+				
+				if genome.globalRank >= randomIndex:
+					print("saved",genome.fitness,genome.geneEnabledCount,genome.globalRank)
+					survivors.append(genome)
+			specie.genomes = survivors
+			if len(specie.genomes) > 0:
+				speciesSurvivors.append(specie)
+		self.species= speciesSurvivors
+
+					
+
+	
+	def breedPool(self):
+		_sum = self.totalAverageRank()
 		c = 0
 		for specie in self.species:
 			for genome in specie.genomes:
 				c += 1
+		#defines new children list
+		children = []
 		while (len(children)+c < self.Population):
-			randomIndex = random.SystemRandom().randrange(len(self.species))
-			parent = self.species[randomIndex]
-			child = parent.breedChildren()
-			children.append(child)
-		# adds all children to there species in the pool
-		self.addToPool(children)
+			for specie in self.species:
+				 # if a species average fitness is over the pool averagefitness it can breed
+				breed = math.floor(specie.averageFitness / _sum * self.Population)-1
+				for i in range(breed):
+						if len(children)+c < self.Population:
+							print("pop",len(children),c)
+							children.append(specie.breedChildren())
 
-	def cullSpecies(self,incoming): #sorts genomes by fitness and removes half of them
-		speciesSurvivors = []
-		for specie in self.species:
-			survivors = []
-			for genome in specie.genomes:
-				if genome.globalRank > incoming:
-					survivors.append(genome)
+				
 		
-			if len(survivors) == self.Population:
-				if self.connectionCost:
-					survivors = [survivors[0]]
-				else:
-					survivorIndex = math.floor(random.SystemRandom.random(1)*self.Population+1)
-					survivors = [survivors[survivorIndex]]
-			specie.genomes = survivors
-			if len(specie.genomes) > 0:
-				speciesSurvivors.append(specie)
+
+		
+		return children
+					
 			
-		self.species = speciesSurvivors
-			
-	# removes poor performing species
-	def removeWeakSpecies(self): 
-		survived = []
-		_sum = self.totalAverageFitness()
-		for specie in self.species:
-			breed = specie.averageFitness / _sum * self.Population
-			if breed >= 1:
-				survived.append(specie)
-		self.species = survived
+
 
 	def updateMates(self):
 		survivors = set()
@@ -352,11 +360,13 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	
 
 	#total of all averages of pool
-	def totalAverageFitness(self):
+	def totalAverageRank(self):
 		total = 0 
 		for specie in self.species:
-			total = total + specie.averageFitness
+			total = total + specie.averageRank
 		return total
+
+
 
 	# average fitness of entire pool
 	def averageFitness(self): 
@@ -456,7 +466,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.mutationRates["disable"] = .1
 			self.mutationRates["step"] = 0.1
 			self.mutationRates["crossover"] = 0.5
-			self.mutationRates["DeltaThreshold"] = 1
+			self.mutationRates["DeltaThreshold"] = .5
 			self.mutationRates["DeltaDisjoint"] = 1
 			self.mutationRates["DeltaWeights"] = 1
 			self.perturbChance = .9
@@ -770,11 +780,18 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.averageFitness = 0
 			self.recurrent = recurrent
 			self.averageCrossover = 1
+			self.averageRank = 0
 			
-		def calculateAverageFitness(self): 
+		def calculateAverageRank(self): 
 			total = 0
 			for genome in self.genomes:
 				total = total + genome.globalRank
+			self.averageRank = total / len(self.genomes)
+
+		def calculateAverageFitness(self): 
+			total = 0
+			for genome in self.genomes:
+				total = total + genome.fitness
 			self.averageFitness = total / len(self.genomes)
 		
 		def calculateAverageCrossover(self):
@@ -786,7 +803,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		 # breeds children of a species
 		def breedChildren(self):
 			genome1 = self.genomes[random.SystemRandom().randrange(len(self.genomes))]
-			child = None
 			if random.SystemRandom().random() < self.averageCrossover and len(genome1.mates)>0:
 				mate = random.sample(genome1.mates,1)
 				generation = mate[0][0]
