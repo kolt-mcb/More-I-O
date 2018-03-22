@@ -294,6 +294,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.deviations.append(fitnessArray.std())
 
 	def cullSpecies(self):
+		change = 1
 		if self.generation > 1:
 			deviationDelta = self.deviations[len(self.deviations)-1] - self.deviations[len(self.deviations)-2]
 			print(deviationDelta)
