@@ -295,6 +295,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 	def cullSpecies(self):
 		change = 1
+		oldPopulation = self.Population
 		if self.generation > 1:
 			deviationDelta = self.deviations[len(self.deviations)-1] - self.deviations[len(self.deviations)-2]
 			print(deviationDelta)
@@ -307,11 +308,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			print(self.Population)
 		
 		speciesSurvivors = []
-		randomIndex = random.SystemRandom().randrange(change,self.Population-1)
+		randomIndex = random.SystemRandom().randrange(change,oldPopulation-1)
+		print(randomIndex,"randomindex")
 		for specie in self.species:
 			survivors = []
 			for genome in specie.genomes:
-				
+				print(genome.fitness,genome.geneEnabledCount,genome.globalRank,randomIndex)
 				if genome.globalRank > randomIndex:
 					print("saved",genome.fitness,genome.geneEnabledCount,genome.globalRank,randomIndex)
 					survivors.append(genome)
@@ -333,7 +335,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		children = []
 		print(c)
 		while (len(children)+c < self.Population):
-			print(len(children))
 			for specie in self.species:
 				 # if a species average fitness is over the pool averagefitness it can breed
 				breed = math.floor(specie.averageFitness / _sum * self.Population)-1
