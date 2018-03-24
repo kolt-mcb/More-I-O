@@ -282,6 +282,10 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 		children = self.breedPool()
 		self.updateMates()
+		for specie in self.species:
+			for genome in specie.genomes:
+				children.append(genome)
+		self.species = []
 		self.addToPool(children)
 		
 
