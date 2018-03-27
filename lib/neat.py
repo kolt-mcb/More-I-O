@@ -279,13 +279,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			specie.calculateAverageRank()
 			specie.calculateAverageFitness()
 			specie.calculateAverageCrossover()
-
-		children = self.breedPool()
 		self.updateMates()
-		for specie in self.species:
-			for genome in specie.genomes:
-				children.append(genome)
-		self.species = []
+		children = self.breedPool()
+
 		self.addToPool(children)
 		
 
