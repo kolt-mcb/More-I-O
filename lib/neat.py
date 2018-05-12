@@ -272,7 +272,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	def nextGeneration(self):
 		self.generation += 1
 		self.rankGlobally()
-		self.statistics()
+		#self.statistics()
 		self.rankGlobally(addBest=True)
 		for specie in self.species:
 			specie.calculateAverageRank()
@@ -298,16 +298,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	def cullSpecies(self):
 		change = 1
 		oldPopulation = self.Population
-		if self.generation > 1:
-			deviationDelta = self.deviations[len(self.deviations)-1] - self.deviations[len(self.deviations)-2]
-			print(deviationDelta)
-			change = round(self.Population * .1)
-			if deviationDelta > 0:
-				self.Population += change
-			else:
+		# if self.generation > 1:
+		# 	deviationDelta = self.deviations[len(self.deviations)-1] - self.deviations[len(self.deviations)-2]
+		# 	print(deviationDelta)
+		# 	change = round(self.Population * .1)
+		# 	if deviationDelta > 0:
+		# 		self.Population += change
+		# 	else:
 				
-				self.Population -= change
-			print(self.Population)
+		# 		self.Population -= change
+		# 	print(self.Population)
 		
 		speciesSurvivors = []
 		randomIndex = random.SystemRandom().randrange(change,oldPopulation-1)
