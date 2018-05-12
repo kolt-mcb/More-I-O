@@ -132,7 +132,7 @@ def get_pid(name):
 
 
 class workerClass(object):
-    def __init__(self,displayQueue,numJobs,env,population,attempts,input,output,recurrnet=False,connectionCost=False,):
+    def __init__(self,displayQueue,numJobs,env,population,attempts,input,output,sharedRunning,recurrnet=False,connectionCost=False,):
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
         self.randomQueue = multiprocessing.Queue(maxsize=1)
@@ -152,6 +152,7 @@ class workerClass(object):
         self.singleGame = None
         self.displayQueue = displayQueue
         self.attempts=attempts
+        self.sharedRunning = sharedRunning
 
 
         
@@ -171,7 +172,7 @@ class workerClass(object):
             self.singleGame.start()
 
         while True:
-            if sharedRunning.value:
+            if self.sharedRunning.value:
                 if not self.initialized.value:
                     self.initialized.value = True
             if self.initialized.value:
@@ -266,11 +267,7 @@ class workerClass(object):
     def jobTrainer(self,envName,jobs,results,running,counter):
         job = None
         env = gym.make(envName)
-        env.lock = self.lock
-        env.lock.acquire()
         env.reset()
-        env.lock.release()
-        env.locked_levels = [False] * 32
         resultsList = []
         resultsReady = False
 
@@ -280,7 +277,7 @@ class workerClass(object):
             discrete = False
 
         while True:
-            if running.value:
+            if self.running.value:
                 try: 
                     job = jobs.get(timeout=1)
                 except queue.Empty as error:
@@ -321,7 +318,7 @@ class workerClass(object):
                             o = genome.evaluateNetwork(ob, discrete)
                             o = acFixer(env.action_space, o)
                             ob, reward, done, _ = env.step(o)
-                            # env.render() # disabled render
+                            #env.render() # disabled render
                             score += reward
                         scores += score
                     finalScore = round(scores / int(self.attempts))
@@ -429,7 +426,7 @@ class gui:
                 else:
                     observation = env.observation_space.shape[0]
                 self.runButton.config(text='running')
-                self.workerClass = workerClass(self.displayQueue,self.jobsEntry.get(),self.envEntry.get(),self.population.get(),self.attemptsEntry.get(), observation, actions)
+                self.workerClass = workerClass(self.displayQueue,self.jobsEntry.get(),self.envEntry.get(),self.population.get(),self.attemptsEntry.get(), observation, actions,sharedRunning)
                 self.display = newNetworkDisplay(self.displayQueue)
                 # file saver button
                 self.fileSaverButton = Button(
