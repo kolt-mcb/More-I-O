@@ -273,12 +273,14 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		self.generation += 1
 		self.rankGlobally()
 		self.statistics()
-		self.cullSpecies()
 		self.rankGlobally(addBest=True)
 		for specie in self.species:
 			specie.calculateAverageRank()
 			specie.calculateAverageFitness()
 			specie.calculateAverageCrossover()
+		self.cullSpecies()
+
+
 		self.updateMates()
 		children = self.breedPool()
 
@@ -337,16 +339,15 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		while (len(children)+c < self.Population):
 			for specie in self.species:
 				 # if a species average fitness is over the pool averagefitness it can breed
-				breed = math.floor(specie.averageFitness / _sum * self.Population)-1
+				breed = math.floor(specie.averageRank / _sum * self.Population)-1
+				print(breed)
 				for i in range(breed):
 						if len(children)+c < self.Population:
 							print("pop",len(children),c)
 							children.append(specie.breedChildren())
+			time.sleep(5)
 
 				
-		
-
-		
 		return children
 					
 			
