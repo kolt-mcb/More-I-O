@@ -8,14 +8,14 @@ from pymongo import MongoClient
 import multiprocessing
 import numpy
 
-
+generations = []
 
 
 class pool: #holds all species data, crossspecies settings and the current gene innovation
-	generations = []
+	
 	client = None
 	timeStamp = time.time()
-	def __init__(self,population,Inputs,Outputs,recurrent=False,database=None,timeStamp=None,connectionCost=False):
+	def __init__(self,population,Inputs,Outputs,recurrent=False,connectionCost=False,timeStamp=None,database=None,):
 		self.species = []
 		self.generation = 0
 		self.currentSpecies = 0
@@ -129,16 +129,16 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 	
 	# adds a list of children to the pool
 	def addToPool(self,children):
-		pool.generations.append([])
-		mp = multiprocessing.Pool(multiprocessing.cpu_count()//2)
-		results = mp.map(self.setRelatives,children)
-		#for child in children:
-		#	child = self.setRelatives(child)
-		children = []
-		for result in results:
-			children.append(result)
-		mp.close()
-		mp.join()
+		generations.append([])
+		# mp = multiprocessing.Pool(multiprocessing.cpu_count()//2)
+		# results = mp.map(self.setRelatives,children)
+		for child in children:
+			child = self.setRelatives(child)
+		#children = []
+		# for result in results:
+		# 	children.append(result)
+		# mp.close()
+		# mp.join()
 		children = self.calculateGeneEnableCount(children)
 
 		for child in children:
@@ -162,12 +162,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			idSet = False
 			if child.ID != None:
 				idSet = True
-				child.ID = (self.generation,len(self.generations[self.generation]))
+				child.ID = (self.generation,len(generations[self.generation]))
 			for mate in updatedMates:
 				specie = mate[0]
 				genome = mate[1]
 				self.species[specie].genomes[genome].mates.add(child.ID)
-			pool.generations[self.generation].append(child)
+			generations[self.generation].append(child)
 			if foundSpecies:
 				self.species[foundedSpecie].genomes.append(child)
 				s = foundedSpecie
@@ -201,7 +201,6 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 		return genomes
 
 	def getRelatives(self,child,relatives=set(),parent=None):
-		count = 0
 		if parent == None:
 			genomeToCheck = child
 		else:
@@ -210,23 +209,19 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			if parentGenomeTup != None and parentGenomeTup not in relatives:
 				generation = parentGenomeTup[0]
 				genome = parentGenomeTup[1]
-				parentGenome = self.generations[generation][genome]
-				count +=1 
+				parentGenome = generations[generation][genome]
 				if self.sameSpecies(child,parentGenome):
 					if parentGenome.ID != None:
 						relatives.add(parentGenome.ID)
-						parentRelatives,bonusCount = self.getRelatives(child,relatives,parentGenome)
-						count += bonusCount
+						parentRelatives = self.getRelatives(child,relatives,parentGenome)
 						if parentRelatives != None:
 							relatives.update(parentRelatives)
 
-		return relatives,count
+		return relatives
 
 	def setRelatives(self,child):
 
-		child.relatives,count = self.getRelatives(child,set())
-		if count == 0:
-			print(child.relatives)
+		child.relatives = self.getRelatives(child,set())
 		return child
 
 	def sameSpecies(self,genome1,genome2,rating=False):
@@ -335,17 +330,14 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				c += 1
 		#defines new children list
 		children = []
-		print(c)
 		while (len(children)+c < self.Population):
 			for specie in self.species:
 				 # if a species average fitness is over the pool averagefitness it can breed
-				breed = math.floor(specie.averageRank / _sum * self.Population)-1
+				breed = math.floor(specie.averageRank / _sum * self.Population)
 				print(breed)
 				for i in range(breed):
 						if len(children)+c < self.Population:
-							print("pop",len(children),c)
 							children.append(specie.breedChildren())
-			time.sleep(5)
 
 				
 		return children
@@ -456,6 +448,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 
 
 	class newGenome:
+		innovation = 0
 		def __init__(self,Inputs,Outputs,recurrent):
 			self.genes = []
 			self.fitness = 0
@@ -466,9 +459,9 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			self.geneEnabledCount = 0
 			self.maxNodes = 10000
 			self.mutationRates["connections"] = 0.5
-			self.mutationRates["link"] =  0.5
+			self.mutationRates["link"] =  1
 			self.mutationRates["bias"] = .1
-			self.mutationRates["node"] = 0.5
+			self.mutationRates["node"] = 1
 			self.mutationRates["enable"] = .05
 			self.mutationRates["disable"] = .1
 			self.mutationRates["step"] = 0.1
@@ -530,11 +523,11 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			p = self.mutationRates["node"] 
 			while p > 0:
 				if random.SystemRandom().random() < p:
+
 					self.nodeMutate()
 				p = p -1
 			p = self.mutationRates["enable"]
 			while p > 0:
-
 				if random.SystemRandom().random() < p:
 					self.enableDisableMutate(True)
 				p = p -1
@@ -565,7 +558,8 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				Inputs = self.Inputs+self.Outputs
 			else:
 				Inputs = self.Inputs
-			if neuron1 <=Inputs and neuron2 <= Inputs:	 
+			if neuron1 <=Inputs and neuron2 <= Inputs:	
+				print(neuron1,neuron2) 
 				return 
 			if neuron1 == neuron2:
 				return
@@ -579,10 +573,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			newLink.out = neuron2 
 			if forceBias:
 				newLink.into = Inputs
+			print(newLink)
 			if self.containsLink(newLink):
 				return	 
 			newLink.innovation = self.newInnovation()
 			newLink.weight = (1-random.SystemRandom().random()*2)
+			print(newLink)
 			self.genes.append(newLink)
 			
 		# checks if link already exists between neurons
@@ -590,6 +586,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 			for gene in self.genes:
 				if gene.into == link.into and gene.out == link.out:
 					return True
+			return False
 		
 		# addds a node 
 		def nodeMutate(self):
@@ -695,10 +692,12 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				if (not nonInput) or gene.out > inputs:
 					neurons[gene.into] = True
 			n = random.SystemRandom().randrange(len(neurons))
+			print(neurons)
 			for k,v in neurons.items():
-				n = n-1
+				
 				if n==0:
 					return k
+				n = n-1
 			return 0
 		
 		# runs inputs through neural network, this is what runs the brain. 
@@ -814,7 +813,7 @@ class pool: #holds all species data, crossspecies settings and the current gene 
 				mate = random.sample(genome1.mates,1)
 				generation = mate[0][0]
 				genome = mate[0][1]
-				genome2 = pool.generations[generation][genome]
+				genome2 = generations[generation][genome]
 				child = self.crossover(genome1,genome2)
 			else:
 				child = genome1.copyGenome()

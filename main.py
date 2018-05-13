@@ -132,7 +132,7 @@ def get_pid(name):
 
 
 class workerClass(object):
-    def __init__(self,displayQueue,numJobs,env,population,attempts,input,output,sharedRunning,recurrnet=False,connectionCost=False,):
+    def __init__(self,displayQueue,numJobs,env,population,attempts,input,output,sharedRunning,recurrnet,connectionCost,):
         self.lock = multiprocessing.Lock()
         self.jobs = multiprocessing.Queue()
         self.randomQueue = multiprocessing.Queue(maxsize=1)
@@ -146,7 +146,12 @@ class workerClass(object):
         self.plotData = {}
         self.genomeDictionary = {}
         self.specieID = 0
-        self.pool = neat.pool(population, input, output, recurrent=False,connectionCost=True)
+        self.population = population
+        self.input = input
+        self.output = output
+        self.recurrent = recurrnet
+        self.connectionCost = connectionCost
+        self.pool = None
         self.numJobs = numJobs
         self.env = env
         self.singleGame = None
@@ -159,6 +164,8 @@ class workerClass(object):
         
             
     def initializeProcess(self):
+        if self.pool == None:
+            self.pool =  neat.pool(self.population, self.input, self.output, self.recurrent,self.connectionCost)
         
         if not self.initialized.value:
             for i in range(int(self.numJobs)):
@@ -214,7 +221,7 @@ class workerClass(object):
                 self.runningNextGen.value = False
                 process.join()
                 stackplotQueue.put(self.generateStackPlot())
-                poolQueue.put((self.pool,neat.pool.generations,self.plotData,self.genomeDictionary,self.specieID))
+                poolQueue.put((self.pool,neat.generations,self.plotData,self.genomeDictionary,self.specieID))
                 print("gen ", self.pool.generation," best", self.pool.getBest().fitness)# sends message to main tkinter process
                 self.initialized.value = False
             time.sleep(0.5)
@@ -239,7 +246,7 @@ class workerClass(object):
                 foundSpecies = False
                 for relative in genome.relatives:
                     if relative in self.genomeDictionary:
-                        relativeGenome = self.pool.generations[relative[0]][relative[1]]
+                        relativeGenome = neat.generations[relative[0]][relative[1]]
                         if self.pool.sameSpecies(genome,relativeGenome):
                             specieID = self.genomeDictionary[relative]
                             if len(self.plotData[specieID]) != self.pool.generation:
@@ -426,7 +433,7 @@ class gui:
                 else:
                     observation = env.observation_space.shape[0]
                 self.runButton.config(text='running')
-                self.workerClass = workerClass(self.displayQueue,self.jobsEntry.get(),self.envEntry.get(),self.population.get(),self.attemptsEntry.get(), observation, actions,sharedRunning)
+                self.workerClass = workerClass(self.displayQueue,self.jobsEntry.get(),self.envEntry.get(),self.population.get(),self.attemptsEntry.get(), observation, actions,sharedRunning,recurrnet=False,connectionCost=False)
                 self.display = newNetworkDisplay(self.displayQueue)
                 # file saver button
                 self.fileSaverButton = Button(
@@ -444,6 +451,7 @@ class gui:
     def checkRunPaused(self):
         if self.running:
             if not stackplotQueue.empty():
+                
                 plotList = stackplotQueue.get()
                 self.ax.clear()
                 self.ax.set_xlabel('generations')
@@ -490,7 +498,7 @@ class gui:
 
         print("file saved",filename)
 
-    def loadFile(self):
+   def loadFile(self):
         filename = filedialog.askopenfilename()
         if filename is ():
             return
@@ -505,9 +513,10 @@ class gui:
                     if gene.innovation > newInovation:
                         newInovation = gene.innovation
 
-        self.workerClass = workerClass(self.displayQueue,self.envNum.get(),
-                                        self.env,
+        self.workerClass = workerClass(self.displayQueue,self.jobsEntry.get(),
+                                        self.envEntry.get(),
                                         sum([v for v in [len(specie.genomes) for specie in species]]),
+                                        self.attemptsEntry.get(),
                                         species[0].genomes[0].Inputs,
                                         species[0].genomes[0].Outputs)
 
@@ -519,7 +528,7 @@ class gui:
         self.workerClass.plotData = loadedPool["plotData"]
         self.workerClass.genomeDictionary = loadedPool["genomeDictionary"]
         self.workerClass.specieID = loadedPool["specieID"]
-        neat.pool.generations = loadedPool["generations"]
+        neat.generations = loadedPool["generations"]
         self.population.set(self.workerClass.pool.Population)
         self.display = newNetworkDisplay(self.displayQueue)
         if not self.poolInitialized:
