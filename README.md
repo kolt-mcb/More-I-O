@@ -21,6 +21,7 @@ Make sure you have the following packages installed as well. Some of the command
 * pymongo (`pip3 install pymongo`)
 * tk (Ubuntu/Debian: `apt install python-tk` or `apt install python3-tk`)
 * gym (`pip3 install gym`)
+* psutil (`pip3 install psutil`)
 * You might also need to install libfreetype6-dev and a few other packages if Tk throws an exception that it can't find libraries to build with.
 
 If you wish, you can install the full OpenAI stack by going to https://gym.openai.com/docs. It is recommended you install these packages locally (don't install them as superuser or globally) because we need to edit some files.
